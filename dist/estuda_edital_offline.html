@@ -87396,21 +87396,32 @@ window.QUESTIONS_QUADRIX = [
   const AI_CONFIG_KEY = "ESTUDA_EDITAL_AI_CONFIG_V1";
   const LEGACY_AI_CONFIG_KEY = "DPDF_TI_AI_CONFIG_V1";
 
+  const DEFAULT_GEMINI_MODEL = "gemini-4-hydrogen";
+
   function loadAiConfig() {
     try {
       const raw = localStorage.getItem(AI_CONFIG_KEY) || localStorage.getItem(LEGACY_AI_CONFIG_KEY);
       const parsed = raw ? JSON.parse(raw) : {};
-      return Object.assign(
+      const cfg = Object.assign(
         {
           provider: "gemini", // "gemini" | "openai"
           apiKey: "",
-          model: "",
+          model: DEFAULT_GEMINI_MODEL,
           models: [] // [{ id, label }]
         },
         parsed
       );
+      if (cfg.provider === "gemini") {
+        if (Array.isArray(cfg.models)) {
+          cfg.models = cfg.models.filter(m => m && m.id && !/-latest$/i.test(m.id));
+        }
+        if (!cfg.model || /-latest$/i.test(cfg.model)) {
+          cfg.model = DEFAULT_GEMINI_MODEL;
+        }
+      }
+      return cfg;
     } catch (e) {
-      return { provider: "gemini", apiKey: "", model: "", models: [] };
+      return { provider: "gemini", apiKey: "", model: DEFAULT_GEMINI_MODEL, models: [] };
     }
   }
 
@@ -87602,7 +87613,8 @@ window.QUESTIONS_QUADRIX = [
       const list = rawTextModels
         .filter(m => {
           const id = m.id.toLowerCase();
-          if (/^gemini-(flash|pro|flash-lite)-latest$/i.test(id)) return true;
+          if (/-latest$/i.test(id)) return false;
+          if (/^gemini-4-hydrogen/i.test(id)) return true;
           const v = parseVersion(id);
           if (v === null) return false;
           if (/^gemini-/i.test(id)) {
@@ -87615,18 +87627,17 @@ window.QUESTIONS_QUADRIX = [
           return false;
         })
         .map(m => {
-          const isLatest = /-latest$/i.test(m.id);
+          const isDefault = m.id.toLowerCase() === DEFAULT_GEMINI_MODEL;
           return {
             id: m.id,
-            label: isLatest ? `★ ${m.label}` : m.label
+            label: isDefault ? `★ ${m.label}` : m.label
           };
         })
         .sort((a, b) => {
           const score = id => {
             const lower = id.toLowerCase();
-            if (lower === "gemini-flash-latest") return 10000;
-            if (lower === "gemini-pro-latest") return 9900;
-            if (lower === "gemini-flash-lite-latest") return 9800;
+            if (lower === DEFAULT_GEMINI_MODEL) return 10000;
+            if (lower.startsWith("gemini-4-hydrogen")) return 9950;
             const v = parseVersion(lower) || 0;
             if (/^gemini-/i.test(lower)) {
               let s = 5000 + v;
