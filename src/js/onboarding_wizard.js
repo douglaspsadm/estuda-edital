@@ -231,20 +231,49 @@
 
         ${WIZ.mode === "preset" ? `
           <div class="wiz-preset-grid" style="margin-top:14px;">
-            ${builtins.map(t => {
-              const qCount = window.TracksManager.getQuestionsForTrack(t.id).length;
-              const selected = WIZ.selectedPresetId === t.id;
-              return `
-                <div class="wiz-preset-card ${selected ? "selected" : ""}" onclick="window.OnboardingWizard.selectPreset('${esc(t.id)}')">
-                  <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                    <strong>${esc(t.shortName)}</strong>
-                    <span class="status-badge status-mastered">${qCount} questões reais</span>
+            ${(() => {
+              const cofenTracks = builtins.filter(t => t.groupId === "cofen_2026");
+              const standalone = builtins.filter(t => !t.groupId);
+              const cards = [];
+
+              if (cofenTracks.length) {
+                const isCofenSelected = cofenTracks.some(t => t.id === WIZ.selectedPresetId);
+                const activeCofen = cofenTracks.find(t => t.id === WIZ.selectedPresetId) || cofenTracks.find(t => t.roleCode === "411") || cofenTracks[0];
+                const qCount = window.TracksManager.getQuestionsForTrack(activeCofen.id).length;
+                cards.push(`
+                  <div class="wiz-preset-card ${isCofenSelected ? "selected" : ""}" onclick="window.OnboardingWizard.selectPreset('${esc(activeCofen.id)}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                      <strong>COFEN 2026 (13 Cargos)</strong>
+                      <span class="status-badge status-mastered">${qCount} questões reais</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Instituto Quadrix • Certo ou Errado • Prova 28/02/2027 • R$ 18.950,52</div>
+                    <div style="margin-top:10px;" onclick="event.stopPropagation()">
+                      <label class="field-label" style="font-size:0.75rem;">Escolha seu Cargo no COFEN:</label>
+                      <select class="form-control" onchange="window.OnboardingWizard.selectPreset(this.value)">
+                        ${cofenTracks.map(c => `<option value="${esc(c.id)}" ${activeCofen.id === c.id ? "selected" : ""}>${esc(c.roleCode)} — ${esc(c.roleName)} (${esc(c.roleVagas)})</option>`).join("")}
+                      </select>
+                    </div>
                   </div>
-                  <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${esc(t.subtitle)}</div>
-                  <p style="font-size:0.83rem; color:var(--text-secondary); margin-top:8px;">${esc(t.description)}</p>
-                </div>
-              `;
-            }).join("")}
+                `);
+              }
+
+              standalone.forEach(t => {
+                const qCount = window.TracksManager.getQuestionsForTrack(t.id).length;
+                const selected = WIZ.selectedPresetId === t.id;
+                cards.push(`
+                  <div class="wiz-preset-card ${selected ? "selected" : ""}" onclick="window.OnboardingWizard.selectPreset('${esc(t.id)}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                      <strong>${esc(t.shortName)}</strong>
+                      <span class="status-badge status-mastered">${qCount} questões reais</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">${esc(t.subtitle)}</div>
+                    <p style="font-size:0.83rem; color:var(--text-secondary); margin-top:8px;">${esc(t.description)}</p>
+                  </div>
+                `);
+              });
+
+              return cards.join("");
+            })()}
           </div>
         ` : `
           <div style="margin-top:14px;">

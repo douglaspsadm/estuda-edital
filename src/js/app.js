@@ -165,13 +165,50 @@
     const tracks = window.TracksManager.listTracks();
     const active = window.TracksManager.getActiveTrack();
 
+    // Agrupa trilhas com groupId (ex: COFEN 2026 com 13 cargos) em uma única entrada no 1º seletor
+    const groupedOptions = [];
+    const seenGroups = new Set();
+    tracks.forEach(t => {
+      if (t.groupId) {
+        if (seenGroups.has(t.groupId)) return;
+        seenGroups.add(t.groupId);
+        const members = tracks.filter(x => x.groupId === t.groupId);
+        groupedOptions.push({
+          value: `group:${t.groupId}`,
+          label: `${t.groupName || t.groupId} (${members.length} cargos)`,
+          selected: active.groupId === t.groupId
+        });
+      } else {
+        const prefix = t.builtin ? "" : "★ ";
+        groupedOptions.push({
+          value: t.id,
+          label: `${prefix}${t.shortName}`,
+          selected: active.id === t.id
+        });
+      }
+    });
+
     const sel = document.getElementById("track-select");
     if (sel) {
-      sel.innerHTML = tracks.map(t => {
-        const prefix = t.builtin ? "" : "★ ";
-        return `<option value="${escapeHtml(t.id)}" ${t.id === active.id ? "selected" : ""}>${prefix}${escapeHtml(t.shortName)}</option>`;
-      }).join("");
+      sel.innerHTML = groupedOptions
+        .map(o => `<option value="${escapeHtml(o.value)}" ${o.selected ? "selected" : ""}>${escapeHtml(o.label)}</option>`)
+        .join("");
     }
+
+    const roleWrap = document.getElementById("role-select-wrapper");
+    const roleSel = document.getElementById("role-select");
+    if (roleWrap && roleSel) {
+      if (active.groupId) {
+        const members = tracks.filter(x => x.groupId === active.groupId);
+        roleWrap.style.display = "block";
+        roleSel.innerHTML = members
+          .map(m => `<option value="${escapeHtml(m.id)}" ${m.id === active.id ? "selected" : ""}>${escapeHtml(m.roleCode ? `${m.roleCode} — ${m.roleName}` : m.shortName)}</option>`)
+          .join("");
+      } else {
+        roleWrap.style.display = "none";
+      }
+    }
+
     const badgeEl = document.getElementById("brand-badge-text");
     const titleEl = document.getElementById("brand-title");
     const subEl = document.getElementById("brand-subtitle");
@@ -179,6 +216,18 @@
     if (titleEl) titleEl.textContent = "Estuda Edital";
     if (subEl) subEl.textContent = active.shortName || "Multi-Concurso";
   }
+
+  window.onConcursoSelectChange = function (val) {
+    if (!val) return;
+    if (val.startsWith("group:")) {
+      const gid = val.slice(6);
+      const tracks = window.TracksManager ? window.TracksManager.listTracks() : [];
+      const firstMember = tracks.find(t => t.groupId === gid);
+      if (firstMember) window.switchTrack(firstMember.id);
+      return;
+    }
+    window.switchTrack(val);
+  };
 
   window.switchTrack = function (trackId) {
     if (!window.TracksManager) return;

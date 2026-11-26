@@ -9,8 +9,9 @@
   - `src/js/onboarding_wizard.js`: Wizard guiado em 4 passos + view dedicada `Importar Provas & Base`.
   - `src/js/ai_tutor.js`: motor BYOK (Gemini/OpenAI) com `askRaw`, `askJson` e `discoverModelsDirect`.
   - `src/js/cloud_sync.js` + `supabase/schema.sql`: sincronização Supabase por `(user_id, track_id)` com fallback gracioso para `user_progress`.
-  - `src/js/app.js`: motor adaptativo completo (Dashboard, Questões, Caderno de Erros, Aulas IA, Revisão Espaçada, Simulado, Discursiva, Flashcards auto-gerados, Edital Verticalizado, Backup).
+  - `src/data/cofen_edital_data.js`: Edital Nº 1/2026 do COFEN (Instituto Quadrix — 13 cargos de nível superior, 400–412) extraído do PDF oficial, com seletor de cargo na sidebar e no Wizard.
+  - `src/js/app.js`: motor adaptativo completo + seletor agrupado Concurso → Cargo.
 
 ## Validação
-- `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (805 questões válidas, 4/4 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
-- E2E Playwright contra `public/`: 7/7 fluxos validados (wizard, criação de trilha, auto-matching base comum, todas as 10 views, troca para DPDF 805q, mobile 390x844 sem overflow) com 0 `pageerror`s.
+- `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (805 questões válidas, 5/5 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
+- E2E Playwright contra `public/`: validado COFEN Enfermeiro (411, 332q reais) → troca de cargo para Analista de Sistemas (404, 602q reais + Língua Inglesa) com 0 `pageerror`s.

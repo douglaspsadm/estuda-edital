@@ -27,10 +27,14 @@
       <button class="icon-btn mobile-only" onclick="closeMobileMenu()" aria-label="Fechar menu">✕</button>
     </div>
 
-    <!-- SELETOR DE TRILHA / CONCURSO -->
+    <!-- SELETOR DE TRILHA / CONCURSO E CARGO -->
     <div class="track-switcher">
       <label class="track-switcher-label" for="track-select">Concurso / Trilha Ativa</label>
-      <select id="track-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
+      <select id="track-select" class="form-control track-select" onchange="onConcursoSelectChange(this.value)"></select>
+      <div id="role-select-wrapper" style="display:none; margin-top:6px;">
+        <label class="track-switcher-label" for="role-select">Cargo / Especialidade</label>
+        <select id="role-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
+      </div>
       <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">
         + Novo Concurso (Wizard)
       </button>
@@ -242,6 +246,7 @@
   <script src="data/dpdf_questions_reais.js"></script>
   <script src="data/dpdf_lessons_data.js"></script>
   <script src="data/dpdf_discursive_data.js"></script>
+  <script src="data/cofen_edital_data.js"></script>
   <script src="data/shared_bank.js"></script>
   <script src="js/tracks_manager.js"></script>
   <script src="js/ai_tutor.js"></script>

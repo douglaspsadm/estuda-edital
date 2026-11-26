@@ -191,6 +191,10 @@
       discursive: { temas: [] }
     });
 
+    if (window.COFEN_2026_DATA && typeof window.COFEN_2026_DATA.buildTracks === "function") {
+      list.push(...window.COFEN_2026_DATA.buildTracks());
+    }
+
     if (DPDF_EDITAL_SNAPSHOT) {
       list.push({
         id: "dpdf_ti_2026",

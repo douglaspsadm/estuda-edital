@@ -26,6 +26,7 @@ const scriptOrder = [
   "data/dpdf_questions_reais.js",
   "data/dpdf_lessons_data.js",
   "data/dpdf_discursive_data.js",
+  "data/cofen_edital_data.js",
   "data/shared_bank.js",
   "js/tracks_manager.js",
   "js/ai_tutor.js",
