@@ -183,6 +183,16 @@
     if (typeof window.refreshActiveView === "function") window.refreshActiveView();
   };
 
+  function trimToSentence(text, max) {
+    const t = String(text || "").replace(/\s+/g, " ").trim();
+    if (t.length <= max) return t;
+    const cut = t.slice(0, max);
+    const last = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("; "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+    if (last > max * 0.5) return cut.slice(0, last + 1).trim();
+    const sp = cut.lastIndexOf(" ");
+    return (sp > 0 ? cut.slice(0, sp) : cut).trim() + "…";
+  }
+
   window.generateQuestionExplanation = async function (qid) {
     const q = QUESTION_MAP.get(qid);
     if (!q) return;
@@ -214,8 +224,12 @@
       const correctOpt = opts[q.correctIndex] != null ? String(opts[q.correctIndex]) : "";
       const chosenOpt = ans && opts[ans.selectedIndex] != null ? String(opts[ans.selectedIndex]) : "";
       const prompt = [
-        "Você é um professor especialista em concursos públicos brasileiros.",
-        "Explique de forma objetiva, didática e cirúrgica a questão oficial abaixo.",
+        "Você é um professor de concursos públicos brasileiros. Escreva uma DICA CIRÚRGICA curta sobre a questão abaixo: não é uma aula, é um lembrete rápido para o aluno não errar de novo.",
+        "",
+        "Regras obrigatórias:",
+        "- Linguagem simples e direta, em português, sem markdown, sem listas e sem repetir o enunciado.",
+        "- Foque só no ponto que decide a questão (a regra que justifica o gabarito oficial).",
+        "- Respeite os limites de tamanho de cada campo.",
         "",
         `Banca: ${q.banca || "Oficial"} | Órgão/Ano: ${q.orgao || ""} ${q.year || ""}`,
         `Disciplina: ${subjName(q.subjectId)}`,
@@ -224,13 +238,13 @@
         `Gabarito oficial: ${correctOpt}`,
         chosenOpt && chosenOpt !== correctOpt ? `Resposta marcada pelo aluno (errou): ${chosenOpt}` : "",
         "",
-        "Retorne APENAS um JSON válido com as chaves exatamente assim:",
+        "Retorne APENAS um JSON válido, exatamente com estas chaves:",
         '{',
-        '  "title": "Título curto do assunto cobrado (máx 70 caracteres)",',
-        '  "explanation": "Explicação clara de por que o gabarito oficial está correto e (se houver) por que o erro comum falha.",',
-        '  "coreConcept": "Regra principal ou fundamento legal/gramatical/técnico que resolve a questão.",',
-        '  "accessTrap": "Principal pegadinha da banca nesta questão.",',
-        '  "mnemonic": "Regra de bolso ou macete curto para não errar mais."',
+        '  "title": "assunto cobrado, até 60 caracteres",',
+        '  "explanation": "por que o gabarito está certo, em até 2 frases e 280 caracteres",',
+        '  "coreConcept": "a regra-chave em 1 frase, até 160 caracteres",',
+        '  "accessTrap": "a pegadinha da banca em 1 frase, até 140 caracteres",',
+        '  "mnemonic": "macete para lembrar, até 90 caracteres"',
         '}'
       ].filter(Boolean).join("\n");
 
@@ -241,11 +255,11 @@
 
       const aiCfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
       const remObj = {
-        title: String(parsed.title || `${subjName(q.subjectId)} — Explicação IA`).trim(),
-        explanation: String(parsed.explanation || "").trim(),
-        coreConcept: String(parsed.coreConcept || parsed.explanation || "").trim(),
-        accessTrap: String(parsed.accessTrap || "").trim(),
-        mnemonic: String(parsed.mnemonic || "").trim(),
+        title: trimToSentence(parsed.title || `${subjName(q.subjectId)} — Dica IA`, 70),
+        explanation: trimToSentence(parsed.explanation, 320),
+        coreConcept: trimToSentence(parsed.coreConcept || parsed.explanation, 200),
+        accessTrap: trimToSentence(parsed.accessTrap, 170),
+        mnemonic: trimToSentence(parsed.mnemonic, 110),
         modelName: String(aiCfg.model || aiCfg.provider || "").trim(),
         generatedByAi: true,
         generatedAt: new Date().toISOString()
@@ -943,8 +957,8 @@
       if (!rem) ensureSharedExplanationLoaded(q);
       const displayExplanation = (rem && rem.generatedByAi && rem.explanation) ? rem.explanation : (q.explanation || "");
       const summaryPrefix = rem && rem.fromCommunity
-        ? "🌐 Explicação IA (comunidade): "
-        : (rem && rem.generatedByAi ? "✨ Explicação cirúrgica (IA): " : "Resumo cirúrgico: ");
+        ? "🌐 Dica da comunidade (IA): "
+        : (rem && rem.generatedByAi ? "✨ Dica cirúrgica (IA): " : "Resumo cirúrgico: ");
       feedbackHtml = `
         <div class="feedback-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
