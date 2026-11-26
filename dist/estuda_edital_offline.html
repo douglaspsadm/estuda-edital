@@ -1410,6 +1410,9 @@ textarea.form-control {
       <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">
         + Novo Concurso (Wizard)
       </button>
+      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
+        📄 Subir Provas (PDF / JSON)
+      </button>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -13138,6 +13141,9 @@ textarea.form-control {
       <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">
         + Novo Concurso (Wizard)
       </button>
+      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
+        📄 Subir Provas (PDF / JSON)
+      </button>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -14756,6 +14762,9 @@ textarea.form-control {
       <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">
         + Novo Concurso (Wizard)
       </button>
+      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
+        📄 Subir Provas (PDF / JSON)
+      </button>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -16372,6 +16381,9 @@ textarea.form-control {
       </div>
       <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">
         + Novo Concurso (Wizard)
+      </button>
+      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
+        📄 Subir Provas (PDF / JSON)
       </button>
     </div>
 
@@ -89452,7 +89464,7 @@ window.QUESTIONS_QUADRIX = [
 // ============================================================================
 // SINCRONIZAÇÃO EM NUVEM & AUTENTICAÇÃO (SUPABASE — 100% GRATUITO)
 // ============================================================================
-// Permite login por E-mail/Senha, Magic Link ou Google OAuth para salvar e
+// Permite login por E-mail/Senha ou Magic Link para salvar e
 // mesclar o progresso automaticamente entre celular e computador.
 // Funciona em paralelo ao localStorage (fallback offline garantido).
 // ============================================================================
@@ -89927,7 +89939,6 @@ window.QUESTIONS_QUADRIX = [
             <button class="btn btn-outline" style="flex:1;" id="cm-signup">Criar conta</button>
           </div>
           <button class="btn btn-outline btn-sm" id="cm-magic">Enviar link mágico por e-mail (sem senha)</button>
-          <button class="btn btn-outline btn-sm" id="cm-google">Entrar com Google</button>
 
           <details ${isConfigured ? "" : "open"} style="margin-top:6px;border-top:1px solid var(--border-color);padding-top:10px;">
             <summary style="cursor:pointer;font-size:0.78rem;color:var(--text-muted);font-weight:600;">
@@ -90015,14 +90026,6 @@ window.QUESTIONS_QUADRIX = [
         showMsg("Enviando link...", false);
         await signInWithMagicLink(emailEl.value);
         showMsg("Link enviado! Abra seu e-mail e clique no link para entrar automaticamente.", false);
-      } catch (e) {
-        showMsg(e.message, true);
-      }
-    };
-
-    overlay.querySelector("#cm-google").onclick = async () => {
-      try {
-        await signInWithGoogle();
       } catch (e) {
         showMsg(e.message, true);
       }
@@ -91359,7 +91362,14 @@ window.QUESTIONS_QUADRIX = [
         <details class="guide-box" open>
           <summary style="color:var(--danger-text);">Reforço direto nos seus erros desta disciplina (${subjWrongQuestions.length})</summary>
           <div class="guide-body">
-            ${subjWrongQuestions.map(q => q.remediationLesson ? `
+            ${subjWrongQuestions.map(q => q.remediationLesson && /^Item oficial da banca/.test(q.remediationLesson.coreConcept || "") ? `
+              <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
+                <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.orgao || "")} ${escapeHtml(String(q.year || ""))}</h4>
+                <p style="font-size:0.88rem; margin:6px 0;">${escapeHtml((q.statement || "").slice(0, 400))}${(q.statement || "").length > 400 ? "…" : ""}</p>
+                <p style="font-size:0.84rem; color:var(--success-text);"><strong>Gabarito oficial:</strong> ${escapeHtml(String((q.options || [])[q.correctIndex] ?? ""))}</p>
+                <p style="font-size:0.8rem; color:var(--text-muted);">Resumo cirúrgico detalhado: use o gerador com IA abaixo (sua chave).</p>
+              </div>
+            ` : q.remediationLesson ? `
               <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
                 <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.remediationLesson.title)}</h4>
                 <p style="white-space:pre-line; font-size:0.88rem; margin:6px 0;">${escapeHtml(q.remediationLesson.coreConcept)}</p>

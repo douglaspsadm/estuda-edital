@@ -1308,7 +1308,14 @@
         <details class="guide-box" open>
           <summary style="color:var(--danger-text);">Reforço direto nos seus erros desta disciplina (${subjWrongQuestions.length})</summary>
           <div class="guide-body">
-            ${subjWrongQuestions.map(q => q.remediationLesson ? `
+            ${subjWrongQuestions.map(q => q.remediationLesson && /^Item oficial da banca/.test(q.remediationLesson.coreConcept || "") ? `
+              <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
+                <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.orgao || "")} ${escapeHtml(String(q.year || ""))}</h4>
+                <p style="font-size:0.88rem; margin:6px 0;">${escapeHtml((q.statement || "").slice(0, 400))}${(q.statement || "").length > 400 ? "…" : ""}</p>
+                <p style="font-size:0.84rem; color:var(--success-text);"><strong>Gabarito oficial:</strong> ${escapeHtml(String((q.options || [])[q.correctIndex] ?? ""))}</p>
+                <p style="font-size:0.8rem; color:var(--text-muted);">Resumo cirúrgico detalhado: use o gerador com IA abaixo (sua chave).</p>
+              </div>
+            ` : q.remediationLesson ? `
               <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
                 <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.remediationLesson.title)}</h4>
                 <p style="white-space:pre-line; font-size:0.88rem; margin:6px 0;">${escapeHtml(q.remediationLesson.coreConcept)}</p>

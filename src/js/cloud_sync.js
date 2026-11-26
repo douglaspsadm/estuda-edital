@@ -1,7 +1,7 @@
 // ============================================================================
 // SINCRONIZAÇÃO EM NUVEM & AUTENTICAÇÃO (SUPABASE — 100% GRATUITO)
 // ============================================================================
-// Permite login por E-mail/Senha, Magic Link ou Google OAuth para salvar e
+// Permite login por E-mail/Senha ou Magic Link para salvar e
 // mesclar o progresso automaticamente entre celular e computador.
 // Funciona em paralelo ao localStorage (fallback offline garantido).
 // ============================================================================
@@ -476,7 +476,6 @@
             <button class="btn btn-outline" style="flex:1;" id="cm-signup">Criar conta</button>
           </div>
           <button class="btn btn-outline btn-sm" id="cm-magic">Enviar link mágico por e-mail (sem senha)</button>
-          <button class="btn btn-outline btn-sm" id="cm-google">Entrar com Google</button>
 
           <details ${isConfigured ? "" : "open"} style="margin-top:6px;border-top:1px solid var(--border-color);padding-top:10px;">
             <summary style="cursor:pointer;font-size:0.78rem;color:var(--text-muted);font-weight:600;">
@@ -564,14 +563,6 @@
         showMsg("Enviando link...", false);
         await signInWithMagicLink(emailEl.value);
         showMsg("Link enviado! Abra seu e-mail e clique no link para entrar automaticamente.", false);
-      } catch (e) {
-        showMsg(e.message, true);
-      }
-    };
-
-    overlay.querySelector("#cm-google").onclick = async () => {
-      try {
-        await signInWithGoogle();
       } catch (e) {
         showMsg(e.message, true);
       }
