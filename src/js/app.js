@@ -271,7 +271,13 @@
 
       // Retroalimenta o cache comunitário para questões oficiais (sem bloquear a UI)
       if (isOfficialBankQuestion(q) && window.CloudSync && typeof window.CloudSync.publishSharedExplanation === "function") {
-        window.CloudSync.publishSharedExplanation(qid, remObj).catch(() => {});
+        window.CloudSync.publishSharedExplanation(qid, remObj).then(ok => {
+          if (ok && state.questionExplanations[qid]) {
+            state.questionExplanations[qid].sharedToCommunity = true;
+            saveState();
+            if (typeof window.refreshActiveView === "function") window.refreshActiveView();
+          }
+        }).catch(() => {});
       }
 
       if (typeof window.refreshActiveView === "function") window.refreshActiveView();
@@ -978,6 +984,7 @@
                 ${rem.accessTrap ? `<p style="color:var(--danger-text); margin-bottom:6px;"><strong>Pegadinha de prova:</strong> ${escapeHtml(rem.accessTrap)}</p>` : ""}
                 ${rem.mnemonic ? `<p style="color:var(--success-text);"><strong>Regra de bolso:</strong> ${escapeHtml(rem.mnemonic)}</p>` : ""}
                 <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  ${rem.sharedToCommunity ? `<span style="font-size:0.78rem; color:var(--success-text); font-weight:600;">✓ Compartilhada com a comunidade</span>` : ""}
                   ${rem.fromCommunity ? `
                     <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">👍 Útil (${rem.upvotes || 0})</button>
                     <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">⚠️ Reportar erro</button>
