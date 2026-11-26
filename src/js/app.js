@@ -338,9 +338,13 @@
     REVDONE.clear();
 
     window.TracksManager.setActiveTrack(trackId);
+    if (typeof window.TracksManager.markOnboardingCompleted === "function") {
+      window.TracksManager.markOnboardingCompleted();
+    }
     state = loadState();
     ensure();
     rebuildQuestionBank();
+    saveState();
     renderTrackSwitcherUI();
     renderCountdown();
     updateSidebarBadges();

@@ -87239,6 +87239,17 @@ window.QUESTIONS_QUADRIX = [
     (cur.customQuestions || []).forEach(q => q && q.id && qMap.set(q.id, q));
     merged.customQuestions = Array.from(qMap.values());
 
+    merged.questionExplanations = Object.assign({}, imp.questionExplanations || {}, cur.questionExplanations || {});
+
+    if (impNewer) {
+      if (imp.currentView) merged.currentView = imp.currentView;
+      if (imp.currentDiagSubject) merged.currentDiagSubject = imp.currentDiagSubject;
+      if (typeof imp.diagFocusIdx === "number") merged.diagFocusIdx = imp.diagFocusIdx;
+      if (typeof imp.diagShuffle === "boolean") merged.diagShuffle = imp.diagShuffle;
+      if (typeof imp.diagOrderSeed === "number") merged.diagOrderSeed = imp.diagOrderSeed;
+      if (imp.lastSaved) merged.lastSaved = imp.lastSaved;
+    }
+
     return merged;
   }
 
@@ -87271,7 +87282,39 @@ window.QUESTIONS_QUADRIX = [
       workspace.trackStates[tid] = mergeSingleTrackProgress(workspace.trackStates[tid], remoteStates[tid]);
     });
 
-    if (remote.onboardingCompleted) workspace.onboardingCompleted = true;
+    // Restaura automaticamente a última trilha/cargo usada (evita reabrir sempre na Base Comum)
+    const curState = workspace.trackStates[workspace.activeTrackId];
+    const curTs = curState && curState.lastSaved ? (Date.parse(curState.lastSaved) || 0) : 0;
+    const curAnsCount = curState && curState.answers ? Object.keys(curState.answers).length : 0;
+
+    if (remote.activeTrackId && getTrackById(remote.activeTrackId)) {
+      const remActiveState = workspace.trackStates[remote.activeTrackId];
+      const remActiveTs = remActiveState && remActiveState.lastSaved ? (Date.parse(remActiveState.lastSaved) || 0) : 0;
+      if (remActiveTs >= curTs || (workspace.activeTrackId === "base_comum_concursos" && curAnsCount === 0)) {
+        workspace.activeTrackId = remote.activeTrackId;
+      }
+    } else {
+      // Escolhe a trilha com lastSaved mais recente vinda da nuvem
+      let bestTid = null;
+      let bestTs = curTs;
+      Object.keys(remoteStates).forEach(tid => {
+        if (!getTrackById(tid)) return;
+        const st = remoteStates[tid];
+        const ts = st && st.lastSaved ? (Date.parse(st.lastSaved) || 0) : 0;
+        const hasActivity = st && ((st.answers && Object.keys(st.answers).length > 0) || ts > 0);
+        if (hasActivity && (ts > bestTs || (workspace.activeTrackId === "base_comum_concursos" && curAnsCount === 0 && tid !== "base_comum_concursos" && ts >= bestTs))) {
+          bestTs = ts;
+          bestTid = tid;
+        }
+      });
+      if (bestTid) {
+        workspace.activeTrackId = bestTid;
+      }
+    }
+
+    if (remote.onboardingCompleted || Object.keys(remoteStates).length > 0) {
+      workspace.onboardingCompleted = true;
+    }
     persistWorkspace();
     syncWindowGlobalsForTrack(getActiveTrack());
     return getWorkspaceSnapshot();
@@ -90684,9 +90727,13 @@ window.QUESTIONS_QUADRIX = [
     REVDONE.clear();
 
     window.TracksManager.setActiveTrack(trackId);
+    if (typeof window.TracksManager.markOnboardingCompleted === "function") {
+      window.TracksManager.markOnboardingCompleted();
+    }
     state = loadState();
     ensure();
     rebuildQuestionBank();
+    saveState();
     renderTrackSwitcherUI();
     renderCountdown();
     updateSidebarBadges();
