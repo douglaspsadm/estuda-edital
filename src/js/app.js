@@ -203,7 +203,7 @@
       if (statusEl) {
         statusEl.style.display = "block";
         statusEl.style.color = "var(--danger-text)";
-        statusEl.innerHTML = `Configure sua chave gratuita do Gemini ou OpenAI para gerar explicações. <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1)">Configurar chave IA</button>`;
+        statusEl.innerHTML = `Configure sua chave gratuita do Gemini ou OpenAI para gerar explicações. <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">Configurar chave IA</button>`;
       }
       return;
     }

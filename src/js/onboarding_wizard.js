@@ -7,9 +7,9 @@
 
   const WIZ = {
     open: false,
-    step: 1, // 1: IA Key | 2: Edital | 3: Questões | 4: Pronto
-    mode: "custom", // "custom" | "preset"
-    selectedPresetId: "base_comum_concursos",
+    step: 1, // 1: Concurso/Edital | 2: Chave IA (opcional) | 3: Questões | 4: Pronto
+    mode: "preset", // "preset" | "custom"
+    selectedPresetId: "cofen_2026_406",
     pdfPages: null,
     pdfFileName: "",
     pageRange: "",
@@ -67,9 +67,14 @@
     if (window.TracksManager) window.TracksManager.markOnboardingCompleted();
   }
 
-  function openWizard(startStep) {
+  function openWizard(startStep, mode) {
     WIZ.open = true;
-    WIZ.step = startStep || (window.AI_TUTOR && window.AI_TUTOR.isConfigured() ? 2 : 1);
+    WIZ.step = startStep || 1;
+    if (mode === "custom" || mode === "preset") {
+      WIZ.mode = mode;
+    } else if (WIZ.step === 1) {
+      WIZ.mode = "preset";
+    }
     WIZ.statusMsg = "";
     WIZ.busy = false;
     renderWizard();
@@ -97,12 +102,17 @@
   }
 
   function renderStepIndicator() {
-    const steps = [
-      { n: 1, label: "1. Chave IA" },
-      { n: 2, label: "2. Seu Edital" },
-      { n: 3, label: "3. Questões" },
-      { n: 4, label: "4. Estudar" }
-    ];
+    const steps = WIZ.mode === "preset"
+      ? [
+          { n: 1, label: "1. Concurso" },
+          { n: 2, label: "2. Chave IA (opcional)" }
+        ]
+      : [
+          { n: 1, label: "1. Seu Edital" },
+          { n: 2, label: "2. Chave IA" },
+          { n: 3, label: "3. Questões" },
+          { n: 4, label: "4. Estudar" }
+        ];
     return `
       <div class="wiz-steps">
         ${steps.map(s => `
@@ -115,15 +125,17 @@
     `;
   }
 
-  function renderStep1Html() {
+  function renderStep2AiHtml() {
     const cfg = window.AI_TUTOR ? window.AI_TUTOR.loadConfig() : { provider: "gemini", apiKey: "", model: "" };
     const isReady = !!(cfg.apiKey && cfg.model);
+    const activeTrack = window.TracksManager ? window.TracksManager.getActiveTrack() : null;
 
     return `
       <div class="wiz-body">
-        <h3 class="wiz-title">Passo 1: Conecte sua chave gratuita de IA (opcional)</h3>
+        <h3 class="wiz-title">Passo 2: Conecte sua chave gratuita de IA (opcional)</h3>
         <p class="wiz-desc">
-          A plataforma tem <strong>custo zero de servidor</strong>: a IA roda direto do seu navegador usando sua própria chave (BYOK) para ler editais, extrair provas e gerar aulas cirúrgicas em cima dos seus erros.
+          ${activeTrack && WIZ.mode === "preset" ? `<strong>${esc(activeTrack.shortName)}</strong> já está selecionado! ` : ""}
+          A plataforma tem <strong>custo zero de servidor</strong>: se você quiser gerar <strong>dicas cirúrgicas e aulas personalizadas</strong> nos seus erros, conecte sua própria chave gratuita do Google Gemini abaixo. Você também pode pular e configurar depois.
         </p>
 
         <div class="wiz-guide-box">
@@ -162,15 +174,16 @@
       </div>
 
       <div class="wiz-footer">
-        <button class="btn btn-outline" onclick="window.OnboardingWizard.goToStep(2)">
-          ${isReady ? "Avançar →" : "Pular por agora (usar sem IA) →"}
-        </button>
-        ${isReady ? `<button class="btn btn-primary" onclick="window.OnboardingWizard.goToStep(2)">Continuar para o Edital →</button>` : ""}
+        <button class="btn btn-outline" onclick="window.OnboardingWizard.goToStep(1)">← Voltar</button>
+        ${WIZ.mode === "preset"
+          ? `<button class="btn btn-primary" onclick="window.OnboardingWizard.closeAndGo('dashboard')">${isReady ? "Começar a estudar →" : "Pular por agora e começar a estudar →"}</button>`
+          : `<button class="btn btn-primary" onclick="window.OnboardingWizard.goToStep(${WIZ.draftEdital ? 3 : 1})">${WIZ.draftEdital ? "Avançar para Questões →" : "Voltar para o Edital →"}</button>`
+        }
       </div>
     `;
   }
 
-  function renderStep2Html() {
+  function renderStep1ConcursoHtml() {
     const builtins = window.TracksManager ? window.TracksManager.listTracks().filter(t => t.builtin) : [];
     const hasAi = window.AI_TUTOR && window.AI_TUTOR.isConfigured();
 
@@ -219,13 +232,13 @@
 
     return `
       <div class="wiz-body">
-        <h3 class="wiz-title">Passo 2: Escolha uma Trilha Pronta ou crie a partir do seu Edital</h3>
+        <h3 class="wiz-title">Passo 1: Escolha seu Concurso (ou crie a partir do seu Edital)</h3>
         <div class="wiz-mode-tabs">
+          <button class="btn ${WIZ.mode === "preset" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('preset')">
+            Concursos Disponíveis
+          </button>
           <button class="btn ${WIZ.mode === "custom" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('custom')">
             Subir / Colar Meu Edital
-          </button>
-          <button class="btn ${WIZ.mode === "preset" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('preset')">
-            Escolher Trilha Pronta
           </button>
         </div>
 
@@ -332,9 +345,9 @@
       </div>
 
       <div class="wiz-footer">
-        <button class="btn btn-outline" onclick="window.OnboardingWizard.goToStep(1)">← Voltar</button>
+        <button class="btn btn-outline" onclick="window.OnboardingWizard.close()">Fechar</button>
         ${WIZ.mode === "preset"
-          ? `<button class="btn btn-primary" onclick="window.OnboardingWizard.activateSelectedPreset()">Usar Trilha Pronta →</button>`
+          ? `<button class="btn btn-primary" onclick="window.OnboardingWizard.activateSelectedPreset()">Continuar com este concurso →</button>`
           : `<button class="btn btn-primary" onclick="window.OnboardingWizard.goToStep(3)" ${WIZ.draftEdital ? "" : "disabled"}>Avançar para Questões →</button>`
         }
       </div>
@@ -437,8 +450,8 @@
     if (!WIZ.open) return;
     const root = ensureModalRoot();
     let stepHtml = "";
-    if (WIZ.step === 1) stepHtml = renderStep1Html();
-    else if (WIZ.step === 2) stepHtml = renderStep2Html();
+    if (WIZ.step === 1) stepHtml = renderStep1ConcursoHtml();
+    else if (WIZ.step === 2) stepHtml = renderStep2AiHtml();
     else if (WIZ.step === 3) stepHtml = renderStep3Html();
     else stepHtml = renderStep4Html();
 
@@ -477,7 +490,7 @@
           <p>Trilha ativa: <strong>${esc(track.shortName)}</strong> • Adicione questões reais da sua banca por PDF, texto ou JSON.</p>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn btn-primary btn-sm" onclick="window.OnboardingWizard.open(2)">+ Novo Concurso (Wizard)</button>
+          <button class="btn btn-primary btn-sm" onclick="window.OnboardingWizard.open(1, 'custom')">+ Novo Concurso (Wizard)</button>
           <button class="btn btn-outline btn-sm" onclick="triggerImportQuestionsJson()">Importar Questões (.json)</button>
         </div>
       </div>
@@ -491,7 +504,7 @@
                 Para extrair e comentar questões automaticamente de PDFs de provas, conecte sua chave gratuita do Google Gemini.
               </div>
             </div>
-            <button class="btn btn-primary btn-sm" onclick="window.OnboardingWizard.open(1)">Configurar Chave IA Grátis</button>
+            <button class="btn btn-primary btn-sm" onclick="window.OnboardingWizard.open(2)">Configurar Chave IA Grátis</button>
           </div>
         </div>
       ` : ""}
@@ -773,7 +786,11 @@
         window.TracksManager.setActiveTrack(WIZ.selectedPresetId);
       }
       window.TracksManager.markOnboardingCompleted();
-      WIZ.step = 4;
+      if (window.AI_TUTOR && window.AI_TUTOR.isConfigured()) {
+        closeWizard();
+        return;
+      }
+      WIZ.step = 2;
       renderWizard();
     },
 
