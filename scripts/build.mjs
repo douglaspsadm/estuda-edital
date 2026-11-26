@@ -17,13 +17,13 @@ const DIST = path.join(ROOT, "dist");
 fs.rmSync(PUBLIC_DIR, { recursive: true, force: true });
 fs.cpSync(SRC, PUBLIC_DIR, { recursive: true });
 
-// 1b. Injeta variáveis de ambiente do Supabase da Vercel (se configuradas)
+// 1b. Injeta variáveis de ambiente do Supabase da Vercel (com fallback padrão do Estuda Edital)
 const sbUrl = (
   process.env.SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.VITE_SUPABASE_URL ||
   process.env.PUBLIC_SUPABASE_URL ||
-  ""
+  "https://gkvlsnymunwzwturubdl.supabase.co"
 ).trim();
 const sbKey = (
   process.env.SUPABASE_PUBLISHABLE_KEY ||
@@ -33,7 +33,7 @@ const sbKey = (
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   process.env.VITE_SUPABASE_ANON_KEY ||
   process.env.PUBLIC_SUPABASE_ANON_KEY ||
-  ""
+  "sb_publishable_OFZCqh14HWgM6A20QiulEA_SetgxzlL"
 ).trim();
 
 const envJsContent = `// Gerado automaticamente pelo scripts/build.mjs a partir das env vars da Vercel\nwindow.ESTUDA_SUPABASE_CONFIG = ${JSON.stringify({ url: sbUrl, key: sbKey })};\n`;
