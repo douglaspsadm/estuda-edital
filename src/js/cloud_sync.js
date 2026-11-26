@@ -663,6 +663,128 @@
     setTimeout(() => emailEl.focus(), 50);
   }
 
+  // ==========================================================================
+  // CACHE COMUNITÁRIO DE EXPLICAÇÕES IA (shared_question_explanations)
+  // ==========================================================================
+  const SHARED_EXPL_TABLE = "shared_question_explanations";
+  const sharedExplCache = {};
+  const sharedExplFetched = new Set();
+  const sharedExplInFlight = {};
+  const sharedExplVoted = new Set();
+  let sharedExplDisabled = false;
+
+  function getCachedSharedExplanation(questionId) {
+    if (!questionId) return null;
+    return sharedExplCache[questionId] || null;
+  }
+
+  async function fetchSharedExplanation(questionId) {
+    if (!questionId || sharedExplDisabled) return null;
+    if (sharedExplCache[questionId]) return sharedExplCache[questionId];
+    if (sharedExplFetched.has(questionId)) return null;
+    if (sharedExplInFlight[questionId]) return sharedExplInFlight[questionId];
+
+    sharedExplInFlight[questionId] = (async () => {
+      try {
+        const sb = await ensureClient();
+        const { data, error } = await sb
+          .from(SHARED_EXPL_TABLE)
+          .select("question_id, title, explanation, core_concept, access_trap, mnemonic, model_name, upvotes, reports, created_at")
+          .eq("question_id", questionId)
+          .lt("reports", 3)
+          .maybeSingle();
+
+        if (error) {
+          if (isMissingTableError(error)) sharedExplDisabled = true;
+          return null;
+        }
+        sharedExplFetched.add(questionId);
+        if (!data) return null;
+        const normalized = {
+          title: data.title,
+          explanation: data.explanation,
+          coreConcept: data.core_concept,
+          accessTrap: data.access_trap || "",
+          mnemonic: data.mnemonic || "",
+          modelName: data.model_name || "",
+          upvotes: data.upvotes || 0,
+          reports: data.reports || 0,
+          generatedByAi: true,
+          fromCommunity: true,
+          generatedAt: data.created_at || ""
+        };
+        sharedExplCache[questionId] = normalized;
+        return normalized;
+      } catch (_) {
+        return null;
+      } finally {
+        delete sharedExplInFlight[questionId];
+      }
+    })();
+
+    return sharedExplInFlight[questionId];
+  }
+
+  async function publishSharedExplanation(questionId, remObj) {
+    if (!questionId || !remObj || sharedExplDisabled) return false;
+    try {
+      const sb = await ensureClient();
+      if (!currentUser) return false;
+      const payload = {
+        question_id: String(questionId).slice(0, 140),
+        title: String(remObj.title || "").trim().slice(0, 160),
+        explanation: String(remObj.explanation || remObj.coreConcept || "").trim().slice(0, 4000),
+        core_concept: String(remObj.coreConcept || remObj.explanation || "").trim().slice(0, 2500),
+        access_trap: String(remObj.accessTrap || "").trim().slice(0, 1000),
+        mnemonic: String(remObj.mnemonic || "").trim().slice(0, 1000),
+        model_name: String(remObj.modelName || "").trim().slice(0, 120),
+        created_by: currentUser.id
+      };
+      if (payload.title.length < 2 || payload.explanation.length < 10 || payload.core_concept.length < 5) {
+        return false;
+      }
+      const { error } = await sb.from(SHARED_EXPL_TABLE).insert(payload);
+      if (error) {
+        if (isMissingTableError(error)) sharedExplDisabled = true;
+        // 23505 = já existe explicação para esta questão (ignora silenciosamente)
+        return false;
+      }
+      sharedExplCache[questionId] = Object.assign({}, remObj, { fromCommunity: true, upvotes: 0, reports: 0 });
+      sharedExplFetched.add(questionId);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  async function voteSharedExplanation(questionId, isReport) {
+    if (!questionId || sharedExplDisabled) return { ok: false, reason: "indisponivel" };
+    const voteKey = `${questionId}:${isReport ? "r" : "u"}`;
+    if (sharedExplVoted.has(voteKey)) return { ok: true, already: true };
+    try {
+      const sb = await ensureClient();
+      if (!currentUser) {
+        return { ok: false, reason: "login_required" };
+      }
+      const { error } = await sb.rpc("vote_shared_explanation", {
+        p_question_id: questionId,
+        p_is_report: !!isReport
+      });
+      if (error) throw new Error(formatSupabaseError(error));
+      sharedExplVoted.add(voteKey);
+      if (sharedExplCache[questionId]) {
+        if (isReport) {
+          delete sharedExplCache[questionId];
+        } else {
+          sharedExplCache[questionId].upvotes = (sharedExplCache[questionId].upvotes || 0) + 1;
+        }
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, reason: e && e.message ? e.message : "erro" };
+    }
+  }
+
   window.CloudSync = {
     init,
     schedulePush,
@@ -674,6 +796,10 @@
     signOut,
     getStatus,
     saveLocalConfig,
-    openAuthModal
+    openAuthModal,
+    getCachedSharedExplanation,
+    fetchSharedExplanation,
+    publishSharedExplanation,
+    voteSharedExplanation
   };
 })();

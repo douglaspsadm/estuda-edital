@@ -133,6 +133,13 @@
     return /^Item oficial da banca/i.test(String(rl.coreConcept).trim());
   }
 
+  function isOfficialBankQuestion(q) {
+    if (!q || !q.id) return false;
+    const isCustom = Array.isArray(state && state.customQuestions) && state.customQuestions.some(c => c && c.id === q.id);
+    if (isCustom) return false;
+    return q.sourceType === "real";
+  }
+
   function getEffectiveRemediation(q) {
     if (!q) return null;
     if (state && state.questionExplanations && state.questionExplanations[q.id]) {
@@ -141,8 +148,40 @@
     if (q.remediationLesson && !isGenericRemediation(q.remediationLesson)) {
       return q.remediationLesson;
     }
+    if (window.CloudSync && typeof window.CloudSync.getCachedSharedExplanation === "function") {
+      const shared = window.CloudSync.getCachedSharedExplanation(q.id);
+      if (shared) return shared;
+    }
     return null;
   }
+
+  function ensureSharedExplanationLoaded(q) {
+    if (!q || !isOfficialBankQuestion(q)) return;
+    if (getEffectiveRemediation(q)) return;
+    if (!window.CloudSync || typeof window.CloudSync.fetchSharedExplanation !== "function") return;
+    window.CloudSync.fetchSharedExplanation(q.id).then(found => {
+      if (found && typeof window.refreshActiveView === "function") {
+        window.refreshActiveView();
+      }
+    });
+  }
+
+  window.voteCommunityExplanation = async function (qid, isReport) {
+    const statusEl = document.getElementById("ai-q-status-" + qid);
+    if (!window.CloudSync || typeof window.CloudSync.voteSharedExplanation !== "function") return;
+    const res = await window.CloudSync.voteSharedExplanation(qid, isReport);
+    if (!res.ok) {
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "var(--danger-text)";
+        statusEl.textContent = res.reason === "login_required"
+          ? "Faça login na nuvem (botão Nuvem / Entrar) para avaliar ou reportar uma explicação."
+          : ("Não foi possível registrar: " + (res.reason || "erro"));
+      }
+      return;
+    }
+    if (typeof window.refreshActiveView === "function") window.refreshActiveView();
+  };
 
   window.generateQuestionExplanation = async function (qid) {
     const q = QUESTION_MAP.get(qid);
@@ -200,17 +239,27 @@
         throw new Error("A IA retornou uma resposta incompleta. Tente novamente.");
       }
 
-      ensure();
-      state.questionExplanations[qid] = {
+      const aiCfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
+      const remObj = {
         title: String(parsed.title || `${subjName(q.subjectId)} — Explicação IA`).trim(),
         explanation: String(parsed.explanation || "").trim(),
         coreConcept: String(parsed.coreConcept || parsed.explanation || "").trim(),
         accessTrap: String(parsed.accessTrap || "").trim(),
         mnemonic: String(parsed.mnemonic || "").trim(),
+        modelName: String(aiCfg.model || aiCfg.provider || "").trim(),
         generatedByAi: true,
         generatedAt: new Date().toISOString()
       };
+
+      ensure();
+      state.questionExplanations[qid] = remObj;
       saveState();
+
+      // Retroalimenta o cache comunitário para questões oficiais (sem bloquear a UI)
+      if (isOfficialBankQuestion(q) && window.CloudSync && typeof window.CloudSync.publishSharedExplanation === "function") {
+        window.CloudSync.publishSharedExplanation(qid, remObj).catch(() => {});
+      }
+
       if (typeof window.refreshActiveView === "function") window.refreshActiveView();
     } catch (err) {
       if (btnEl) {
@@ -891,7 +940,11 @@
     let feedbackHtml = "";
     if (ans) {
       const rem = getEffectiveRemediation(q);
+      if (!rem) ensureSharedExplanationLoaded(q);
       const displayExplanation = (rem && rem.generatedByAi && rem.explanation) ? rem.explanation : (q.explanation || "");
+      const summaryPrefix = rem && rem.fromCommunity
+        ? "🌐 Explicação IA (comunidade): "
+        : (rem && rem.generatedByAi ? "✨ Explicação cirúrgica (IA): " : "Resumo cirúrgico: ");
       feedbackHtml = `
         <div class="feedback-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
@@ -905,13 +958,17 @@
 
           ${rem ? `
             <details class="guide-box" ${!ans.correct || rem.generatedByAi ? "open" : ""} style="margin-top:14px;">
-              <summary>${rem.generatedByAi ? "✨ Explicação cirúrgica (IA): " : "Resumo cirúrgico: "}${escapeHtml(rem.title)}</summary>
+              <summary>${summaryPrefix}${escapeHtml(rem.title)}</summary>
               <div class="guide-body" style="font-size:0.89rem;">
                 <p style="white-space:pre-line; margin-bottom:10px;">${escapeHtml(rem.coreConcept)}</p>
                 ${rem.accessTrap ? `<p style="color:var(--danger-text); margin-bottom:6px;"><strong>Pegadinha de prova:</strong> ${escapeHtml(rem.accessTrap)}</p>` : ""}
                 ${rem.mnemonic ? `<p style="color:var(--success-text);"><strong>Regra de bolso:</strong> ${escapeHtml(rem.mnemonic)}</p>` : ""}
-                <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
-                  ${rem.generatedByAi ? `<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ Gerar novamente com IA</button>` : ""}
+                <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                  ${rem.fromCommunity ? `
+                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">👍 Útil (${rem.upvotes || 0})</button>
+                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">⚠️ Reportar erro</button>
+                  ` : ""}
+                  ${rem.generatedByAi ? `<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ ${rem.fromCommunity ? "Gerar outra com minha IA" : "Gerar novamente com IA"}</button>` : ""}
                   <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
                   ${!ans.correct ? `<button class="btn btn-primary btn-sm" onclick="switchView('errors')">Ir para Caderno de Erros / IA</button>` : ""}
                 </div>
