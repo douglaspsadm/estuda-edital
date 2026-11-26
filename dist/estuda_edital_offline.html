@@ -90466,10 +90466,108 @@ window.QUESTIONS_QUADRIX = [
     state.checkedTopics = state.checkedTopics || {};
     state.discursiveDrafts = state.discursiveDrafts || {};
     state.simulados = Array.isArray(state.simulados) ? state.simulados : [];
+    state.questionExplanations = state.questionExplanations || {};
     state.fc = state.fc || {};
     if (!state.diagMode) state.diagMode = "focus";
     if (typeof state.diagFocusIdx !== "number") state.diagFocusIdx = 0;
   }
+
+  function isGenericRemediation(rl) {
+    if (!rl || !rl.coreConcept) return true;
+    return /^Item oficial da banca/i.test(String(rl.coreConcept).trim());
+  }
+
+  function getEffectiveRemediation(q) {
+    if (!q) return null;
+    if (state && state.questionExplanations && state.questionExplanations[q.id]) {
+      return state.questionExplanations[q.id];
+    }
+    if (q.remediationLesson && !isGenericRemediation(q.remediationLesson)) {
+      return q.remediationLesson;
+    }
+    return null;
+  }
+
+  window.generateQuestionExplanation = async function (qid) {
+    const q = QUESTION_MAP.get(qid);
+    if (!q) return;
+    const statusEl = document.getElementById("ai-q-status-" + qid);
+    const btnEl = document.getElementById("ai-q-btn-" + qid);
+
+    if (!window.AI_TUTOR || !window.AI_TUTOR.isConfigured()) {
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "var(--danger-text)";
+        statusEl.innerHTML = `Configure sua chave gratuita do Gemini ou OpenAI para gerar explicações. <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1)">Configurar chave IA</button>`;
+      }
+      return;
+    }
+
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.textContent = "⏳ Gerando explicação com IA...";
+    }
+    if (statusEl) {
+      statusEl.style.display = "block";
+      statusEl.style.color = "var(--text-muted)";
+      statusEl.textContent = "Consultando sua IA para analisar a questão e o gabarito oficial...";
+    }
+
+    try {
+      const ans = state.answers[qid];
+      const opts = Array.isArray(q.options) ? q.options : [];
+      const correctOpt = opts[q.correctIndex] != null ? String(opts[q.correctIndex]) : "";
+      const chosenOpt = ans && opts[ans.selectedIndex] != null ? String(opts[ans.selectedIndex]) : "";
+      const prompt = [
+        "Você é um professor especialista em concursos públicos brasileiros.",
+        "Explique de forma objetiva, didática e cirúrgica a questão oficial abaixo.",
+        "",
+        `Banca: ${q.banca || "Oficial"} | Órgão/Ano: ${q.orgao || ""} ${q.year || ""}`,
+        `Disciplina: ${subjName(q.subjectId)}`,
+        `Enunciado: ${q.statement || ""}`,
+        `Alternativas: ${opts.map((o, i) => `${i + 1}) ${o}`).join(" | ")}`,
+        `Gabarito oficial: ${correctOpt}`,
+        chosenOpt && chosenOpt !== correctOpt ? `Resposta marcada pelo aluno (errou): ${chosenOpt}` : "",
+        "",
+        "Retorne APENAS um JSON válido com as chaves exatamente assim:",
+        '{',
+        '  "title": "Título curto do assunto cobrado (máx 70 caracteres)",',
+        '  "explanation": "Explicação clara de por que o gabarito oficial está correto e (se houver) por que o erro comum falha.",',
+        '  "coreConcept": "Regra principal ou fundamento legal/gramatical/técnico que resolve a questão.",',
+        '  "accessTrap": "Principal pegadinha da banca nesta questão.",',
+        '  "mnemonic": "Regra de bolso ou macete curto para não errar mais."',
+        '}'
+      ].filter(Boolean).join("\n");
+
+      const parsed = await window.AI_TUTOR.askJson(prompt, { temperature: 0.25 });
+      if (!parsed || (!parsed.coreConcept && !parsed.explanation)) {
+        throw new Error("A IA retornou uma resposta incompleta. Tente novamente.");
+      }
+
+      ensure();
+      state.questionExplanations[qid] = {
+        title: String(parsed.title || `${subjName(q.subjectId)} — Explicação IA`).trim(),
+        explanation: String(parsed.explanation || "").trim(),
+        coreConcept: String(parsed.coreConcept || parsed.explanation || "").trim(),
+        accessTrap: String(parsed.accessTrap || "").trim(),
+        mnemonic: String(parsed.mnemonic || "").trim(),
+        generatedByAi: true,
+        generatedAt: new Date().toISOString()
+      };
+      saveState();
+      if (typeof window.refreshActiveView === "function") window.refreshActiveView();
+    } catch (err) {
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.textContent = "✨ Gerar explicação com IA";
+      }
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "var(--danger-text)";
+        statusEl.textContent = "Erro ao gerar explicação: " + (err && err.message ? err.message : String(err));
+      }
+    }
+  };
 
   function rebuildQuestionBank() {
     const map = new Map();
@@ -91113,6 +91211,8 @@ window.QUESTIONS_QUADRIX = [
 
     let feedbackHtml = "";
     if (ans) {
+      const rem = getEffectiveRemediation(q);
+      const displayExplanation = (rem && rem.generatedByAi && rem.explanation) ? rem.explanation : (q.explanation || "");
       feedbackHtml = `
         <div class="feedback-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
@@ -91122,22 +91222,31 @@ window.QUESTIONS_QUADRIX = [
             </strong>
             <button class="btn btn-outline btn-sm" onclick="window.resetQuestion('${qidEsc}')">Refazer</button>
           </div>
-          <p style="white-space:pre-line; font-size:0.9rem; color:var(--text-secondary); line-height:1.65;">${escapeHtml(q.explanation || "")}</p>
+          <p style="white-space:pre-line; font-size:0.9rem; color:var(--text-secondary); line-height:1.65;">${escapeHtml(displayExplanation)}</p>
 
-          ${q.remediationLesson ? `
-            <details class="guide-box" ${!ans.correct ? "open" : ""} style="margin-top:14px;">
-              <summary>Resumo cirúrgico: ${escapeHtml(q.remediationLesson.title)}</summary>
+          ${rem ? `
+            <details class="guide-box" ${!ans.correct || rem.generatedByAi ? "open" : ""} style="margin-top:14px;">
+              <summary>${rem.generatedByAi ? "✨ Explicação cirúrgica (IA): " : "Resumo cirúrgico: "}${escapeHtml(rem.title)}</summary>
               <div class="guide-body" style="font-size:0.89rem;">
-                <p style="white-space:pre-line; margin-bottom:10px;">${escapeHtml(q.remediationLesson.coreConcept)}</p>
-                <p style="color:var(--danger-text); margin-bottom:6px;"><strong>Pegadinha de prova:</strong> ${escapeHtml(q.remediationLesson.accessTrap)}</p>
-                <p style="color:var(--success-text);"><strong>Regra de bolso:</strong> ${escapeHtml(q.remediationLesson.mnemonic)}</p>
+                <p style="white-space:pre-line; margin-bottom:10px;">${escapeHtml(rem.coreConcept)}</p>
+                ${rem.accessTrap ? `<p style="color:var(--danger-text); margin-bottom:6px;"><strong>Pegadinha de prova:</strong> ${escapeHtml(rem.accessTrap)}</p>` : ""}
+                ${rem.mnemonic ? `<p style="color:var(--success-text);"><strong>Regra de bolso:</strong> ${escapeHtml(rem.mnemonic)}</p>` : ""}
                 <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                  ${rem.generatedByAi ? `<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ Gerar novamente com IA</button>` : ""}
                   <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
                   ${!ans.correct ? `<button class="btn btn-primary btn-sm" onclick="switchView('errors')">Ir para Caderno de Erros / IA</button>` : ""}
                 </div>
+                <div id="ai-q-status-${escapeHtml(q.id)}" style="display:none; font-size:0.82rem; margin-top:8px;"></div>
               </div>
             </details>
-          ` : ""}
+          ` : `
+            <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">✨ Gerar explicação com IA</button>
+              <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
+              ${!ans.correct ? `<button class="btn btn-outline btn-sm" onclick="switchView('errors')">Caderno de Erros</button>` : ""}
+            </div>
+            <div id="ai-q-status-${escapeHtml(q.id)}" style="display:none; font-size:0.82rem; margin-top:8px;"></div>
+          `}
         </div>
       `;
     }
@@ -91657,21 +91766,26 @@ window.QUESTIONS_QUADRIX = [
         <details class="guide-box" open>
           <summary style="color:var(--danger-text);">Reforço direto nos seus erros desta disciplina (${subjWrongQuestions.length})</summary>
           <div class="guide-body">
-            ${subjWrongQuestions.map(q => q.remediationLesson && /^Item oficial da banca/.test(q.remediationLesson.coreConcept || "") ? `
-              <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
-                <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.orgao || "")} ${escapeHtml(String(q.year || ""))}</h4>
-                <p style="font-size:0.88rem; margin:6px 0;">${escapeHtml((q.statement || "").slice(0, 400))}${(q.statement || "").length > 400 ? "…" : ""}</p>
-                <p style="font-size:0.84rem; color:var(--success-text);"><strong>Gabarito oficial:</strong> ${escapeHtml(String((q.options || [])[q.correctIndex] ?? ""))}</p>
-                <p style="font-size:0.8rem; color:var(--text-muted);">Resumo cirúrgico detalhado: use o gerador com IA abaixo (sua chave).</p>
-              </div>
-            ` : q.remediationLesson ? `
-              <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
-                <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.remediationLesson.title)}</h4>
-                <p style="white-space:pre-line; font-size:0.88rem; margin:6px 0;">${escapeHtml(q.remediationLesson.coreConcept)}</p>
-                <p style="font-size:0.84rem; color:var(--danger-text);"><strong>Pegadinha:</strong> ${escapeHtml(q.remediationLesson.accessTrap)}</p>
-                <p style="font-size:0.84rem; color:var(--success-text); margin-top:4px;"><strong>Regra:</strong> ${escapeHtml(q.remediationLesson.mnemonic)}</p>
-              </div>
-            ` : "").join("")}
+            ${subjWrongQuestions.map(q => {
+              const rem = getEffectiveRemediation(q);
+              const qidEsc = escapeJsStr(q.id);
+              return rem ? `
+                <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
+                  <h4>[${escapeHtml(q.id)}] ${rem.generatedByAi ? "✨ " : ""}${escapeHtml(rem.title)}</h4>
+                  <p style="white-space:pre-line; font-size:0.88rem; margin:6px 0;">${escapeHtml(rem.coreConcept)}</p>
+                  ${rem.accessTrap ? `<p style="font-size:0.84rem; color:var(--danger-text);"><strong>Pegadinha:</strong> ${escapeHtml(rem.accessTrap)}</p>` : ""}
+                  ${rem.mnemonic ? `<p style="font-size:0.84rem; color:var(--success-text); margin-top:4px;"><strong>Regra:</strong> ${escapeHtml(rem.mnemonic)}</p>` : ""}
+                </div>
+              ` : `
+                <div class="remediation-box" style="margin-top:0; margin-bottom:10px;">
+                  <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.orgao || "")} ${escapeHtml(String(q.year || ""))}</h4>
+                  <p style="font-size:0.88rem; margin:6px 0;">${escapeHtml((q.statement || "").slice(0, 400))}${(q.statement || "").length > 400 ? "…" : ""}</p>
+                  <p style="font-size:0.84rem; color:var(--success-text); margin-bottom:8px;"><strong>Gabarito oficial:</strong> ${escapeHtml(String((q.options || [])[q.correctIndex] ?? ""))}</p>
+                  <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">✨ Gerar explicação com IA</button>
+                  <div id="ai-q-status-${escapeHtml(q.id)}" style="display:none; font-size:0.82rem; margin-top:6px;"></div>
+                </div>
+              `;
+            }).join("")}
           </div>
         </details>
       `
@@ -92221,14 +92335,15 @@ window.QUESTIONS_QUADRIX = [
     const generated = [];
     const seen = new Set();
     ALL_QUESTIONS.forEach(q => {
-      if (q && q.remediationLesson && q.remediationLesson.title && q.remediationLesson.coreConcept) {
-        const key = q.remediationLesson.title.toLowerCase();
+      const rem = getEffectiveRemediation(q);
+      if (rem && rem.title && rem.coreConcept) {
+        const key = rem.title.toLowerCase();
         if (seen.has(key)) return;
         seen.add(key);
         generated.push({
           disciplina: subjName(q.subjectId),
-          frente: `${q.remediationLesson.title}\n\nQual é a regra-chave cobrada em prova?`,
-          verso: `${q.remediationLesson.coreConcept}${q.remediationLesson.accessTrap ? "\n\nPegadinha: " + q.remediationLesson.accessTrap : ""}${q.remediationLesson.mnemonic ? "\n\nMacete: " + q.remediationLesson.mnemonic : ""}`
+          frente: `${rem.title}\n\nQual é a regra-chave cobrada em prova?`,
+          verso: `${rem.coreConcept}${rem.accessTrap ? "\n\nPegadinha: " + rem.accessTrap : ""}${rem.mnemonic ? "\n\nMacete: " + rem.mnemonic : ""}`
         });
       }
     });
