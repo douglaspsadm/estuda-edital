@@ -1,9 +1,9 @@
 // ============================================================================
 // BANCO COMPARTILHADO DE QUESTÕES REAIS (REAPROVEITÁVEL EM QUALQUER CONCURSO)
 // ============================================================================
-// Organiza as 805+ questões reais validadas (originárias de provas oficiais
-// CEBRASPE, FGV, FCC, IADES, ACCESS, IBEST e Quadrix) em pacotes temáticos
-// universais que podem ser ligados opcionalmente em qualquer trilha/edital.
+// Unifica as 805 questões reais originais (CEBRASPE, FGV, FCC, IADES, ACCESS,
+// IBEST, Quadrix) + 1.919 questões reais Quadrix (COREN, CRF, CRM, CORE, CRP)
+// em pacotes temáticos universais ligáveis em qualquer trilha/edital.
 // ============================================================================
 
 (function () {
@@ -24,16 +24,65 @@
       ]
     },
     {
+      id: "pack_rlm",
+      nome: "Raciocínio Lógico e Matemática",
+      categoria: "basicos",
+      universal: true,
+      cor: "#f59e0b",
+      descricao: "Lógica proposicional, porcentagem, razão/proporção, combinatória, probabilidade, estatística básica e matemática financeira.",
+      sourceSubjectIds: ["bas_rlm"],
+      keywords: [
+        "raciocinio logico", "matematica", "logica", "probabilidade", "porcentagem",
+        "estatistica", "matematica financeira", "combinatoria"
+      ]
+    },
+    {
       id: "pack_informatica",
       nome: "Noções de Informática",
       categoria: "basicos",
       universal: true,
       cor: "#06b6d4",
-      descricao: "Sistemas operacionais, suítes de escritório, redes, internet, navegadores, nuvem e segurança básica.",
+      descricao: "Sistemas operacionais, suítes de escritório, redes, internet, navegadores, nuvem, IA e segurança básica.",
       sourceSubjectIds: ["bas_info"],
       keywords: [
         "informatica", "nocoes de informatica", "computacao", "windows", "linux",
-        "excel", "word", "libreoffice", "redes de computadores", "internet"
+        "excel", "word", "libreoffice", "redes de computadores", "internet", "microsoft 365"
+      ]
+    },
+    {
+      id: "pack_ingles",
+      nome: "Língua Inglesa (Geral e Técnica TI)",
+      categoria: "basicos",
+      universal: true,
+      cor: "#0ea5e9",
+      descricao: "Compreensão de textos em língua inglesa, vocabulário profissional/técnico e gramática aplicada.",
+      sourceSubjectIds: ["bas_ingles"],
+      keywords: ["lingua inglesa", "ingles", "english", "textos em lingua inglesa"]
+    },
+    {
+      id: "pack_constitucional",
+      nome: "Direito Constitucional",
+      categoria: "basicos",
+      universal: true,
+      cor: "#10b981",
+      descricao: "Princípios fundamentais, direitos e garantias, organização do Estado e Poderes, controle e Ordem Social.",
+      sourceSubjectIds: ["comp_const"],
+      keywords: [
+        "direito constitucional", "constituicao federal", "direitos fundamentais",
+        "organizacao do estado", "poderes", "ordem social"
+      ]
+    },
+    {
+      id: "pack_administrativo",
+      nome: "Direito Administrativo & Conselhos Profissionais",
+      categoria: "basicos",
+      universal: true,
+      cor: "#ec4899",
+      descricao: "Princípios, atos e poderes administrativos, Conselhos de Fiscalização Profissional, empregado público, Lei 9.784/99 e LIA.",
+      sourceSubjectIds: ["comp_adm"],
+      keywords: [
+        "direito administrativo", "conselhos de fiscalizacao", "atos administrativos",
+        "poderes administrativos", "empregado publico", "improbidade", "9.784", "5.905"
       ]
     },
     {
@@ -54,12 +103,12 @@
       nome: "Licitações e Contratos (Lei 14.133/2021)",
       categoria: "basicos",
       universal: true,
-      cor: "#f59e0b",
+      cor: "#d97706",
       descricao: "Nova Lei de Licitações e Contratos Administrativos (Lei 14.133/2021), fiscalização de contratos e contratações públicas.",
       sourceSubjectIds: ["esp_10"],
       keywords: [
         "14.133", "14133", "licitacao", "licitacoes", "contratos administrativos",
-        "fiscalizacao de contratos", "direito administrativo", "in 94", "contratacoes"
+        "fiscalizacao de contratos", "in 94", "contratacoes"
       ]
     },
     {
@@ -67,7 +116,7 @@
       nome: "Lei Maria da Penha (Lei 11.340/2006)",
       categoria: "basicos",
       universal: true,
-      cor: "#ec4899",
+      cor: "#db2777",
       descricao: "Violência doméstica e familiar contra a mulher, medidas protetivas de urgência e jurisprudência.",
       sourceSubjectIds: ["bas_maria_penha"],
       keywords: [
@@ -81,7 +130,7 @@
       categoria: "basicos",
       universal: true,
       cor: "#ef4444",
-      descricao: "Suporte básico de vida, RCP, engasgo, hemorragias, queimaduras, fraturas e emergências.",
+      descricao: "Suporte básico de vida, RCP, engasgo, hemorragias, queimaduras e fraturas.",
       sourceSubjectIds: ["bas_socorros"],
       keywords: [
         "primeiros socorros", "socorros", "suporte basico", "emergencia", "saude", "seguranca do trabalho"
@@ -92,7 +141,7 @@
       nome: "Legislação do DF (LODF, LC 840/2011 e RIDE/DF)",
       categoria: "basicos",
       universal: false,
-      cor: "#10b981",
+      cor: "#059669",
       descricao: "Lei Orgânica do Distrito Federal (LODF), Regime Jurídico dos Servidores do DF (LC 840/2011) e Conhecimentos sobre o DF/RIDE.",
       sourceSubjectIds: ["bas_lodf", "bas_lc840", "bas_df_mulher"],
       keywords: [
@@ -106,13 +155,54 @@
       categoria: "especificos",
       universal: false,
       cor: "#6366f1",
-      descricao: "Engenharia de Software, Desenvolvimento, Arquitetura/Cloud/Docker/K8s, Banco de Dados, Testes, DevOps e Segurança da Informação.",
+      descricao: "Engenharia de Software, Desenvolvimento, Arquitetura/Cloud/Redes, Banco de Dados, Testes, DevOps e Segurança da Informação.",
       sourceSubjectIds: ["esp_1", "esp_2", "esp_3", "esp_4", "esp_5", "esp_6", "esp_7", "esp_8"],
       keywords: [
         "engenharia de software", "desenvolvimento de sistemas", "programacao", "arquitetura de software",
         "banco de dados", "sql", "devops", "docker", "kubernetes", "seguranca da informacao",
-        "qualidade de software", "testes de software", "tecnologia da informacao", "analise de sistemas"
+        "qualidade de software", "testes de software", "tecnologia da informacao", "analise de sistemas",
+        "suporte tecnico", "infraestrutura"
       ]
+    },
+    {
+      id: "pack_cofen_enfermagem",
+      nome: "Enfermagem & Sistema COFEN/CORENs",
+      categoria: "especificos",
+      universal: false,
+      cor: "#14b8a6",
+      descricao: "Questões reais Quadrix de CORENs sobre Legislação da Enfermagem, Resoluções COFEN, Fiscalização, Ética e SUS.",
+      sourceSubjectIds: ["cofen_esp_enf"],
+      keywords: ["enfermagem", "enfermeiro", "coren", "cofen", "fiscalizacao", "sus", "7.498"]
+    },
+    {
+      id: "pack_cofen_juridico",
+      nome: "Direito & Advocacia Pública (Conselhos)",
+      categoria: "especificos",
+      universal: false,
+      cor: "#7c3aed",
+      descricao: "Questões reais Quadrix para Advogado e Assistente Jurídico (Civil, Processo Civil, Trabalho, Tributário e Público).",
+      sourceSubjectIds: ["cofen_esp_jur"],
+      keywords: ["advogado", "juridico", "processo civil", "direito do trabalho", "direito civil"]
+    },
+    {
+      id: "pack_cofen_adm",
+      nome: "Administração Pública, RH & Gestão",
+      categoria: "especificos",
+      universal: false,
+      cor: "#f97316",
+      descricao: "Questões reais Quadrix para Administrador, Gestão de Pessoas, RH, Secretário Executivo e Analista Técnico.",
+      sourceSubjectIds: ["cofen_esp_adm"],
+      keywords: ["administracao publica", "gestao de pessoas", "recursos humanos", "analista tecnico", "secretario"]
+    },
+    {
+      id: "pack_cofen_comunicacao",
+      nome: "Comunicação Social & Redação Institucional",
+      categoria: "especificos",
+      universal: false,
+      cor: "#0284c7",
+      descricao: "Questões reais Quadrix de Comunicação Social, Assessoria de Imprensa e Redação Institucional.",
+      sourceSubjectIds: ["cofen_esp_com"],
+      keywords: ["comunicacao", "jornalismo", "redacao", "letras", "assessoria"]
     }
   ];
 
@@ -127,21 +217,27 @@
   }
 
   function getAllRealQuestions() {
-    return Array.isArray(window.QUESTIONS_REAIS) ? window.QUESTIONS_REAIS : [];
+    const base = Array.isArray(window.QUESTIONS_REAIS) ? window.QUESTIONS_REAIS : [];
+    const quadrix = Array.isArray(window.QUESTIONS_QUADRIX) ? window.QUESTIONS_QUADRIX : [];
+    return [...base, ...quadrix];
+  }
+
+  function belongsToPack(q, pack) {
+    if (!q || !pack) return false;
+    if (q.sharedPackId) return q.sharedPackId === pack.id;
+    return pack.sourceSubjectIds.includes(q.subjectId);
   }
 
   function getPackQuestions(packId) {
     const pack = PACK_DEFINITIONS.find(p => p.id === packId);
     if (!pack) return [];
-    const allowed = new Set(pack.sourceSubjectIds);
-    return getAllRealQuestions().filter(q => q && allowed.has(q.subjectId));
+    return getAllRealQuestions().filter(q => belongsToPack(q, pack));
   }
 
   function listPacks() {
     const all = getAllRealQuestions();
     return PACK_DEFINITIONS.map(pack => {
-      const allowed = new Set(pack.sourceSubjectIds);
-      const count = all.filter(q => q && allowed.has(q.subjectId)).length;
+      const count = all.filter(q => belongsToPack(q, pack)).length;
       return Object.assign({}, pack, { questionCount: count });
     });
   }
@@ -149,7 +245,6 @@
   /**
    * Analisa as disciplinas de um edital arbitrário e sugere automaticamente
    * quais pacotes do Banco Compartilhado combinam com cada disciplina.
-   * Retorna: [{ packId, packName, questionCount, targetSubjectId, targetSubjectName, score }]
    */
   function matchPacksToEdital(edital) {
     const disciplinas = (edital && Array.isArray(edital.disciplinas)) ? edital.disciplinas : [];
@@ -176,7 +271,6 @@
             score += nkw.length > 8 ? 3 : 2;
           }
         });
-        // Peso extra se bater diretamente no nome da disciplina
         const nameNorm = normalizeText(d.nome);
         pack.keywords.forEach(kw => {
           const nkw = normalizeText(kw);
@@ -208,7 +302,7 @@
 
   /**
    * Retorna as questões dos pacotes selecionados, remapeando o subjectId para
-   * a disciplina correspondente do edital da trilha (ou criando disciplina virtual se não mapeado).
+   * a disciplina correspondente do edital da trilha.
    */
   function buildMappedQuestionsForTrack(enabledPacks, packMapping) {
     const selectedIds = Array.isArray(enabledPacks) ? enabledPacks : [];
@@ -220,9 +314,8 @@
       const qs = getPackQuestions(packId);
       const targetSubjectId = mapping[packId] || null;
       qs.forEach(q => {
-        const mappedId = `${packId}__${q.id}`;
-        if (seen.has(mappedId)) return;
-        seen.add(mappedId);
+        if (!q || !q.id || seen.has(q.id)) return;
+        seen.add(q.id);
         result.push(
           Object.assign({}, q, {
             id: q.id,
@@ -241,6 +334,7 @@
   window.SHARED_BANK = {
     PACK_DEFINITIONS,
     normalizeText,
+    getAllRealQuestions,
     listPacks,
     getPackQuestions,
     matchPacksToEdital,

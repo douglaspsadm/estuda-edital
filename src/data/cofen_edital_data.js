@@ -1214,19 +1214,44 @@
 
   function buildTracks() {
     return RAW.roles.map(role => {
-      const enabledSharedPacks = ["pack_portugues", "pack_lei_14133", "pack_lai_lgpd"];
+      const enabledSharedPacks = [
+        "pack_portugues",
+        "pack_rlm",
+        "pack_lei_14133",
+        "pack_lai_lgpd",
+        "pack_constitucional",
+        "pack_administrativo"
+      ];
       const packMapping = {
         pack_portugues: "cofen_bas_port",
+        pack_rlm: "cofen_bas_rlm",
         pack_lei_14133: "cofen_comp_leg",
-        pack_lai_lgpd: "cofen_comp_leg"
+        pack_lai_lgpd: "cofen_comp_leg",
+        pack_constitucional: "cofen_comp_const",
+        pack_administrativo: "cofen_comp_adm"
       };
 
       if (role.isTI) {
-        enabledSharedPacks.push("pack_ti_dev");
+        enabledSharedPacks.push("pack_ingles", "pack_ti_dev");
+        packMapping.pack_ingles = "cofen_bas_ingles";
         packMapping.pack_ti_dev = `cofen_${role.codigo}_esp`;
       } else {
         enabledSharedPacks.push("pack_informatica");
         packMapping.pack_informatica = "cofen_bas_info";
+      }
+
+      if (role.codigo === "411" || role.codigo === "412") {
+        enabledSharedPacks.push("pack_cofen_enfermagem");
+        packMapping.pack_cofen_enfermagem = `cofen_${role.codigo}_esp`;
+      } else if (role.codigo === "400") {
+        enabledSharedPacks.push("pack_cofen_juridico");
+        packMapping.pack_cofen_juridico = `cofen_${role.codigo}_esp`;
+      } else if (role.codigo === "401") {
+        enabledSharedPacks.push("pack_cofen_comunicacao");
+        packMapping.pack_cofen_comunicacao = `cofen_${role.codigo}_esp`;
+      } else if (role.codigo === "402" || role.codigo === "403" || role.codigo === "406") {
+        enabledSharedPacks.push("pack_cofen_adm");
+        packMapping.pack_cofen_adm = `cofen_${role.codigo}_esp`;
       }
 
       return {

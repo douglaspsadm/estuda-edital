@@ -9,9 +9,9 @@
   - `src/js/onboarding_wizard.js`: Wizard guiado em 4 passos + view dedicada `Importar Provas & Base`.
   - `src/js/ai_tutor.js`: motor BYOK (Gemini/OpenAI) com `askRaw`, `askJson` e `discoverModelsDirect`.
   - `src/js/cloud_sync.js` + `supabase/schema.sql`: sincronização Supabase por `(user_id, track_id)` com fallback gracioso para `user_progress`.
-  - `src/data/cofen_edital_data.js`: Edital Nº 1/2026 do COFEN (Instituto Quadrix — 13 cargos de nível superior, 400–412) extraído do PDF oficial, com seletor de cargo na sidebar e no Wizard.
-  - `src/js/app.js`: motor adaptativo completo + seletor agrupado Concurso → Cargo.
+  - `src/data/quadrix_questions.js`: **1.919 questões reais únicas** da banca Instituto Quadrix (40 provas + gabaritos de COREN-AC, COREN-PR, CRF-DF, CRF-PR, CRF-AC, CRF-MS, CRM-ES, CRM-MS, CORE-BA, CRP-13, Fundação ABC).
+  - `src/data/shared_bank.js`: **16 pacotes temáticos** unificando **2.724 questões reais** (805 originais + 1.919 Quadrix) reaproveitadas na Base Nacional Comum (`1.204q`), COFEN 2026 (`1.156q`–`1.523q` por cargo) e DPDF 2026 — TI (`1.431q`).
 
 ## Validação
-- `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (805 questões válidas, 5/5 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
-- E2E Playwright contra `public/`: validado COFEN Enfermeiro (411, 332q reais) → troca de cargo para Analista de Sistemas (404, 602q reais + Língua Inglesa) com 0 `pageerror`s.
+- `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (**2.724 questões válidas**, 0 erros, 5/5 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
+- E2E Playwright contra `public/`: validado COFEN Enfermeiro (`0/1284`), COFEN Analista de Sistemas (`0/1523`) e DPDF TI (`0/1431`) com 0 `pageerror`s.

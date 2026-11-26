@@ -80,8 +80,24 @@
         ]
       },
       {
-        id: "comum_info",
+        id: "comum_rlm",
         codigo: "BAS-02",
+        nome: "Raciocínio Lógico e Matemática",
+        categoria: "basicos",
+        questoesProva: 10,
+        peso: 1,
+        pontosProva: 10.0,
+        prioridade: "Média",
+        cor: "#f59e0b",
+        descricao: "Lógica proposicional, porcentagem, probabilidade, combinatória, estatística básica e matemática financeira.",
+        topicos: [
+          { id: "comum_rlm_1", numero: "1", titulo: "Lógica Proposicional e Quantificadores", subitens: "Proposições, conectivos, equivalências e negações." },
+          { id: "comum_rlm_2", numero: "2", titulo: "Matemática Básica, Probabilidade e Estatística", subitens: "Porcentagem, razão, combinatória, média/mediana." }
+        ]
+      },
+      {
+        id: "comum_info",
+        codigo: "BAS-03",
         nome: "Noções de Informática",
         categoria: "basicos",
         questoesProva: 10,
@@ -96,8 +112,38 @@
         ]
       },
       {
+        id: "comum_const",
+        codigo: "BAS-04",
+        nome: "Direito Constitucional",
+        categoria: "basicos",
+        questoesProva: 10,
+        peso: 1,
+        pontosProva: 10.0,
+        prioridade: "Alta",
+        cor: "#10b981",
+        descricao: "Princípios fundamentais, direitos e garantias, organização do Estado e Poderes.",
+        topicos: [
+          { id: "comum_const_1", numero: "1", titulo: "Direitos Fundamentais e Administração Pública", subitens: "Art. 5º, Art. 37 e Ordem Social." }
+        ]
+      },
+      {
+        id: "comum_adm",
+        codigo: "BAS-05",
+        nome: "Direito Administrativo & Legislação",
+        categoria: "basicos",
+        questoesProva: 10,
+        peso: 1,
+        pontosProva: 10.0,
+        prioridade: "Alta",
+        cor: "#ec4899",
+        descricao: "Atos, poderes administrativos, organização administrativa, Lei 9.784/99 e Improbidade.",
+        topicos: [
+          { id: "comum_adm_1", numero: "1", titulo: "Atos, Poderes e Organização Administrativa", subitens: "Descentralização, conselhos profissionais, LIA e processo administrativo." }
+        ]
+      },
+      {
         id: "comum_lai_lgpd",
-        codigo: "BAS-03",
+        codigo: "BAS-06",
         nome: "LAI, LGPD & Governança",
         categoria: "basicos",
         questoesProva: 10,
@@ -113,14 +159,14 @@
       },
       {
         id: "comum_14133",
-        codigo: "BAS-04",
+        codigo: "BAS-07",
         nome: "Licitações e Contratos (Lei 14.133/2021)",
         categoria: "basicos",
         questoesProva: 10,
         peso: 1,
         pontosProva: 10.0,
         prioridade: "Alta",
-        cor: "#f59e0b",
+        cor: "#d97706",
         descricao: "Nova Lei de Licitações e Contratos Administrativos, modalidades, dispensa, inexigibilidade e fiscalização.",
         topicos: [
           { id: "comum_14133_1", numero: "1", titulo: "Modalidades, Critérios e Contratação Direta", subitens: "Pregão, concorrência, diálogo competitivo, dispensa e inexigibilidade." },
@@ -129,14 +175,14 @@
       },
       {
         id: "comum_maria",
-        codigo: "BAS-05",
+        codigo: "BAS-08",
         nome: "Lei Maria da Penha (Lei 11.340/2006)",
         categoria: "basicos",
         questoesProva: 3,
         peso: 1,
         pontosProva: 3.0,
         prioridade: "Média",
-        cor: "#ec4899",
+        cor: "#db2777",
         descricao: "Formas de violência doméstica, medidas protetivas de urgência e atendimento policial/judicial.",
         topicos: [
           { id: "comum_maria_1", numero: "1", titulo: "Formas de Violência e Medidas Protetivas", subitens: "Arts. 1º a 46 da Lei 11.340/2006 e súmulas STJ." }
@@ -144,7 +190,7 @@
       },
       {
         id: "comum_socorros",
-        codigo: "BAS-06",
+        codigo: "BAS-09",
         nome: "Noções de Primeiros Socorros",
         categoria: "basicos",
         questoesProva: 2,
@@ -169,11 +215,14 @@
       badge: "BASE",
       shortName: "Base Nacional Comum",
       subtitle: "Pré-Edital • Qualquer Área",
-      description: "Disciplinas básicas universais (Português, Informática, LAI/LGPD, Lei 14.133, Maria da Penha e Primeiros Socorros) com +370 questões reais prontas.",
+      description: "Disciplinas básicas universais (Português, RLM, Informática, Constitucional, Administrativo, LAI/LGPD, Lei 14.133, Maria da Penha e Primeiros Socorros) com +1.100 questões reais.",
       edital: BASE_COMUM_EDITAL,
       enabledSharedPacks: [
         "pack_portugues",
+        "pack_rlm",
         "pack_informatica",
+        "pack_constitucional",
+        "pack_administrativo",
         "pack_lai_lgpd",
         "pack_lei_14133",
         "pack_maria_penha",
@@ -181,7 +230,10 @@
       ],
       packMapping: {
         pack_portugues: "comum_port",
+        pack_rlm: "comum_rlm",
         pack_informatica: "comum_info",
+        pack_constitucional: "comum_const",
+        pack_administrativo: "comum_adm",
         pack_lai_lgpd: "comum_lai_lgpd",
         pack_lei_14133: "comum_14133",
         pack_maria_penha: "comum_maria",
@@ -484,11 +536,21 @@
     const track = getTrackById(trackId) || getActiveTrack();
     const map = new Map();
 
-    // 1. Se for a trilha DPDF pronta, inclui todas as 805 questões reais originais
-    if (track.useFullDpdfBank && Array.isArray(window.QUESTIONS_REAIS)) {
-      window.QUESTIONS_REAIS.forEach(q => {
-        if (q && q.id) map.set(q.id, q);
-      });
+    // 1. Se for a trilha DPDF pronta, inclui todas as 805 questões reais + questões Quadrix compatíveis com as disciplinas do DPDF
+    if (track.useFullDpdfBank) {
+      if (Array.isArray(window.QUESTIONS_REAIS)) {
+        window.QUESTIONS_REAIS.forEach(q => {
+          if (q && q.id) map.set(q.id, q);
+        });
+      }
+      if (Array.isArray(window.QUESTIONS_QUADRIX)) {
+        const dpdfSubjects = new Set((track.edital && track.edital.disciplinas ? track.edital.disciplinas : []).map(d => d.id));
+        window.QUESTIONS_QUADRIX.forEach(q => {
+          if (q && q.id && dpdfSubjects.has(q.subjectId)) {
+            map.set(q.id, q);
+          }
+        });
+      }
     } else if (window.SHARED_BANK && Array.isArray(track.enabledSharedPacks) && track.enabledSharedPacks.length) {
       // 2. Pacotes da Base Compartilhada ligados nesta trilha (com remapeamento de subjectId!)
       const mapped = window.SHARED_BANK.buildMappedQuestionsForTrack(track.enabledSharedPacks, track.packMapping);

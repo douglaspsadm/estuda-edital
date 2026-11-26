@@ -16,6 +16,7 @@ vm.createContext(sandbox);
 const dataFiles = [
   "dpdf_edital_data.js",
   "dpdf_questions_reais.js",
+  "quadrix_questions.js",
   "shared_bank.js"
 ];
 
@@ -28,11 +29,22 @@ for (const file of dataFiles) {
 const edital = sandbox.window.EDITAL_DATA;
 const validSubjects = new Set(edital.disciplinas.map(d => d.id));
 const validTopics = new Set(edital.disciplinas.flatMap(d => d.topicos.map(t => t.id)));
-const allQuestions = sandbox.window.QUESTIONS_REAIS || [];
+const dpdfQuestions = sandbox.window.QUESTIONS_REAIS || [];
+const quadrixQuestions = sandbox.window.QUESTIONS_QUADRIX || [];
+const allQuestions = [...dpdfQuestions, ...quadrixQuestions];
 
 const seenIds = new Set();
 const errors = [];
 const warnings = [];
+
+for (const q of dpdfQuestions) {
+  if (!validSubjects.has(q.subjectId)) {
+    errors.push(`[${q.id}] subjectId inválido no DPDF: '${q.subjectId}'`);
+  }
+  if (q.topicId && !validTopics.has(q.topicId)) {
+    warnings.push(`[${q.id}] topicId '${q.topicId}' não consta literalmente no EDITAL_DATA.`);
+  }
+}
 
 for (const q of allQuestions) {
   if (!q.id) {
@@ -44,11 +56,8 @@ for (const q of allQuestions) {
   }
   seenIds.add(q.id);
 
-  if (!validSubjects.has(q.subjectId)) {
-    errors.push(`[${q.id}] subjectId inválido: '${q.subjectId}'`);
-  }
-  if (q.topicId && !validTopics.has(q.topicId)) {
-    warnings.push(`[${q.id}] topicId '${q.topicId}' não consta literalmente no EDITAL_DATA.`);
+  if (!q.subjectId) {
+    errors.push(`[${q.id}] subjectId ausente.`);
   }
   if (!q.statement || typeof q.statement !== "string") {
     errors.push(`[${q.id}] Enunciado ('statement') ausente.`);

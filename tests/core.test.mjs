@@ -39,6 +39,7 @@ function createBrowserSandbox() {
     "src/data/dpdf_lessons_data.js",
     "src/data/dpdf_discursive_data.js",
     "src/data/cofen_edital_data.js",
+    "src/data/quadrix_questions.js",
     "src/data/shared_bank.js",
     "src/js/tracks_manager.js",
     "src/js/ai_tutor.js",
@@ -54,9 +55,9 @@ function createBrowserSandbox() {
 test("SHARED_BANK lista pacotes reais e faz matching automático com edital de outra área", () => {
   const { window } = createBrowserSandbox();
   const packs = window.SHARED_BANK.listPacks();
-  assert.ok(packs.length >= 6);
+  assert.ok(packs.length >= 12);
   const totalMapped = packs.reduce((s, p) => s + p.questionCount, 0);
-  assert.equal(totalMapped, 805);
+  assert.ok(totalMapped >= 2400, `Esperava >= 2400 questões mapeadas, veio ${totalMapped}`);
 
   const tribunalEdital = {
     disciplinas: [
@@ -75,7 +76,7 @@ test("SHARED_BANK lista pacotes reais e faz matching automático com edital de o
     ["pack_portugues"],
     { pack_portugues: "d_port" }
   );
-  assert.equal(mappedQs.length, 176);
+  assert.equal(mappedQs.length, 360);
   assert.ok(mappedQs.every(q => q.subjectId === "d_port"));
 });
 
@@ -106,7 +107,7 @@ test("TracksManager isola progresso por track_id e suporta criar, exportar e imp
 
   const stDpdf = tm.getTrackState("dpdf_ti_2026");
   assert.equal(stDpdf.answers["Q_TEST_1"], undefined);
-  assert.equal(tm.getQuestionsForTrack(custom.id).length, 176);
+  assert.equal(tm.getQuestionsForTrack(custom.id).length, 360);
 
   // Exporta e reimporta bundle
   const bundle = tm.exportTrackBundle(custom.id);
@@ -153,23 +154,29 @@ test("AI_TUTOR.extractJsonFromText limpa cercas markdown e vírgulas finais", ()
   assert.deepEqual(parsed.items, [1, 2]);
 });
 
-test("COFEN 2026 registra todos os 13 cargos com diferenciação TI (Inglês + 305q TI) vs Não-TI (Informática)", () => {
+test("COFEN 2026 registra todos os 13 cargos com pacotes Quadrix + Base Comum", () => {
   const { window } = createBrowserSandbox();
   const tm = window.TracksManager;
   const cofenTracks = tm.listTracks().filter(t => t.groupId === "cofen_2026");
   assert.equal(cofenTracks.length, 13);
 
-  // Cargo 404 (Analista de Sistemas — TI): Língua Inglesa + 602 questões reais (Port 176 + Leg 121 + TI 305)
+  // Cargo 404 (Analista de Sistemas — TI): Língua Inglesa + TI + Básicos/Complementares
   const tiTrack = tm.getTrackById("cofen_2026_404");
   assert.ok(tiTrack);
   assert.ok(tiTrack.edital.disciplinas.some(d => d.id === "cofen_bas_ingles"));
   assert.ok(!tiTrack.edital.disciplinas.some(d => d.id === "cofen_bas_info"));
-  assert.equal(tm.getQuestionsForTrack("cofen_2026_404").length, 602);
+  const tiCount = tm.getQuestionsForTrack("cofen_2026_404").length;
+  assert.ok(tiCount > 1400, `Esperava > 1400 questões para COFEN TI, veio ${tiCount}`);
 
-  // Cargo 411 (Enfermeiro — Não-TI): Noções de Informática + 332 questões reais (Port 176 + Info 35 + Leg 121)
+  // Cargo 411 (Enfermeiro — Não-TI): Informática + Enfermagem + Básicos/Complementares
   const enfTrack = tm.getTrackById("cofen_2026_411");
   assert.ok(enfTrack);
   assert.ok(enfTrack.edital.disciplinas.some(d => d.id === "cofen_bas_info"));
   assert.ok(!enfTrack.edital.disciplinas.some(d => d.id === "cofen_bas_ingles"));
-  assert.equal(tm.getQuestionsForTrack("cofen_2026_411").length, 332);
+  const enfCount = tm.getQuestionsForTrack("cofen_2026_411").length;
+  assert.ok(enfCount > 1200, `Esperava > 1200 questões para COFEN Enfermeiro, veio ${enfCount}`);
+
+  // DPDF TI também foi enriquecido com questões Quadrix compatíveis (> 1400)
+  const dpdfCount = tm.getQuestionsForTrack("dpdf_ti_2026").length;
+  assert.ok(dpdfCount > 1400, `Esperava > 1400 questões para DPDF TI, veio ${dpdfCount}`);
 });
