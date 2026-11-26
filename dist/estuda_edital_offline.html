@@ -89820,10 +89820,16 @@ window.QUESTIONS_QUADRIX = [
       return `Tabelas Supabase ainda não criadas (execute supabase/schema.sql no SQL Editor).`;
     }
     if (msg.includes("Invalid login credentials")) {
-      return "E-mail ou senha incorretos.";
+      return "E-mail ou senha incorretos. Se você já entrou antes por Link Mágico ou esqueceu a senha, use 'Esqueci minha senha' ou 'Link mágico'.";
     }
     if (msg.includes("Email not confirmed")) {
-      return "Confirme seu e-mail pelo link enviado antes de entrar.";
+      return "Confirme seu e-mail pelo link enviado antes de entrar (verifique também o spam).";
+    }
+    if (msg.includes("User already registered")) {
+      return "Este e-mail já está cadastrado. Clique em Entrar ou use 'Esqueci minha senha'.";
+    }
+    if (msg.toLowerCase().includes("rate limit")) {
+      return "Limite temporário de envio de e-mails atingido. Aguarde alguns minutos e tente novamente.";
     }
     if (msg.includes("Password should be at least")) {
       return "A senha deve ter pelo menos 6 caracteres.";
@@ -89845,7 +89851,10 @@ window.QUESTIONS_QUADRIX = [
         const nextUser = session ? session.user : null;
         const changedUser = (nextUser && nextUser.id) !== (currentUser && currentUser.id);
         currentUser = nextUser;
-
+        if (event === "PASSWORD_RECOVERY") {
+          openResetPasswordModal();
+          return;
+        }
         if (!currentUser) {
           clearTimeout(pushTimer);
           setStatus("local");
@@ -89893,6 +89902,72 @@ window.QUESTIONS_QUADRIX = [
     });
     if (error) throw new Error(formatSupabaseError(error));
     return data;
+  }
+
+  async function resetPassword(email) {
+    const sb = await ensureClient();
+    const { data, error } = await sb.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    if (error) throw new Error(formatSupabaseError(error));
+    return data;
+  }
+
+  async function updatePassword(newPassword) {
+    const sb = await ensureClient();
+    const { data, error } = await sb.auth.updateUser({ password: newPassword });
+    if (error) throw new Error(formatSupabaseError(error));
+    return data;
+  }
+
+  function openResetPasswordModal() {
+    const existing = document.getElementById("cloud-auth-modal");
+    if (existing) existing.remove();
+    const overlay = document.createElement("div");
+    overlay.id = "cloud-auth-modal";
+    overlay.style.cssText =
+      "position:fixed;inset:0;background:rgba(15,23,42,0.72);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;";
+    overlay.innerHTML = `
+      <div style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-strong);border-radius:14px;max-width:400px;width:100%;padding:22px;box-shadow:var(--shadow);">
+        <h3 style="font-size:1.05rem;font-weight:800;margin-bottom:8px;">Definir nova senha</h3>
+        <p style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:12px;">
+          Digite abaixo a nova senha para sua conta (mínimo 6 caracteres).
+        </p>
+        <input id="cm-new-pass" type="password" class="form-control" placeholder="Nova senha (mín. 6 caracteres)" autocomplete="new-password" />
+        <div id="cm-reset-msg" style="display:none;font-size:0.82rem;padding:9px 11px;border-radius:8px;margin-top:10px;"></div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button class="btn btn-primary" style="flex:1;" id="cm-save-new-pass">Salvar senha</button>
+          <button class="btn btn-outline" id="cm-cancel-new-pass">Cancelar</button>
+        </div>
+      </div>
+    `;
+    const msg = overlay.querySelector("#cm-reset-msg");
+    const passEl = overlay.querySelector("#cm-new-pass");
+    overlay.querySelector("#cm-cancel-new-pass").onclick = () => overlay.remove();
+    overlay.querySelector("#cm-save-new-pass").onclick = async () => {
+      if (passEl.value.length < 6) {
+        msg.style.display = "block";
+        msg.style.background = "var(--danger-bg)";
+        msg.style.color = "var(--danger-text)";
+        msg.textContent = "A senha deve ter pelo menos 6 caracteres.";
+        return;
+      }
+      try {
+        await updatePassword(passEl.value);
+        msg.style.display = "block";
+        msg.style.background = "var(--success-bg)";
+        msg.style.color = "var(--success-text)";
+        msg.textContent = "Senha atualizada com sucesso! Você já está conectado.";
+        setTimeout(() => overlay.remove(), 1200);
+      } catch (e) {
+        msg.style.display = "block";
+        msg.style.background = "var(--danger-bg)";
+        msg.style.color = "var(--danger-text)";
+        msg.textContent = e.message;
+      }
+    };
+    document.body.appendChild(overlay);
+    setTimeout(() => passEl.focus(), 50);
   }
 
   async function signInWithGoogle() {
@@ -90014,7 +90089,10 @@ window.QUESTIONS_QUADRIX = [
             <button class="btn btn-primary" style="flex:1;" id="cm-login">Entrar</button>
             <button class="btn btn-outline" style="flex:1;" id="cm-signup">Criar conta</button>
           </div>
-          <button class="btn btn-outline btn-sm" id="cm-magic">Enviar link mágico por e-mail (sem senha)</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" style="flex:1;" id="cm-magic">Enviar link mágico</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;" id="cm-forgot">Esqueci minha senha</button>
+          </div>
 
           <details ${isConfigured ? "" : "open"} style="margin-top:6px;border-top:1px solid var(--border-color);padding-top:10px;">
             <summary style="cursor:pointer;font-size:0.78rem;color:var(--text-muted);font-weight:600;">
@@ -90088,8 +90166,10 @@ window.QUESTIONS_QUADRIX = [
         const res = await signUp(emailEl.value, passEl.value);
         if (res && res.session) {
           overlay.remove();
+        } else if (res && res.user && Array.isArray(res.user.identities) && res.user.identities.length === 0) {
+          showMsg("Este e-mail já possui conta cadastrada! Use 'Entrar' com sua senha, 'Enviar link mágico' ou 'Esqueci minha senha' para definir uma nova senha.", true);
         } else {
-          showMsg("Conta criada! Verifique seu e-mail para confirmar o cadastro e depois clique em Entrar.", false);
+          showMsg("Conta criada! Abra seu e-mail e clique no link de confirmação antes de entrar (verifique também a caixa de spam).", false);
         }
       } catch (e) {
         showMsg(e.message, true);
@@ -90102,6 +90182,17 @@ window.QUESTIONS_QUADRIX = [
         showMsg("Enviando link...", false);
         await signInWithMagicLink(emailEl.value);
         showMsg("Link enviado! Abra seu e-mail e clique no link para entrar automaticamente.", false);
+      } catch (e) {
+        showMsg(e.message, true);
+      }
+    };
+
+    overlay.querySelector("#cm-forgot").onclick = async () => {
+      if (!emailEl.value.trim()) return showMsg("Digite seu e-mail acima para redefinir a senha.", true);
+      try {
+        showMsg("Enviando e-mail de redefinição...", false);
+        await resetPassword(emailEl.value);
+        showMsg("E-mail enviado! Abra o link recebido para definir sua nova senha (verifique também o spam).", false);
       } catch (e) {
         showMsg(e.message, true);
       }
