@@ -689,13 +689,14 @@
 
     // Restaura automaticamente a última trilha/cargo usada (evita reabrir sempre na Base Comum)
     const curState = workspace.trackStates[workspace.activeTrackId];
-    const curTs = curState && curState.lastSaved ? (Date.parse(curState.lastSaved) || 0) : 0;
     const curAnsCount = curState && curState.answers ? Object.keys(curState.answers).length : 0;
+    const isUntouchedDefault = workspace.activeTrackId === "base_comum_concursos" && curAnsCount === 0;
+    const curTs = isUntouchedDefault ? 0 : (curState && curState.lastSaved ? (Date.parse(curState.lastSaved) || 0) : 0);
 
     if (remote.activeTrackId && getTrackById(remote.activeTrackId)) {
       const remActiveState = workspace.trackStates[remote.activeTrackId];
       const remActiveTs = remActiveState && remActiveState.lastSaved ? (Date.parse(remActiveState.lastSaved) || 0) : 0;
-      if (remActiveTs >= curTs || (workspace.activeTrackId === "base_comum_concursos" && curAnsCount === 0)) {
+      if (remActiveTs >= curTs || isUntouchedDefault) {
         workspace.activeTrackId = remote.activeTrackId;
       }
     } else {
@@ -707,7 +708,7 @@
         const st = remoteStates[tid];
         const ts = st && st.lastSaved ? (Date.parse(st.lastSaved) || 0) : 0;
         const hasActivity = st && ((st.answers && Object.keys(st.answers).length > 0) || ts > 0);
-        if (hasActivity && (ts > bestTs || (workspace.activeTrackId === "base_comum_concursos" && curAnsCount === 0 && tid !== "base_comum_concursos" && ts >= bestTs))) {
+        if (hasActivity && (ts > bestTs || (isUntouchedDefault && tid !== "base_comum_concursos" && ts >= bestTs))) {
           bestTs = ts;
           bestTid = tid;
         }
