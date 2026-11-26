@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Gera:
- * 1) public/ -> site estático pronto para deploy no Vercel
- * 2) dist/dpdf_ti_mobile.html -> build single-file 100% offline para celular
+ * 1) public/ -> site estático pronto para deploy gratuito na Vercel
+ * 2) dist/estuda_edital_offline.html -> build single-file 100% offline
  * Uso: node scripts/build.mjs
  */
 import fs from "node:fs";
@@ -17,21 +17,20 @@ const DIST = path.join(ROOT, "dist");
 fs.rmSync(PUBLIC_DIR, { recursive: true, force: true });
 fs.cpSync(SRC, PUBLIC_DIR, { recursive: true });
 
-// 2. Gera bundle single-file offline (dist/dpdf_ti_mobile.html)
+// 2. Gera bundle single-file offline (dist/estuda_edital_offline.html)
 const html = fs.readFileSync(path.join(SRC, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(SRC, "css", "styles.css"), "utf8");
 
 const scriptOrder = [
-  "data/edital_data.js",
-  "data/questions_reais.js",
-  "data/questions_basic.js",
-  "data/questions_specific_1.js",
-  "data/questions_specific_2.js",
-  "data/questions_specific_3.js",
-  "data/questions_bancas.js",
-  "data/lessons_data.js",
-  "data/discursive_data.js",
+  "data/dpdf_edital_data.js",
+  "data/dpdf_questions_reais.js",
+  "data/dpdf_lessons_data.js",
+  "data/dpdf_discursive_data.js",
+  "data/shared_bank.js",
+  "js/tracks_manager.js",
   "js/ai_tutor.js",
+  "js/pdf_importer.js",
+  "js/onboarding_wizard.js",
   "js/cloud_sync.js",
   "js/app.js"
 ];
@@ -57,9 +56,9 @@ if (!scriptsRegex.test(out)) {
 out = out.replace(scriptsRegex, `\n  <script>\n${bundledJs}\n  </script>\n`);
 
 fs.mkdirSync(DIST, { recursive: true });
-const outFile = path.join(DIST, "dpdf_ti_mobile.html");
+const outFile = path.join(DIST, "estuda_edital_offline.html");
 fs.writeFileSync(outFile, out, "utf8");
 
 const sizeKb = (Buffer.byteLength(out, "utf8") / 1024).toFixed(1);
 console.log(`✅ Site estático gerado em: public/ (pronto para Vercel)`);
-console.log(`✅ Build offline gerado em: dist/dpdf_ti_mobile.html (${sizeKb} KB)`);
+console.log(`✅ Build offline gerado em: dist/estuda_edital_offline.html (${sizeKb} KB)`);

@@ -1,11 +1,12 @@
 {
-  "name": "dpdf-ti-estudo",
+  "name": "estuda-edital",
   "version": "1.0.0",
   "private": true,
-  "description": "Sistema adaptativo de estudo para o concurso DPDF TI (Desenvolvimento de Sistemas)",
+  "description": "Plataforma adaptativa multi-concurso (Edital Dinâmico + Base Compartilhada + PDF no navegador + IA BYOK + Supabase/localStorage)",
   "scripts": {
     "validate": "node scripts/validate_questions.mjs",
+    "test": "node --test tests/core.test.mjs",
     "build": "node scripts/build.mjs",
-    "check": "node scripts/validate_questions.mjs && node scripts/build.mjs"
+    "check": "node scripts/validate_questions.mjs && node --test tests/core.test.mjs && node scripts/build.mjs"
   }
 }

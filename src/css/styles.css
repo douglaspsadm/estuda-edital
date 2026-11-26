@@ -1102,3 +1102,270 @@ textarea.form-control {
     color: var(--accent-primary);
   }
 }
+
+
+/* ============================================================================
+   ESTUDA EDITAL — SELETOR DE TRILHA & WIZARD MULTI-CONCURSO
+   ============================================================================ */
+.track-switcher {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+}
+.track-switcher-label {
+  display: block;
+  font-size: 0.71rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+.track-select {
+  font-size: 0.83rem;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+
+.wizard-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(4px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  overflow-y: auto;
+}
+.wizard-modal {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong, var(--border-color));
+  border-radius: 16px;
+  width: 100%;
+  max-width: 780px;
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.wiz-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-color);
+}
+.wiz-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px 20px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-color);
+}
+.wiz-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.wiz-step.active {
+  color: var(--text-primary);
+}
+.wiz-step.done {
+  color: var(--success-text);
+}
+.wiz-step-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+.wiz-step.active .wiz-step-dot {
+  background: var(--accent, #3b82f6);
+  color: #fff;
+  border-color: transparent;
+}
+.wiz-step.done .wiz-step-dot {
+  background: var(--success-bg);
+  color: var(--success-text);
+  border-color: transparent;
+}
+.wiz-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+.wiz-title {
+  font-size: 1.08rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+.wiz-desc {
+  font-size: 0.86rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.wiz-guide-box {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+.wiz-guide-box ol {
+  margin: 6px 0 0 18px;
+  line-height: 1.6;
+}
+.wiz-guide-box a {
+  color: var(--accent, #3b82f6);
+  font-weight: 600;
+}
+.wiz-mode-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.wiz-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.wiz-preset-card {
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.wiz-preset-card.selected {
+  border-color: var(--accent, #3b82f6);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+}
+.wiz-upload-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wiz-preview-box {
+  margin-top: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+}
+.wiz-disc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.wiz-disc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  font-size: 0.84rem;
+}
+.wiz-pack-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  max-height: 310px;
+  overflow-y: auto;
+}
+.wiz-pack-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+}
+.wiz-pack-item.selected {
+  border-color: var(--accent, #3b82f6);
+}
+.wiz-pack-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+}
+.wiz-pack-check input[type="checkbox"] {
+  margin-top: 3px;
+}
+.badge-mini {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+.wiz-status {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.83rem;
+}
+.wiz-status-info {
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+.wiz-status-success {
+  background: var(--success-bg);
+  color: var(--success-text);
+}
+.wiz-status-error {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+.wiz-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-elevated);
+}
+.wiz-success-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--success-bg);
+  color: var(--success-text);
+  font-size: 1.6rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width: 640px) {
+  .wiz-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

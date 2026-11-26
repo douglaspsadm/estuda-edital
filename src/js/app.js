@@ -1,11 +1,9 @@
 // ============================================================================
-// MOTOR INTERATIVO DE ESTUDO — DPDF TI (DESENVOLVIMENTO DE SISTEMAS)
+// MOTOR INTERATIVO DE ESTUDO — ESTUDA EDITAL (MULTI-CONCURSO ADAPTATIVO)
 // Arquitetura limpa, sem monkey-patching, UX focada e livre de poluição visual
 // ============================================================================
 
 (function () {
-  const STORAGE_KEY = "DPDF_TI_STUDY_STATE_V1";
-  const EXAM_DATE = new Date("2027-02-21T08:00:00-03:00");
   const STEPS = [2, 7, 21, 45];
   const REASONS = [
     ["conteudo", "Conteúdo"],
@@ -21,11 +19,19 @@
     remediation: "Aulas & Reforço",
     review: "Revisão Espaçada",
     simulado: "Simulado Cronometrado",
-    discursive: "Prova Discursiva (50 pts)",
+    discursive: "Prova Discursiva",
     flashcards: "Flashcards Ativos",
+    import: "Importar Provas & Base",
     edital: "Edital Verticalizado",
     handoff: "Dados, Backup & IA"
   };
+
+  function getExamDate() {
+    const raw = window.EDITAL_DATA && window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.provas && window.EDITAL_DATA.metadata.provas.dataProva;
+    if (!raw || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+    const d = new Date(`${raw}T08:00:00-03:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
 
   function escapeHtml(str) {
     return String(str == null ? "" : str)
@@ -50,18 +56,14 @@
     return !b.includes("autoral") && !b.includes("estilo");
   }
 
-  const BASE_QUESTIONS = [
-    ...(window.QUESTIONS_REAIS || []),
-    ...(window.QUESTIONS_BASIC || []),
-    ...(window.QUESTIONS_SPECIFIC_1 || []),
-    ...(window.QUESTIONS_SPECIFIC_2 || []),
-    ...(window.QUESTIONS_SPECIFIC_3 || []),
-    ...(window.QUESTIONS_FCC_QUADRIX_IADES || [])
-  ];
-  let ALL_QUESTIONS = BASE_QUESTIONS.slice();
+  let ALL_QUESTIONS = [];
   let QUESTION_MAP = new Map();
 
   function getDefaultState() {
+    if (window.TracksManager) {
+      const track = window.TracksManager.getActiveTrack();
+      return window.TracksManager.getDefaultTrackProgressState(track.edital);
+    }
     return {
       answers: {},
       errorHistory: [],
@@ -76,21 +78,28 @@
       fc: {},
       flashcardIndex: 0,
       flashcardFlipped: false,
-      theme: "dark",
       currentView: "dashboard",
-      dashSubjectFilter: "ALL", // "ALL" | "WEAK" | "SPEC" | "BASIC"
+      dashSubjectFilter: "ALL",
       currentDiagSubject: "ALL",
       currentDiagStatus: "ALL",
       currentDiagBanca: "ALL",
-      currentDiagOrigin: "REAL",
-      diagMode: "focus", // "focus" (1 por vez) | "list"
+      currentDiagOrigin: "ALL",
+      diagMode: "focus",
       diagFocusIdx: 0,
-      currentLessonSubject: "esp_2",
+      currentLessonSubject: "ALL",
       errorTopicFilter: "ALL",
-      discursiveTab: "write", // "write" | "calc" | "all"
-      selectedDiscursiveId: "DISS-01",
+      discursiveTab: "write",
+      selectedDiscursiveId: "",
       lastSaved: new Date().toISOString()
     };
+  }
+
+  function loadState() {
+    if (window.TracksManager) {
+      const track = window.TracksManager.getActiveTrack();
+      return window.TracksManager.getTrackState(track.id);
+    }
+    return getDefaultState();
   }
 
   let state = loadState();
@@ -118,7 +127,12 @@
 
   function rebuildQuestionBank() {
     const map = new Map();
-    BASE_QUESTIONS.forEach(q => { if (q && q.id) map.set(q.id, q); });
+    if (window.TracksManager) {
+      const track = window.TracksManager.getActiveTrack();
+      window.TracksManager.getQuestionsForTrack(track.id).forEach(q => {
+        if (q && q.id) map.set(q.id, q);
+      });
+    }
     (state && Array.isArray(state.customQuestions) ? state.customQuestions : []).forEach(q => {
       if (q && q.id) map.set(q.id, q);
     });
@@ -129,27 +143,83 @@
   rebuildQuestionBank();
   ensure();
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return getDefaultState();
-      return Object.assign(getDefaultState(), JSON.parse(raw));
-    } catch (e) {
-      return getDefaultState();
-    }
-  }
-
   function saveState() {
     try {
       state.lastSaved = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (window.TracksManager) {
+        const track = window.TracksManager.getActiveTrack();
+        window.TracksManager.saveTrackState(track.id, state);
+      }
       updateSidebarBadges();
       updateSaveIndicator();
-      if (window.CloudSync) window.CloudSync.schedulePush(state);
+      if (window.CloudSync && window.TracksManager) {
+        window.CloudSync.schedulePush(window.TracksManager.getWorkspaceSnapshot());
+      }
     } catch (e) {
       console.error("Erro ao salvar no localStorage:", e);
     }
   }
+
+  function renderTrackSwitcherUI() {
+    if (!window.TracksManager) return;
+    const tracks = window.TracksManager.listTracks();
+    const active = window.TracksManager.getActiveTrack();
+
+    const sel = document.getElementById("track-select");
+    if (sel) {
+      sel.innerHTML = tracks.map(t => {
+        const prefix = t.builtin ? "" : "★ ";
+        return `<option value="${escapeHtml(t.id)}" ${t.id === active.id ? "selected" : ""}>${prefix}${escapeHtml(t.shortName)}</option>`;
+      }).join("");
+    }
+    const badgeEl = document.getElementById("brand-badge-text");
+    const titleEl = document.getElementById("brand-title");
+    const subEl = document.getElementById("brand-subtitle");
+    if (badgeEl) badgeEl.textContent = active.badge || "EE";
+    if (titleEl) titleEl.textContent = "Estuda Edital";
+    if (subEl) subEl.textContent = active.shortName || "Multi-Concurso";
+  }
+
+  window.switchTrack = function (trackId) {
+    if (!window.TracksManager) return;
+    clearInterval(SIM.t);
+    SIM.on = false;
+    Object.keys(PERM).forEach(k => delete PERM[k]);
+    Object.keys(SESS).forEach(k => delete SESS[k]);
+    REVDONE.clear();
+
+    window.TracksManager.setActiveTrack(trackId);
+    state = loadState();
+    ensure();
+    rebuildQuestionBank();
+    renderTrackSwitcherUI();
+    renderCountdown();
+    updateSidebarBadges();
+    updateSaveIndicator();
+    switchView(state.currentView || "dashboard");
+  };
+
+  window.reloadActiveTrack = function () {
+    if (!window.TracksManager) return;
+    window.TracksManager.syncWindowGlobalsForTrack(window.TracksManager.getActiveTrack());
+    rebuildQuestionBank();
+    renderTrackSwitcherUI();
+    renderCountdown();
+    updateSidebarBadges();
+    if (window.CloudSync) window.CloudSync.schedulePush(window.TracksManager.getWorkspaceSnapshot());
+  };
+
+  window.appendCustomQuestions = function (list) {
+    if (!Array.isArray(list) || !list.length) return;
+    ensure();
+    const existingMap = new Map(state.customQuestions.map(q => [q.id, q]));
+    list.forEach(q => {
+      if (q && q.id) existingMap.set(q.id, Object.assign({ sourceType: "real" }, q));
+    });
+    state.customQuestions = Array.from(existingMap.values());
+    rebuildQuestionBank();
+    saveState();
+  };
 
   function updateSaveIndicator() {
     const el = document.getElementById("save-status-indicator");
@@ -167,7 +237,9 @@
   }
 
   function subjName(id) {
-    const d = window.EDITAL_DATA.disciplinas.find(x => x.id === id);
+    const d = window.EDITAL_DATA && Array.isArray(window.EDITAL_DATA.disciplinas)
+      ? window.EDITAL_DATA.disciplinas.find(x => x.id === id)
+      : null;
     return d ? d.nome : id;
   }
 
@@ -203,7 +275,10 @@
     const p = state.reviews[qid];
     const step = !ok ? 0 : (conf === "certeza" ? (p ? Math.min(p.step + 1, STEPS.length - 1) : 1) : (p ? p.step : 0));
     let due = new Date(Date.now() + STEPS[step] * 864e5);
-    if (due > EXAM_DATE) due = new Date(Math.max(Date.now() + 864e5, EXAM_DATE.getTime() - 864e5));
+    const examDate = getExamDate();
+    if (examDate && due > examDate) {
+      due = new Date(Math.max(Date.now() + 864e5, examDate.getTime() - 864e5));
+    }
     state.reviews[qid] = { step, due: due.toISOString(), conf: conf || null };
   }
 
@@ -345,9 +420,17 @@
   }
 
   function renderCountdown() {
-    const diffMs = EXAM_DATE.getTime() - Date.now();
-    const days = Math.max(0, Math.ceil(diffMs / 864e5));
     const el = document.getElementById("countdown-days");
+    const lbl = document.getElementById("countdown-label");
+    const examDate = getExamDate();
+    if (!examDate) {
+      if (lbl) lbl.textContent = "Data da Prova";
+      if (el) el.textContent = "A definir";
+      return;
+    }
+    const diffMs = examDate.getTime() - Date.now();
+    const days = Math.max(0, Math.ceil(diffMs / 864e5));
+    if (lbl) lbl.textContent = `Prova ${examDate.toLocaleDateString("pt-BR")}`;
     if (el) el.textContent = `${days} dias`;
   }
 
@@ -390,7 +473,7 @@
     if (target) target.classList.add("active");
 
     const titleEl = document.getElementById("topbar-view-title");
-    if (titleEl) titleEl.textContent = VIEW_TITLES[validView] || "DPDF TI";
+    if (titleEl) titleEl.textContent = VIEW_TITLES[validView] || "Estuda Edital";
 
     if (validView === "dashboard") renderDashboard();
     else if (validView === "diagnostic") renderDiagnosticView();
@@ -400,6 +483,7 @@
     else if (validView === "simulado") renderSim();
     else if (validView === "discursive") renderDiscursiveView();
     else if (validView === "flashcards") renderFlashcardsView();
+    else if (validView === "import") { if (window.OnboardingWizard) window.OnboardingWizard.renderImportView(); }
     else if (validView === "edital") renderEditalView();
     else if (validView === "handoff") renderHandoffView();
 
@@ -541,13 +625,13 @@
       <div class="section-head">
         <div>
           <h2>Disciplinas do Edital</h2>
-          <p>Cargo 4: Analista — Informática (Desenvolvimento de Sistemas) • Instituto ACCESS</p>
+          <p>${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.concurso) || "Meu Concurso")} • ${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.cargo) || "")}${window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.banca ? " • " + escapeHtml(window.EDITAL_DATA.metadata.banca) : ""}</p>
         </div>
         <div class="segmented-tabs">
-          <button class="seg-btn ${filter === "ALL" ? "active" : ""}" onclick="setDashFilter('ALL')">Todas (17)</button>
+          <button class="seg-btn ${filter === "ALL" ? "active" : ""}" onclick="setDashFilter('ALL')">Todas (${window.EDITAL_DATA.disciplinas.length})</button>
           <button class="seg-btn ${filter === "WEAK" ? "active" : ""}" onclick="setDashFilter('WEAK')">Pontos Fracos (${g.weakSubjects.length})</button>
-          <button class="seg-btn ${filter === "SPEC" ? "active" : ""}" onclick="setDashFilter('SPEC')">Específicos TI (10)</button>
-          <button class="seg-btn ${filter === "BASIC" ? "active" : ""}" onclick="setDashFilter('BASIC')">Básicos (7)</button>
+          <button class="seg-btn ${filter === "SPEC" ? "active" : ""}" onclick="setDashFilter('SPEC')">Específicos (${window.EDITAL_DATA.disciplinas.filter(d => d.categoria === "especificos").length})</button>
+          <button class="seg-btn ${filter === "BASIC" ? "active" : ""}" onclick="setDashFilter('BASIC')">Básicos (${window.EDITAL_DATA.disciplinas.filter(d => d.categoria === "basicos").length})</button>
         </div>
       </div>
 
@@ -762,13 +846,10 @@
                 <label class="field-label">Banca</label>
                 <select class="form-control" onchange="changeDiagBanca(this.value)">
                   <option value="ALL" ${bancaFilter === "ALL" ? "selected" : ""}>Todas as bancas</option>
-                  <option value="ACCESS" ${bancaFilter === "ACCESS" ? "selected" : ""}>Instituto ACCESS</option>
-                  <option value="FCC" ${bancaFilter === "FCC" ? "selected" : ""}>FCC</option>
-                  <option value="Quadrix" ${bancaFilter === "Quadrix" ? "selected" : ""}>Quadrix</option>
-                  <option value="IADES" ${bancaFilter === "IADES" ? "selected" : ""}>IADES</option>
-                  <option value="CEBRASPE" ${bancaFilter === "CEBRASPE" ? "selected" : ""}>CEBRASPE</option>
-                  <option value="FGV" ${bancaFilter === "FGV" ? "selected" : ""}>FGV</option>
-                  <option value="IBEST" ${bancaFilter === "IBEST" ? "selected" : ""}>Instituto IBEST</option>
+                  ${Array.from(new Set(ALL_QUESTIONS.map(q => (q.banca || "").trim()).filter(Boolean)))
+                    .sort((a, b) => a.localeCompare(b))
+                    .map(b => `<option value="${escapeHtml(b)}" ${bancaFilter === b ? "selected" : ""}>${escapeHtml(b)}</option>`)
+                    .join("")}
                 </select>
               </div>
               <div>
@@ -881,8 +962,9 @@
       byTopic[key].push(q);
     });
 
+    const meta = (window.EDITAL_DATA && window.EDITAL_DATA.metadata) || {};
     const lines = [
-      "Você é meu Tutor Adaptativo de Concursos de TI, especialista no Edital Nº 1 — DPDF (Cargo 4: Analista de Apoio à Assistência Judiciária — Desenvolvimento de Sistemas, Banca Instituto ACCESS).",
+      `Você é meu Tutor Adaptativo de Concursos Públicos, especialista no edital "${meta.concurso || "Meu Concurso"}" (${meta.cargo || "Cargo"}, Banca ${meta.banca || "Multibanca"}).`,
       "",
       "## MISSÃO",
       "Abaixo estão EXCLUSIVAMENTE as questões que eu ERREI. Não perca tempo com teoria genérica do que eu já sei. Monte uma AULA CIRÚRGICA focada nos meus erros reais.",
@@ -892,11 +974,11 @@
       "2. Para cada lacuna identificada:",
       "   - Explique o conceito do zero com clareza e rigor técnico de prova;",
       "   - Mostre EXATAMENTE por que a alternativa que eu marquei estava errada (desmontando o meu raciocínio falso);",
-      "   - Destaque a pegadinha clássica da banca (Instituto ACCESS / FCC / IADES / Quadrix / Cebraspe);",
-      "   - Dê um exemplo prático (trecho de código, SQL, diagrama textual ou caso concreto da lei);",
+      `   - Destaque a pegadinha clássica da banca (${meta.banca || "banca organizadora"});`,
+      "   - Dê um exemplo prático ou caso concreto da matéria/lei;",
       "   - Crie uma tabela comparativa ou regra rápida para fixação.",
       "3. Se meu erro foi marcado como 'certeza' (erro confiante / falso positivo), dê atenção dobrada: explique qual conceito confundi.",
-      "4. Ao final, entregue um checklist de revisão ativa de 5 pontos-chave (sem inventar questões fictícias; sugira filtros exatos do Qconcursos para eu treinar os tópicos fracos).",
+      "4. Ao final, entregue um checklist de revisão ativa de 5 pontos-chave.",
       "",
       `## MEUS ERROS REGISTRADOS (${wrong.length} questão(ões))`,
       ""
@@ -1457,7 +1539,10 @@
                   <option value="10">10 questões (30 min)</option>
                   <option value="20" selected>20 questões (60 min)</option>
                   <option value="30">30 questões (90 min)</option>
-                  <option value="70">70 questões — Padrão DPDF (3h30)</option>
+                  ${(() => {
+                    const tot = (window.EDITAL_DATA && window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.provas && window.EDITAL_DATA.metadata.provas.objetiva && window.EDITAL_DATA.metadata.provas.objetiva.totalQuestoes) || 60;
+                    return `<option value="${tot}">${tot} questões — Padrão do Edital</option>`;
+                  })()}
                   <option value="${realCount}">Todas as reais (${realCount})</option>
                 </select>
               </div>
@@ -1553,13 +1638,13 @@
     const container = document.getElementById("discursive-content");
     if (!container) return;
 
-    const data = window.DISCURSIVE_AND_FLASHCARDS;
+    const data = window.DISCURSIVE_AND_FLASHCARDS || { temasDissertacao: [], questoesTecnicasDiscursivas: [], flashcards: [] };
     const tab = state.discursiveTab || "write";
     const allItems = [
-      ...data.temasDissertacao.map(t => ({
+      ...(data.temasDissertacao || []).map(t => ({
         id: t.id,
         type: "diss",
-        label: `[Dissertação 20 pts] ${t.titulo}`,
+        label: `[Dissertação ${t.valorMaximo || 20} pts] ${t.titulo}`,
         titulo: t.titulo,
         sub: `${t.categoria} • Máx. ${t.maxLinhas} linhas`,
         maxLinhas: t.maxLinhas,
@@ -1568,10 +1653,10 @@
         espelho: t.espelhoNotaMaxima,
         checklist: t.pontosChaveAvaliacao
       })),
-      ...data.questoesTecnicasDiscursivas.map(q => ({
+      ...(data.questoesTecnicasDiscursivas || []).map(q => ({
         id: q.id,
         type: "qtec",
-        label: `[Questão TI 10 pts] ${q.titulo}`,
+        label: `[Questão Técnica ${q.valorMaximo || 10} pts] ${q.titulo}`,
         titulo: q.titulo,
         sub: `${q.disciplina} • Máx. ${q.maxLinhas} linhas`,
         maxLinhas: q.maxLinhas,
@@ -1581,6 +1666,20 @@
         checklist: q.checklistCorrecao
       }))
     ];
+    if (!allItems.length) {
+      allItems.push({
+        id: "LIVRE-01",
+        type: "diss",
+        label: "[Treino Livre] Dissertação / Estudo de Caso (30 linhas)",
+        titulo: "Treino Livre de Discursiva",
+        sub: "Personalizado • Máx. 30 linhas",
+        maxLinhas: 30,
+        valorMaximo: 20,
+        enunciado: "Use este espaço para treinar redação dissertativa ou estudo de caso do seu concurso, controlando o limite de linhas e avaliando sua nota na aba Calculadora.",
+        espelho: "Estrutura recomendada: 1) Introdução com tese clara; 2) Desenvolvimento em 2–3 parágrafos respondendo a cada tópico do comando; 3) Conclusão objetiva.",
+        checklist: ["Respondeu a todos os tópicos do comando", "Respeitou o limite máximo de linhas", "Revisou concordância, regência e pontuação"]
+      });
+    }
 
     const selected = allItems.find(x => x.id === state.selectedDiscursiveId) || allItems[0];
     const draft = (state.discursiveDrafts && state.discursiveDrafts[selected.id]) || { text: "" };
@@ -1708,13 +1807,49 @@
   // ==========================================================================
   // 7. FLASHCARDS DE REVISÃO ATIVA
   // ==========================================================================
+  function getActiveFlashcards() {
+    const preset = (window.DISCURSIVE_AND_FLASHCARDS && Array.isArray(window.DISCURSIVE_AND_FLASHCARDS.flashcards))
+      ? window.DISCURSIVE_AND_FLASHCARDS.flashcards
+      : [];
+    if (preset.length) return preset;
+    // Gera flashcards automáticos a partir das micro-aulas das questões da trilha!
+    const generated = [];
+    const seen = new Set();
+    ALL_QUESTIONS.forEach(q => {
+      if (q && q.remediationLesson && q.remediationLesson.title && q.remediationLesson.coreConcept) {
+        const key = q.remediationLesson.title.toLowerCase();
+        if (seen.has(key)) return;
+        seen.add(key);
+        generated.push({
+          disciplina: subjName(q.subjectId),
+          frente: `${q.remediationLesson.title}\n\nQual é a regra-chave cobrada em prova?`,
+          verso: `${q.remediationLesson.coreConcept}${q.remediationLesson.accessTrap ? "\n\nPegadinha: " + q.remediationLesson.accessTrap : ""}${q.remediationLesson.mnemonic ? "\n\nMacete: " + q.remediationLesson.mnemonic : ""}`
+        });
+      }
+    });
+    return generated;
+  }
+
   function renderFlashcardsView() {
     const container = document.getElementById("flashcards-content");
     if (!container) return;
     ensure();
 
-    const cards = window.DISCURSIVE_AND_FLASHCARDS.flashcards || [];
-    if (!cards.length) return;
+    const cards = getActiveFlashcards();
+    if (!cards.length) {
+      container.innerHTML = `
+        <div class="focus-Stage">
+          <div class="card" style="text-align:center; padding:28px;">
+            <h3>Nenhum flashcard disponível nesta trilha ainda</h3>
+            <p style="font-size:0.86rem; color:var(--text-secondary); margin:8px 0 14px;">
+              Ative pacotes da Base Compartilhada ou importe provas na aba <strong>Importar Provas</strong> para gerar flashcards automáticos.
+            </p>
+            <button class="btn btn-primary btn-sm" onclick="switchView('import')">Importar Provas / Base</button>
+          </div>
+        </div>
+      `;
+      return;
+    }
     const idx = Math.min(Math.max(0, state.flashcardIndex || 0), cards.length - 1);
     const card = cards[idx];
     const f = state.fc[idx];
@@ -1755,14 +1890,16 @@
 
   window.flipFlashcard = function () { state.flashcardFlipped = !state.flashcardFlipped; renderFlashcardsView(); };
   window.nextFlashcard = function () {
-    const total = window.DISCURSIVE_AND_FLASHCARDS.flashcards.length;
+    const total = getActiveFlashcards().length;
+    if (!total) return;
     state.flashcardIndex = (state.flashcardIndex + 1) % total;
     state.flashcardFlipped = false;
     saveState();
     renderFlashcardsView();
   };
   window.prevFlashcard = function () {
-    const total = window.DISCURSIVE_AND_FLASHCARDS.flashcards.length;
+    const total = getActiveFlashcards().length;
+    if (!total) return;
     state.flashcardIndex = (state.flashcardIndex - 1 + total) % total;
     state.flashcardFlipped = false;
     saveState();
@@ -1788,7 +1925,8 @@
     const totalTopics = window.EDITAL_DATA.disciplinas.reduce((acc, d) => acc + d.topicos.length, 0);
     const checkedCount = Object.keys(state.checkedTopics || {}).filter(k => state.checkedTopics[k]).length;
 
-    const cronogramaRows = window.EDITAL_DATA.cronograma.map(c => `
+    const cronograma = Array.isArray(window.EDITAL_DATA.cronograma) ? window.EDITAL_DATA.cronograma : [];
+    const cronogramaRows = cronograma.map(c => `
       <tr style="${c.destaque ? "background:var(--accent-soft); font-weight:600;" : ""}">
         <td>${escapeHtml(c.ordem)}</td>
         <td>${escapeHtml(c.evento)}</td>
@@ -1826,6 +1964,7 @@
       `;
     }).join("");
 
+    const editalLabel = (window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.edital) || "Edital Ativo";
     container.innerHTML = `
       <div class="focus-Stage">
         <div class="section-head">
@@ -1835,17 +1974,19 @@
           </div>
         </div>
 
-        <details class="guide-box">
-          <summary>Cronograma Oficial Previsto (Anexo II — Edital Nº 1 DPDF)</summary>
-          <div class="guide-body">
-            <div class="lesson-table-wrapper" style="margin:0;">
-              <table class="lesson-table">
-                <thead><tr><th>Item</th><th>Evento</th><th>Data</th></tr></thead>
-                <tbody>${cronogramaRows}</tbody>
-              </table>
+        ${cronograma.length ? `
+          <details class="guide-box">
+            <summary>Cronograma Previsto (${escapeHtml(editalLabel)})</summary>
+            <div class="guide-body">
+              <div class="lesson-table-wrapper" style="margin:0;">
+                <table class="lesson-table">
+                  <thead><tr><th>Item</th><th>Evento</th><th>Data</th></tr></thead>
+                  <tbody>${cronogramaRows}</tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </details>
+          </details>
+        ` : ""}
 
         ${verticalizadoHtml}
       </div>
@@ -1912,25 +2053,58 @@
         </div>
 
         <div class="card">
-          <h3 class="card-title" style="margin-bottom:6px;">Banco de Questões Reais</h3>
-          <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:14px;">
-            Total carregado: <strong>${ALL_QUESTIONS.length} questões</strong> (${realCount} reais • ${customCount} importadas localmente no navegador).
-          </p>
-          <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" onclick="triggerImportQuestionsJson()">Importar Questões Reais (.json)</button>
-          </div>
+          <h3 class="card-title" style="margin-bottom:6px;">Trilha Ativa &amp; Banco de Questões</h3>
+          ${(() => {
+            const tr = window.TracksManager ? window.TracksManager.getActiveTrack() : null;
+            return `
+              <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:14px;">
+                Concurso ativo: <strong>${escapeHtml(tr ? tr.shortName : "Padrão")}</strong> •
+                Total carregado: <strong>${ALL_QUESTIONS.length} questões</strong> (${realCount} reais • ${customCount} importadas nesta trilha).
+              </p>
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" onclick="switchView('import')">Importar PDF de Prova / Base Comum</button>
+                <button class="btn btn-outline btn-sm" onclick="triggerImportQuestionsJson()">Importar Questões (.json)</button>
+                <button class="btn btn-outline btn-sm" onclick="exportTrackBundleJson()">Exportar Trilha (.json)</button>
+                ${tr && !tr.builtin ? `<button class="btn btn-outline btn-sm" style="color:var(--danger-text);" onclick="deleteActiveCustomTrack()">Excluir esta Trilha</button>` : ""}
+              </div>
+            `;
+          })()}
         </div>
 
         <div class="card">
           <h3 class="card-title" style="margin-bottom:6px;">Sincronização &amp; Backup entre Dispositivos</h3>
           <p style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:14px;">
-            O progresso fica salvo no <code>localStorage</code> deste navegador. Para levar do PC para o celular (ou vice-versa), baixe o JSON e use <strong>Restaurar (Mesclar)</strong>.
+            Todas as suas trilhas e progresso ficam salvos no <code>localStorage</code> deste navegador (isolados por <code>track_id</code>). Você pode baixar o backup completo ou importar uma trilha compartilhada (<code>.json</code>).
           </p>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" onclick="exportProgressJson()">Baixar Backup (.json)</button>
-            <button class="btn btn-outline btn-sm" onclick="triggerImportBackup()">Restaurar / Mesclar Backup</button>
-            <button class="btn btn-outline btn-sm" style="color:var(--danger-text);" onclick="resetAllProgress()">Zerar Respostas</button>
+            <button class="btn btn-primary btn-sm" onclick="exportProgressJson()">Baixar Backup Completo (.json)</button>
+            <button class="btn btn-outline btn-sm" onclick="triggerImportBackup()">Restaurar Backup / Importar Trilha</button>
+            <button class="btn btn-outline btn-sm" style="color:var(--danger-text);" onclick="resetAllProgress()">Zerar Respostas desta Trilha</button>
           </div>
+          <details style="margin-top:12px; border-top:1px solid var(--border-color); padding-top:10px;">
+            <summary style="cursor:pointer; font-size:0.8rem; color:var(--text-muted); font-weight:600;">SQL para tabelas multi-concurso no Supabase (user_tracks + user_track_progress)</summary>
+            <pre style="margin-top:8px; font-size:0.75rem; background:var(--bg-elevated); padding:10px; border-radius:8px; overflow-x:auto;">create table if not exists public.user_tracks (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  track_id text not null,
+  track_data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, track_id)
+);
+alter table public.user_tracks enable row level security;
+create policy "user_tracks_owner_all" on public.user_tracks
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create table if not exists public.user_track_progress (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  track_id text not null,
+  state jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  primary key (user_id, track_id)
+);
+alter table public.user_track_progress enable row level security;
+create policy "user_track_progress_owner_all" on public.user_track_progress
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);</pre>
+          </details>
         </div>
       </div>
     `;
@@ -1979,11 +2153,37 @@
     event.target.value = "";
   };
 
-  window.exportProgressJson = function () {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+  window.exportTrackBundleJson = function () {
+    if (!window.TracksManager) return;
+    const active = window.TracksManager.getActiveTrack();
+    const bundle = window.TracksManager.exportTrackBundle(active.id);
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(bundle, null, 2));
     const dlAnchor = document.createElement("a");
     dlAnchor.setAttribute("href", dataStr);
-    dlAnchor.setAttribute("download", `progresso_dpdf_ti_${new Date().toISOString().slice(0, 10)}.json`);
+    dlAnchor.setAttribute("download", `trilha_${active.id}_${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+  };
+
+  window.deleteActiveCustomTrack = function () {
+    if (!window.TracksManager) return;
+    const active = window.TracksManager.getActiveTrack();
+    if (active.builtin) {
+      alert("Trilhas prontas da plataforma não podem ser excluídas.");
+      return;
+    }
+    if (!confirm(`Excluir a trilha "${active.shortName}" e todo o progresso dela?`)) return;
+    window.TracksManager.deleteCustomTrack(active.id);
+    window.switchTrack(window.TracksManager.getActiveTrack().id);
+  };
+
+  window.exportProgressJson = function () {
+    const payload = window.TracksManager ? window.TracksManager.getWorkspaceSnapshot() : state;
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+    const dlAnchor = document.createElement("a");
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `estuda_edital_backup_${new Date().toISOString().slice(0, 10)}.json`);
     document.body.appendChild(dlAnchor);
     dlAnchor.click();
     dlAnchor.remove();
@@ -1994,50 +2194,9 @@
   };
 
   function mergeProgress(current, imported) {
-    const merged = Object.assign({}, current);
-    const ts = x => (x && x.timestamp ? Date.parse(x.timestamp) || 0 : 0);
-
-    merged.answers = Object.assign({}, current.answers || {});
-    Object.keys(imported.answers || {}).forEach(qid => {
-      const cur = merged.answers[qid];
-      if (!cur || ts(imported.answers[qid]) >= ts(cur)) merged.answers[qid] = imported.answers[qid];
-    });
-
-    merged.checkedTopics = Object.assign({}, current.checkedTopics || {}, imported.checkedTopics || {});
-    merged.completedLessons = Object.assign({}, current.completedLessons || {}, imported.completedLessons || {});
-
-    const impNewer = (Date.parse(imported.lastSaved) || 0) > (Date.parse(current.lastSaved) || 0);
-    merged.discursiveDrafts = Object.assign({}, current.discursiveDrafts || {});
-    Object.keys(imported.discursiveDrafts || {}).forEach(tid => {
-      if (!merged.discursiveDrafts[tid] || impNewer) merged.discursiveDrafts[tid] = imported.discursiveDrafts[tid];
-    });
-
-    merged.reviews = Object.assign({}, imported.reviews || {}, current.reviews || {});
-    merged.errors = Object.assign({}, imported.errors || {}, current.errors || {});
-    merged.sr = Object.assign({}, imported.sr || {}, current.sr || {});
-    merged.fc = Object.assign({}, imported.fc || {}, current.fc || {});
-
-    const simMap = new Map();
-    (imported.simulados || []).forEach(s => s && s.date && simMap.set(s.date, s));
-    (current.simulados || []).forEach(s => s && s.date && simMap.set(s.date, s));
-    merged.simulados = Array.from(simMap.values()).sort((a, b) => Date.parse(a.date || 0) - Date.parse(b.date || 0));
-
-    const errMap = new Map();
-    (imported.errorHistory || []).forEach(e => { if (e && e.id) errMap.set(`${e.id}|${e.timestamp || ""}`, e); });
-    (current.errorHistory || []).forEach(e => { if (e && e.id) errMap.set(`${e.id}|${e.timestamp || ""}`, e); });
-    merged.errorHistory = Array.from(errMap.values()).sort((a, b) => Date.parse(a.timestamp || 0) - Date.parse(b.timestamp || 0));
-
-    const lessonsMap = new Map();
-    (imported.aiLessons || []).forEach(l => l && l.id && lessonsMap.set(l.id, l));
-    (current.aiLessons || []).forEach(l => l && l.id && lessonsMap.set(l.id, l));
-    merged.aiLessons = Array.from(lessonsMap.values()).sort((a, b) => Date.parse(b.createdAt || 0) - Date.parse(a.createdAt || 0));
-
-    const qMap = new Map();
-    (imported.customQuestions || []).forEach(q => q && q.id && qMap.set(q.id, q));
-    (current.customQuestions || []).forEach(q => q && q.id && qMap.set(q.id, q));
-    merged.customQuestions = Array.from(qMap.values());
-
-    return merged;
+    return window.TracksManager
+      ? window.TracksManager.mergeSingleTrackProgress(current, imported)
+      : Object.assign({}, current, imported);
   }
 
   function askImportMode(onChoice) {
@@ -2072,20 +2231,35 @@
     reader.onload = function (e) {
       try {
         const imported = JSON.parse(e.target.result);
-        const isValid = imported && typeof imported === "object" && (
+        // Caso 1: pacote compartilhável de trilha (estuda_edital_track_v1)
+        if (imported && imported.format === "estuda_edital_track_v1" && window.TracksManager) {
+          const created = window.TracksManager.importTrackBundle(imported);
+          window.switchTrack(created.id);
+          alert(`Trilha "${created.shortName}" importada com sucesso!`);
+          return;
+        }
+        // Caso 2: workspace multi-track ou backup de progresso legado
+        const isWorkspace = imported && typeof imported === "object" && (imported.trackStates || imported.customTracks);
+        const isLegacy = imported && typeof imported === "object" && (
           imported.answers || imported.checkedTopics || imported.discursiveDrafts ||
           imported.customQuestions || imported.aiLessons || imported.reviews
         );
-        if (!isValid) {
-          alert("Arquivo JSON inválido. Selecione um backup exportado pela plataforma.");
+        if (!isWorkspace && !isLegacy) {
+          alert("Arquivo JSON inválido. Selecione um backup ou trilha exportada pelo Estuda Edital.");
           return;
         }
         askImportMode(mode => {
-          state = mode === "merge"
-            ? Object.assign(getDefaultState(), mergeProgress(state, imported))
-            : Object.assign(getDefaultState(), imported);
+          if (isWorkspace && window.TracksManager) {
+            window.TracksManager.applyMergedWorkspace(imported);
+            state = loadState();
+          } else {
+            state = mode === "merge"
+              ? Object.assign(getDefaultState(), mergeProgress(state, imported))
+              : Object.assign(getDefaultState(), imported);
+          }
           ensure();
           rebuildQuestionBank();
+          renderTrackSwitcherUI();
           saveState();
           switchView(state.currentView || "dashboard");
         });
@@ -2098,10 +2272,9 @@
   };
 
   window.resetAllProgress = function () {
-    if (!confirm("Zerar respostas, revisões e rascunhos? (Suas questões reais importadas e aulas IA salvas serão mantidas).")) return;
+    if (!confirm("Zerar respostas, revisões e rascunhos desta trilha? (Suas questões importadas e aulas IA salvas serão mantidas).")) return;
     const preservedQuestions = state.customQuestions || [];
     const preservedLessons = state.aiLessons || [];
-    const preservedTheme = state.theme || "dark";
     clearInterval(SIM.t);
     SIM.on = false;
     Object.keys(PERM).forEach(k => delete PERM[k]);
@@ -2111,7 +2284,6 @@
     state = getDefaultState();
     state.customQuestions = preservedQuestions;
     state.aiLessons = preservedLessons;
-    state.theme = preservedTheme;
     rebuildQuestionBank();
     saveState();
     switchView(state.currentView || "dashboard");
@@ -2119,32 +2291,37 @@
 
   window.toggleTheme = function () {
     document.body.classList.toggle("light-theme");
-    state.theme = document.body.classList.contains("light-theme") ? "light" : "dark";
+    const theme = document.body.classList.contains("light-theme") ? "light" : "dark";
+    if (window.TracksManager) window.TracksManager.setTheme(theme);
     saveState();
   };
 
   // Inicialização segura (funciona mesmo se DOMContentLoaded já tiver disparado)
   function initApp() {
-    if (state.theme === "light") {
+    const theme = window.TracksManager ? window.TracksManager.getTheme() : "dark";
+    if (theme === "light") {
       document.body.classList.add("light-theme");
     }
+    renderTrackSwitcherUI();
     renderCountdown();
     updateSidebarBadges();
     updateSaveIndicator();
     switchView(state.currentView || "dashboard");
 
-    if (window.CloudSync) {
+    if (window.CloudSync && window.TracksManager) {
       window.CloudSync.init({
-        getState: () => state,
-        applyMergedState: (cloudState) => {
-          state = mergeProgress(state, cloudState);
+        getState: () => window.TracksManager.getWorkspaceSnapshot(),
+        applyMergedState: (cloudWorkspace) => {
+          const mergedWs = window.TracksManager.applyMergedWorkspace(cloudWorkspace);
+          state = loadState();
           ensure();
           rebuildQuestionBank();
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          renderTrackSwitcherUI();
+          renderCountdown();
           updateSidebarBadges();
           updateSaveIndicator();
           switchView(state.currentView || "dashboard");
-          return state;
+          return mergedWs;
         },
         onStatusChange: () => {
           updateSaveIndicator();
@@ -2153,6 +2330,11 @@
           }
         }
       });
+    }
+
+    // Na primeira visita, abre o Wizard guiado (o usuário pode pular ou escolher trilha pronta em 1 clique)
+    if (window.TracksManager && !window.TracksManager.isOnboardingCompleted() && window.OnboardingWizard) {
+      setTimeout(() => window.OnboardingWizard.open(1), 250);
     }
   }
 

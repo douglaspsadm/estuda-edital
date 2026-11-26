@@ -12,7 +12,9 @@
   const SUPABASE_URL = "https://qcxukkvksgfhldftunbr.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_vHNCG0XErlBiXq6XyvM3BA_Ft08Av3b";
   const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
-  const TABLE_NAME = "user_progress";
+  const TRACKS_TABLE = "user_tracks";
+  const TRACK_PROGRESS_TABLE = "user_track_progress";
+  const LEGACY_TABLE = "user_progress";
 
   let client = null;
   let currentUser = null;
@@ -21,6 +23,7 @@
   let lastError = null;
   let pushTimer = null;
   let initStarted = false;
+  let useLegacyFallback = false;
   let hooks = {
     getState: null,
     applyMergedState: null,
@@ -97,49 +100,88 @@
     return client;
   }
 
+  function isMissingTableError(err) {
+    const msg = String((err && (err.message || err.details || err.code)) || "");
+    return msg.includes("does not exist") || msg.includes("42P01") || msg.includes("Could not find the table");
+  }
+
+  async function pushWorkspaceMultiTrack(ws) {
+    const now = new Date().toISOString();
+    const customTracks = (ws && ws.customTracks) || {};
+    const trackStates = (ws && ws.trackStates) || {};
+
+    const trackRows = Object.keys(customTracks).map(tid => ({
+      user_id: currentUser.id,
+      track_id: tid,
+      track_data: customTracks[tid],
+      updated_at: now
+    }));
+    if (trackRows.length) {
+      const { error } = await client.from(TRACKS_TABLE).upsert(trackRows, { onConflict: "user_id,track_id" });
+      if (error) throw error;
+    }
+
+    const progressRows = Object.keys(trackStates).map(tid => ({
+      user_id: currentUser.id,
+      track_id: tid,
+      state: trackStates[tid],
+      updated_at: now
+    }));
+    if (progressRows.length) {
+      const { error } = await client.from(TRACK_PROGRESS_TABLE).upsert(progressRows, { onConflict: "user_id,track_id" });
+      if (error) throw error;
+    }
+  }
+
   async function pullAndMerge() {
     if (!client || !currentUser) return;
     setStatus("syncing");
     try {
+      const localWs = hooks.getState ? hooks.getState() : null;
+
+      if (!useLegacyFallback) {
+        const [tracksRes, progRes] = await Promise.all([
+          client.from(TRACKS_TABLE).select("track_id, track_data").eq("user_id", currentUser.id),
+          client.from(TRACK_PROGRESS_TABLE).select("track_id, state").eq("user_id", currentUser.id)
+        ]);
+
+        if (!tracksRes.error && !progRes.error) {
+          const remoteWs = { customTracks: {}, trackStates: {} };
+          (tracksRes.data || []).forEach(r => { if (r && r.track_id && r.track_data) remoteWs.customTracks[r.track_id] = r.track_data; });
+          (progRes.data || []).forEach(r => { if (r && r.track_id && r.state) remoteWs.trackStates[r.track_id] = r.state; });
+
+          const finalWs = typeof hooks.applyMergedState === "function" ? hooks.applyMergedState(remoteWs) : localWs;
+          if (finalWs) await pushWorkspaceMultiTrack(finalWs);
+          setStatus("synced");
+          return;
+        }
+
+        if (isMissingTableError(tracksRes.error) || isMissingTableError(progRes.error)) {
+          useLegacyFallback = true;
+        } else {
+          throw tracksRes.error || progRes.error;
+        }
+      }
+
+      // Fallback para tabela única user_progress (compatibilidade imediata)
       const { data, error } = await client
-        .from(TABLE_NAME)
+        .from(LEGACY_TABLE)
         .select("state, updated_at")
         .eq("user_id", currentUser.id)
         .maybeSingle();
-
       if (error) throw error;
 
-      const localState = hooks.getState ? hooks.getState() : null;
-
+      let finalWs = localWs;
       if (data && data.state && typeof data.state === "object" && Object.keys(data.state).length > 0) {
-        let finalState = data.state;
         if (typeof hooks.applyMergedState === "function") {
-          finalState = hooks.applyMergedState(data.state);
+          finalWs = hooks.applyMergedState(data.state);
         }
-        // Envia o estado mesclado de volta se houver progresso local adicional
-        if (localState) {
-          const { error: upErr } = await client
-            .from(TABLE_NAME)
-            .upsert(
-              {
-                user_id: currentUser.id,
-                state: finalState,
-                updated_at: new Date().toISOString()
-              },
-              { onConflict: "user_id" }
-            );
-          if (upErr) throw upErr;
-        }
-      } else if (localState) {
-        // Primeiro login neste usuário: envia progresso local atual para a nuvem
+      }
+      if (finalWs) {
         const { error: upErr } = await client
-          .from(TABLE_NAME)
+          .from(LEGACY_TABLE)
           .upsert(
-            {
-              user_id: currentUser.id,
-              state: localState,
-              updated_at: new Date().toISOString()
-            },
+            { user_id: currentUser.id, state: finalWs, updated_at: new Date().toISOString() },
             { onConflict: "user_id" }
           );
         if (upErr) throw upErr;
@@ -152,18 +194,28 @@
     }
   }
 
-  async function pushStateNow(stateObj) {
-    if (!client || !currentUser || !stateObj) return;
+  async function pushStateNow(wsObj) {
+    if (!client || !currentUser || !wsObj) return;
     setStatus("syncing");
     try {
+      if (!useLegacyFallback) {
+        try {
+          await pushWorkspaceMultiTrack(wsObj);
+          setStatus("synced");
+          return;
+        } catch (err) {
+          if (isMissingTableError(err)) {
+            useLegacyFallback = true;
+          } else {
+            throw err;
+          }
+        }
+      }
+
       const { error } = await client
-        .from(TABLE_NAME)
+        .from(LEGACY_TABLE)
         .upsert(
-          {
-            user_id: currentUser.id,
-            state: stateObj,
-            updated_at: new Date().toISOString()
-          },
+          { user_id: currentUser.id, state: wsObj, updated_at: new Date().toISOString() },
           { onConflict: "user_id" }
         );
       if (error) throw error;
@@ -184,8 +236,8 @@
 
   function formatSupabaseError(err) {
     const msg = (err && (err.message || err.error_description)) || String(err || "Erro desconhecido");
-    if (msg.includes("relation") && msg.includes(TABLE_NAME)) {
-      return `Tabela "${TABLE_NAME}" ainda não foi criada no Supabase (veja o SQL na tela de Dados & Backup).`;
+    if (msg.includes("relation") || msg.includes("Could not find the table")) {
+      return `Tabelas Supabase ainda não criadas (execute supabase/schema.sql no SQL Editor).`;
     }
     if (msg.includes("Invalid login credentials")) {
       return "E-mail ou senha incorretos.";

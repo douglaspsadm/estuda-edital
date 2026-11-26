@@ -1,9 +1,9 @@
 {
-  "name": "DPDF TI — Sistema de Aprovação",
-  "short_name": "DPDF TI",
-  "description": "Sistema adaptativo de estudo para o concurso DPDF TI com questões reais, caderno de erros e aulas personalizadas por IA.",
-  "start_url": "/",
+  "name": "Estuda Edital — Plataforma Adaptativa Multi-Concurso",
+  "short_name": "Estuda Edital",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a"
+  "background_color": "#0b1120",
+  "theme_color": "#3b82f6",
+  "description": "Plataforma adaptativa multi-concurso com Edital dinâmico, questões reais, caderno de erros e Tutor IA BYOK."
 }

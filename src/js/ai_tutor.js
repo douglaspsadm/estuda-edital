@@ -5,11 +5,12 @@
 // ============================================================================
 
 (function () {
-  const AI_CONFIG_KEY = "DPDF_TI_AI_CONFIG_V1";
+  const AI_CONFIG_KEY = "ESTUDA_EDITAL_AI_CONFIG_V1";
+  const LEGACY_AI_CONFIG_KEY = "DPDF_TI_AI_CONFIG_V1";
 
   function loadAiConfig() {
     try {
-      const raw = localStorage.getItem(AI_CONFIG_KEY);
+      const raw = localStorage.getItem(AI_CONFIG_KEY) || localStorage.getItem(LEGACY_AI_CONFIG_KEY);
       const parsed = raw ? JSON.parse(raw) : {};
       return Object.assign(
         {
@@ -278,25 +279,33 @@
     throw new Error("Provedor não suportado: " + provider);
   }
 
-  async function generateLessonWithAi(promptText, cfg) {
+  async function generateLessonWithAi(promptText, cfg, opts) {
+    const options = opts || {};
     const key = (cfg.apiKey || "").trim();
     const model = (cfg.model || "").trim();
     if (!key) throw new Error("Configure sua API Key primeiro.");
     if (!model) throw new Error("Clique em 'Buscar Modelos' e selecione um modelo.");
 
+    const temperature = typeof options.temperature === "number" ? options.temperature : 0.4;
+    const maxOutputTokens = Number(options.maxOutputTokens) || 8192;
+
     if (cfg.provider === "gemini") {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+      const generationConfig = { temperature, maxOutputTokens };
+      if (options.jsonMode) {
+        generationConfig.responseMimeType = "application/json";
+      }
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: promptText }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 8192 }
+          generationConfig
         })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error((data.error && data.error.message) || `Erro HTTP ${res.status} ao gerar aula no Gemini.`);
+        throw new Error((data.error && data.error.message) || `Erro HTTP ${res.status} ao consultar o Gemini.`);
       }
       const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
       const text = parts ? parts.map(p => p.text || "").join("\n").trim() : "";
@@ -310,7 +319,10 @@
         messages: [{ role: "user", content: promptText }]
       };
       if (!/^o\d/i.test(model)) {
-        payload.temperature = 0.4;
+        payload.temperature = temperature;
+      }
+      if (options.jsonMode && !/^o\d/i.test(model)) {
+        payload.response_format = { type: "json_object" };
       }
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -322,7 +334,7 @@
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error((data.error && data.error.message) || `Erro HTTP ${res.status} ao gerar aula na OpenAI.`);
+        throw new Error((data.error && data.error.message) || `Erro HTTP ${res.status} ao consultar a OpenAI.`);
       }
       const text = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
       if (!text) throw new Error("O modelo retornou uma resposta vazia.");
@@ -330,6 +342,36 @@
     }
 
     throw new Error("Provedor não suportado.");
+  }
+
+  function extractJsonFromText(rawText) {
+    const cleaned = String(rawText || "")
+      .trim()
+      .replace(/^```(?:json)?\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    try {
+      return JSON.parse(cleaned);
+    } catch (_) {
+      // Tenta localizar primeiro bloco JSON válido ({...} ou [...])
+      const firstBrace = cleaned.indexOf("{");
+      const firstBracket = cleaned.indexOf("[");
+      let start = -1;
+      let endChar = "}";
+      if (firstBrace !== -1 && (firstBracket === -1 || firstBrace < firstBracket)) {
+        start = firstBrace;
+        endChar = "}";
+      } else if (firstBracket !== -1) {
+        start = firstBracket;
+        endChar = "]";
+      }
+      if (start === -1) throw new Error("A resposta da IA não contém JSON válido.");
+      const end = cleaned.lastIndexOf(endChar);
+      if (end <= start) throw new Error("JSON retornado pela IA está incompleto.");
+      const slice = cleaned.slice(start, end + 1).replace(/,\s*([}\]])/g, "$1");
+      return JSON.parse(slice);
+    }
   }
 
   // Renderiza barra enxuta: se já configurada, esconde os inputs num painel retrátil discreto!
@@ -401,8 +443,43 @@
   window.AI_TUTOR = {
     loadConfig: loadAiConfig,
     saveConfig: saveAiConfig,
+    isConfigured() {
+      const cfg = loadAiConfig();
+      return !!(cfg.apiKey && cfg.apiKey.trim());
+    },
     renderMarkdownSafe,
     renderConfigCard: renderAiConfigCardHtml,
+    extractJsonFromText,
+
+    async discoverModelsDirect(provider, apiKey) {
+      const models = await fetchAvailableModels(provider, apiKey);
+      const cfg = loadAiConfig();
+      cfg.provider = provider;
+      cfg.apiKey = (apiKey || "").trim();
+      cfg.models = models;
+      if (!cfg.model || !models.some(m => m.id === cfg.model)) {
+        cfg.model = models[0].id;
+      }
+      saveAiConfig(cfg);
+      return { models, activeModel: cfg.model };
+    },
+
+    async askRaw(promptText, opts) {
+      const cfg = loadAiConfig();
+      if (!cfg.apiKey) throw new Error("Configure sua API Key de IA primeiro (Google Gemini ou OpenAI).");
+      if (!cfg.model) {
+        const models = await fetchAvailableModels(cfg.provider, cfg.apiKey);
+        cfg.models = models;
+        cfg.model = models[0].id;
+        saveAiConfig(cfg);
+      }
+      return generateLessonWithAi(promptText, cfg, opts);
+    },
+
+    async askJson(promptText, opts) {
+      const raw = await this.askRaw(promptText, Object.assign({ temperature: 0.2, jsonMode: true }, opts || {}));
+      return extractJsonFromText(raw);
+    },
 
     onProviderChange(contextId, provider) {
       const cfg = loadAiConfig();
