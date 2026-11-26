@@ -124,6 +124,8 @@
     state.fc = state.fc || {};
     if (!state.diagMode) state.diagMode = "focus";
     if (typeof state.diagFocusIdx !== "number") state.diagFocusIdx = 0;
+    if (typeof state.diagShuffle !== "boolean") state.diagShuffle = true;
+    if (typeof state.diagOrderSeed !== "number") state.diagOrderSeed = Math.floor(Math.random() * 2147483647) + 1;
   }
 
   function isGenericRemediation(rl) {
@@ -794,13 +796,26 @@
   // ==========================================================================
   // 2. QUESTÕES (MODO FOCO 1 POR VEZ POR PADRÃO + FILTROS RETRÁTEIS)
   // ==========================================================================
+  function seededOrderHash(seed, str) {
+    let h = (seed ^ 0x811c9dc5) >>> 0;
+    const s = String(str || "");
+    for (let i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    h ^= h >>> 16;
+    h = Math.imul(h, 0x85ebca6b) >>> 0;
+    h ^= h >>> 13;
+    return h >>> 0;
+  }
+
   function getFilteredDiagnosticQuestions() {
     const subjFilter = state.currentDiagSubject || "ALL";
     const originFilter = state.currentDiagOrigin || "ALL";
     const bancaFilter = state.currentDiagBanca || "ALL";
     const statusFilter = state.currentDiagStatus || "ALL";
 
-    return ALL_QUESTIONS.filter(q => {
+    const list = ALL_QUESTIONS.filter(q => {
       if (subjFilter !== "ALL" && q.subjectId !== subjFilter) return false;
       if (originFilter === "REAL" && !isRealQuestion(q)) return false;
       if (originFilter === "AUTORAL" && isRealQuestion(q)) return false;
@@ -814,6 +829,12 @@
       if (statusFilter === "CORRECT" && (!ans || !ans.correct)) return false;
       return true;
     });
+
+    if (state.diagShuffle !== false) {
+      const seed = state.diagOrderSeed || 1;
+      return list.slice().sort((a, b) => seededOrderHash(seed, a.id) - seededOrderHash(seed, b.id));
+    }
+    return list;
   }
 
   window.setConf = function (c) {
@@ -984,7 +1005,11 @@
             <button class="seg-btn ${isFocus ? "active" : ""}" onclick="setDiagMode('focus')">Modo Foco (1 por vez)</button>
             <button class="seg-btn ${!isFocus ? "active" : ""}" onclick="setDiagMode('list')">Lista (${filtered.length})</button>
           </div>
-          ${subjFilter !== "ALL" ? `<button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(subjFilter)}')">Abrir aula desta matéria</button>` : ""}
+          <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+            <button class="btn btn-outline btn-sm" id="btn-reshuffle-diag" onclick="reshuffleDiagQuestions()" title="Sortear nova ordem aleatória das questões deste filtro">🔀 Embaralhar</button>
+            <button class="btn btn-outline btn-sm" id="btn-toggle-shuffle" onclick="toggleDiagShuffle()" title="Alternar entre ordem aleatória e ordem original das provas">Ordem: ${state.diagShuffle !== false ? "Aleatória" : "Original"}</button>
+            ${subjFilter !== "ALL" ? `<button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(subjFilter)}')">Abrir aula desta matéria</button>` : ""}
+          </div>
         </div>
 
         <details class="guide-box" ${activeFiltersCount > 0 && filtered.length === 0 ? "open" : ""}>
@@ -1034,6 +1059,26 @@
 
   window.setDiagMode = function (mode) {
     state.diagMode = mode;
+    saveState();
+    renderDiagnosticView();
+  };
+
+  window.reshuffleDiagQuestions = function () {
+    state.diagShuffle = true;
+    state.diagOrderSeed = Math.floor(Math.random() * 2147483647) + 1;
+    state.diagFocusIdx = 0;
+    curConf = "certeza";
+    saveState();
+    renderDiagnosticView();
+  };
+
+  window.toggleDiagShuffle = function () {
+    state.diagShuffle = state.diagShuffle === false;
+    if (state.diagShuffle && !state.diagOrderSeed) {
+      state.diagOrderSeed = Math.floor(Math.random() * 2147483647) + 1;
+    }
+    state.diagFocusIdx = 0;
+    curConf = "certeza";
     saveState();
     renderDiagnosticView();
   };
