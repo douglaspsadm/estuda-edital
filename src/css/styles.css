@@ -150,6 +150,12 @@ code, pre {
   flex-shrink: 0;
 }
 
+.brand-logo-img {
+  background: #07101c;
+  object-fit: cover;
+  padding: 0;
+}
+
 .brand-text {
   flex: 1;
   min-width: 0;

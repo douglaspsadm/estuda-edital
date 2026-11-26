@@ -56,6 +56,7 @@ const scriptOrder = [
   "js/pdf_importer.js",
   "js/onboarding_wizard.js",
   "js/cloud_sync.js",
+  "js/pwa_install.js",
   "js/app.js"
 ];
 

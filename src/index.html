@@ -10,6 +10,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b1120" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Estuda Edital" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
 </head>
 <body>
 
@@ -19,7 +26,7 @@
   <!-- BARRA LATERAL (SIDEBAR / MOBILE DRAWER) -->
   <aside id="app-sidebar" class="sidebar" aria-label="Menu principal">
     <div class="brand">
-      <div class="brand-badge" id="brand-badge-text">EE</div>
+      <img src="icons/icon-192.png" alt="Estuda Edital" class="brand-badge brand-logo-img" onerror="this.style.display='none'" />
       <div class="brand-text">
         <h1 id="brand-title">Estuda Edital</h1>
         <span id="brand-subtitle">Plataforma Multi-Concurso</span>
@@ -118,6 +125,9 @@
     </nav>
 
     <div class="sidebar-footer">
+      <button class="btn btn-primary btn-sm" data-pwa-install-btn style="width:100%; margin-bottom:6px;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
+        📲 Instalar App
+      </button>
       <div class="sidebar-footer-row">
         <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
           Tema
@@ -147,6 +157,9 @@
       </div>
       <div class="topbar-actions">
         <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
+        <button class="btn btn-outline btn-sm" data-pwa-install-btn onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar como aplicativo no celular">
+          📲 Instalar
+        </button>
         <button class="btn btn-outline btn-sm desktop-only" onclick="window.OnboardingWizard && OnboardingWizard.open(1)" title="Abrir assistente passo a passo">
           Wizard
         </button>
@@ -258,6 +271,7 @@
   <script src="js/onboarding_wizard.js"></script>
   <script src="js/supabase_env.js"></script>
   <script src="js/cloud_sync.js"></script>
+  <script src="js/pwa_install.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
