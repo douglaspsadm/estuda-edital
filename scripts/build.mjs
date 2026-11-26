@@ -17,6 +17,28 @@ const DIST = path.join(ROOT, "dist");
 fs.rmSync(PUBLIC_DIR, { recursive: true, force: true });
 fs.cpSync(SRC, PUBLIC_DIR, { recursive: true });
 
+// 1b. Injeta variáveis de ambiente do Supabase da Vercel (se configuradas)
+const sbUrl = (
+  process.env.SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  process.env.PUBLIC_SUPABASE_URL ||
+  ""
+).trim();
+const sbKey = (
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.PUBLIC_SUPABASE_ANON_KEY ||
+  ""
+).trim();
+
+const envJsContent = `// Gerado automaticamente pelo scripts/build.mjs a partir das env vars da Vercel\nwindow.ESTUDA_SUPABASE_CONFIG = ${JSON.stringify({ url: sbUrl, key: sbKey })};\n`;
+fs.writeFileSync(path.join(PUBLIC_DIR, "js", "supabase_env.js"), envJsContent, "utf8");
+
 // 2. Gera bundle single-file offline (dist/estuda_edital_offline.html)
 const html = fs.readFileSync(path.join(SRC, "index.html"), "utf8");
 const css = fs.readFileSync(path.join(SRC, "css", "styles.css"), "utf8");
@@ -37,12 +59,13 @@ const scriptOrder = [
   "js/app.js"
 ];
 
-const bundledJs = scriptOrder
-  .map(rel => {
+const bundledJs = [
+  `// --- ENV: supabase_env.js ---\n${envJsContent}`,
+  ...scriptOrder.map(rel => {
     const content = fs.readFileSync(path.join(SRC, rel), "utf8");
     return `// --- FILE: src/${rel} ---\n${content}`;
   })
-  .join("\n\n");
+].join("\n\n");
 
 let out = html
   .replace(/<link\s+rel="manifest"[^>]*>\s*/i, "")

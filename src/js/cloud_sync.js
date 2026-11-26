@@ -9,12 +9,46 @@
 (function () {
   "use strict";
 
-  const SUPABASE_URL = "https://qcxukkvksgfhldftunbr.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_vHNCG0XErlBiXq6XyvM3BA_Ft08Av3b";
+  const SUPABASE_CONFIG_KEY = "ESTUDA_EDITAL_SUPABASE_CONFIG_V1";
   const SUPABASE_CDN = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2";
   const TRACKS_TABLE = "user_tracks";
   const TRACK_PROGRESS_TABLE = "user_track_progress";
   const LEGACY_TABLE = "user_progress";
+
+  function resolveConfig() {
+    let localCfg = {};
+    try {
+      const raw = localStorage.getItem(SUPABASE_CONFIG_KEY);
+      if (raw) localCfg = JSON.parse(raw) || {};
+    } catch (_) {}
+    const envCfg = (window.ESTUDA_SUPABASE_CONFIG && typeof window.ESTUDA_SUPABASE_CONFIG === "object")
+      ? window.ESTUDA_SUPABASE_CONFIG
+      : {};
+    const url = String(localCfg.url || envCfg.url || "").trim().replace(/\/+$/, "");
+    const key = String(localCfg.key || envCfg.key || "").trim();
+    return {
+      url,
+      key,
+      hasCustomLocal: !!(localCfg.url && localCfg.key)
+    };
+  }
+
+  function saveLocalConfig(url, key) {
+    try {
+      if (!url && !key) {
+        localStorage.removeItem(SUPABASE_CONFIG_KEY);
+      } else {
+        localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify({
+          url: String(url || "").trim().replace(/\/+$/, ""),
+          key: String(key || "").trim()
+        }));
+      }
+      client = null;
+      currentUser = null;
+    } catch (e) {
+      console.error("Erro ao salvar config Supabase:", e);
+    }
+  }
 
   let client = null;
   let currentUser = null;
@@ -49,8 +83,11 @@
   }
 
   function getStatus() {
+    const cfg = resolveConfig();
     return {
       ready: !!client,
+      configured: !!(cfg.url && cfg.key),
+      supabaseUrl: cfg.url,
       user: currentUser,
       status: syncStatus,
       lastSyncAt,
@@ -89,8 +126,12 @@
 
   async function ensureClient() {
     if (client) return client;
+    const cfg = resolveConfig();
+    if (!cfg.url || !cfg.key) {
+      throw new Error("Supabase ainda não configurado. Informe a URL e a Publishable/Anon Key abaixo (ou nas variáveis de ambiente da Vercel).");
+    }
     const sb = await loadSdk();
-    client = sb.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    client = sb.createClient(cfg.url, cfg.key, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -407,13 +448,16 @@
       return;
     }
 
+    const cfg = resolveConfig();
+    const isConfigured = !!(cfg.url && cfg.key);
+
     overlay.innerHTML = `
-      <div style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-strong);border-radius:14px;max-width:430px;width:100%;padding:22px;box-shadow:var(--shadow);">
+      <div style="background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border-strong);border-radius:14px;max-width:440px;width:100%;padding:22px;box-shadow:var(--shadow);">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <h3 style="font-size:1.08rem;font-weight:800;">Salvar Progresso na Nuvem</h3>
           <button class="btn btn-outline btn-sm" id="cm-close">Fechar</button>
         </div>
-        <p style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:14px;">
+        <p style="font-size:0.84rem;color:var(--text-secondary);margin-bottom:12px;">
           Entre para sincronizar suas respostas, erros, simulados e aulas entre celular e computador. Sem login, tudo continua salvo localmente.
         </p>
 
@@ -433,6 +477,26 @@
           </div>
           <button class="btn btn-outline btn-sm" id="cm-magic">Enviar link mágico por e-mail (sem senha)</button>
           <button class="btn btn-outline btn-sm" id="cm-google">Entrar com Google</button>
+
+          <details ${isConfigured ? "" : "open"} style="margin-top:6px;border-top:1px solid var(--border-color);padding-top:10px;">
+            <summary style="cursor:pointer;font-size:0.78rem;color:var(--text-muted);font-weight:600;">
+              ${isConfigured ? `Projeto Supabase ativo (${escapeHtml(cfg.url.replace("https://", ""))})` : "Configurar Supabase (URL + Key)"}
+            </summary>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+              <div>
+                <label class="field-label" for="cm-sb-url" style="font-size:0.74rem;">Supabase URL</label>
+                <input id="cm-sb-url" class="form-control" value="${escapeHtml(cfg.url)}" placeholder="https://xxxx.supabase.co" />
+              </div>
+              <div>
+                <label class="field-label" for="cm-sb-key" style="font-size:0.74rem;">Publishable / Anon Key</label>
+                <input id="cm-sb-key" class="form-control" value="${escapeHtml(cfg.key)}" placeholder="sb_publishable_... ou eyJ..." />
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn btn-outline btn-sm" id="cm-save-sb" style="flex:1;">Salvar neste navegador</button>
+                ${cfg.hasCustomLocal ? `<button class="btn btn-outline btn-sm" id="cm-clear-sb" style="color:var(--danger-text);">Limpar</button>` : ""}
+              </div>
+            </div>
+          </details>
         </div>
       </div>
     `;
@@ -450,6 +514,21 @@
 
     overlay.querySelector("#cm-close").onclick = () => overlay.remove();
     overlay.addEventListener("click", ev => { if (ev.target === overlay) overlay.remove(); });
+
+    overlay.querySelector("#cm-save-sb").onclick = async () => {
+      const u = overlay.querySelector("#cm-sb-url").value.trim();
+      const k = overlay.querySelector("#cm-sb-key").value.trim();
+      if (!u || !k) return showMsg("Informe a Supabase URL e a Publishable/Anon Key.", true);
+      saveLocalConfig(u, k);
+      showMsg("Configuração do Supabase salva! Você já pode entrar acima.", false);
+    };
+    const clearBtn = overlay.querySelector("#cm-clear-sb");
+    if (clearBtn) {
+      clearBtn.onclick = () => {
+        saveLocalConfig("", "");
+        openAuthModal();
+      };
+    }
 
     overlay.querySelector("#cm-login").onclick = async () => {
       if (!emailEl.value.trim() || !passEl.value) return showMsg("Preencha e-mail e senha.", true);
@@ -512,6 +591,7 @@
     signInWithGoogle,
     signOut,
     getStatus,
+    saveLocalConfig,
     openAuthModal
   };
 })();
