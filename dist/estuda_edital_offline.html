@@ -90636,7 +90636,10 @@ window.QUESTIONS_QUADRIX = [
       heroEyebrow = "Comece por aqui";
       heroTitle = "Inicie sua avaliação diagnóstica por questões";
       heroDesc = "Responda questões reais para mapear o que você já domina e registrar automaticamente onde precisa de aula.";
-      heroBtn = `<button class="btn btn-primary" onclick="switchView('diagnostic', 'esp_2')">Começar por Desenv. de Sistemas</button>`;
+      const firstD = (window.EDITAL_DATA.disciplinas || []).find(d => ALL_QUESTIONS.some(q => q.subjectId === d.id)) || (window.EDITAL_DATA.disciplinas || [])[0];
+      heroBtn = firstD
+        ? `<button class="btn btn-primary" onclick="switchView('diagnostic', '${escapeHtml(firstD.id)}')">Começar por ${escapeHtml(firstD.nome)}</button>`
+        : `<button class="btn btn-primary" onclick="switchView('diagnostic')">Começar questões</button>`;
     } else {
       heroEyebrow = "Ritmo consistente";
       heroTitle = "Continue avançando no banco de questões";
@@ -91331,7 +91334,7 @@ window.QUESTIONS_QUADRIX = [
     const g = getGlobalStats();
     let currentSubjId = state.currentLessonSubject;
     if (!currentSubjId || !window.EDITAL_DATA.disciplinas.some(d => d.id === currentSubjId)) {
-      currentSubjId = g.weakSubjects.length > 0 ? g.weakSubjects[0].disciplina.id : "esp_2";
+      currentSubjId = g.weakSubjects.length > 0 ? g.weakSubjects[0].disciplina.id : ((window.EDITAL_DATA.disciplinas.find(d => ALL_QUESTIONS.some(q => q.subjectId === d.id)) || window.EDITAL_DATA.disciplinas[0] || {}).id);
       state.currentLessonSubject = currentSubjId;
     }
 
