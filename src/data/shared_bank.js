@@ -203,6 +203,16 @@
       descricao: "Questões reais Quadrix de Comunicação Social, Assessoria de Imprensa e Redação Institucional.",
       sourceSubjectIds: ["cofen_esp_com"],
       keywords: ["comunicacao", "jornalismo", "redacao", "letras", "assessoria"]
+    },
+    {
+      id: "pack_cofen_contabilidade",
+      nome: "Contabilidade Pública & Geral",
+      categoria: "especificos",
+      universal: false,
+      cor: "#0d9488",
+      descricao: "Questões reais Quadrix para Contador (Contabilidade Pública, Orçamento, Auditoria e Tributário).",
+      sourceSubjectIds: ["cofen_esp_cont"],
+      keywords: ["contabilidade", "contador", "orcamento publico", "auditoria", "mcasp"]
     }
   ];
 

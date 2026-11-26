@@ -1249,6 +1249,9 @@
       } else if (role.codigo === "401") {
         enabledSharedPacks.push("pack_cofen_comunicacao");
         packMapping.pack_cofen_comunicacao = `cofen_${role.codigo}_esp`;
+      } else if (role.codigo === "410") {
+        enabledSharedPacks.push("pack_cofen_contabilidade");
+        packMapping.pack_cofen_contabilidade = `cofen_${role.codigo}_esp`;
       } else if (role.codigo === "402" || role.codigo === "403" || role.codigo === "406") {
         enabledSharedPacks.push("pack_cofen_adm");
         packMapping.pack_cofen_adm = `cofen_${role.codigo}_esp`;

@@ -76,7 +76,7 @@ test("SHARED_BANK lista pacotes reais e faz matching automático com edital de o
     ["pack_portugues"],
     { pack_portugues: "d_port" }
   );
-  assert.equal(mappedQs.length, 360);
+  assert.equal(mappedQs.length, 414);
   assert.ok(mappedQs.every(q => q.subjectId === "d_port"));
 });
 
@@ -107,7 +107,7 @@ test("TracksManager isola progresso por track_id e suporta criar, exportar e imp
 
   const stDpdf = tm.getTrackState("dpdf_ti_2026");
   assert.equal(stDpdf.answers["Q_TEST_1"], undefined);
-  assert.equal(tm.getQuestionsForTrack(custom.id).length, 360);
+  assert.equal(tm.getQuestionsForTrack(custom.id).length, 414);
 
   // Exporta e reimporta bundle
   const bundle = tm.exportTrackBundle(custom.id);
