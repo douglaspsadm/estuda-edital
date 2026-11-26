@@ -1,0 +1,11 @@
+{
+  "name": "dpdf-ti-estudo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema adaptativo de estudo para o concurso DPDF TI (Desenvolvimento de Sistemas)",
+  "scripts": {
+    "validate": "node scripts/validate_questions.mjs",
+    "build": "node scripts/build.mjs",
+    "check": "node scripts/validate_questions.mjs && node scripts/build.mjs"
+  }
+}

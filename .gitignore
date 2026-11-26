@@ -1,0 +1,25 @@
+# Sistema operacional e editores
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# Logs e backups locais do estudante
+*.log
+progresso_dpdf_*.json
+dossie_erros_*.md
+
+# Arquivos brutos temporários colocados em inbox/ (exceto README.md)
+inbox/*
+!inbox/README.md
+
+# Build estático gerado automaticamente para Vercel
+public/
+
+# Segredos / variáveis de ambiente (nunca commitar)
+.env
+.env.*
+
+# Caches de economia de tokens (perf-stack)
+graphify-out/
+.context-mode/

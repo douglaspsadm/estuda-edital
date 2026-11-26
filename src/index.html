@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="Plataforma adaptativa de estudo por questões reais, caderno de erros e aulas personalizadas para o concurso DPDF TI — Desenvolvimento de Sistemas." />
+  <title>DPDF TI — Estudo Adaptativo por Questões Reais</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+
+  <!-- OVERLAY MOBILE DRAWER -->
+  <div id="sidebar-backdrop" class="sidebar-backdrop" onclick="closeMobileMenu()"></div>
+
+  <!-- BARRA LATERAL (SIDEBAR / MOBILE DRAWER) -->
+  <aside id="app-sidebar" class="sidebar" aria-label="Menu principal">
+    <div class="brand">
+      <div class="brand-badge">TI</div>
+      <div class="brand-text">
+        <h1>DPDF TI</h1>
+        <span>Desenvolvimento de Sistemas</span>
+      </div>
+      <button class="icon-btn mobile-only" onclick="closeMobileMenu()" aria-label="Fechar menu">✕</button>
+    </div>
+
+    <div class="countdown-chip">
+      <span class="cd-label">Prova 21/02/2027</span>
+      <strong class="cd-days" id="countdown-days">-- dias</strong>
+    </div>
+
+    <nav class="nav-scroll">
+      <ul class="nav-menu">
+        <li class="nav-section-title">Estudo Diário</li>
+        <li class="nav-item">
+          <button class="nav-btn active" data-view="dashboard" onclick="switchView('dashboard')">
+            <span>Início</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="diagnostic" onclick="switchView('diagnostic')">
+            <span>Questões</span>
+            <span class="nav-badge" id="badge-questions-count">0/0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="errors" onclick="switchView('errors')">
+            <span>Caderno de Erros</span>
+            <span class="nav-badge" id="badge-errors-count">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="remediation" onclick="switchView('remediation')">
+            <span>Aulas &amp; Reforço</span>
+            <span class="nav-badge" id="badge-weak-count">0</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="review" onclick="switchView('review')">
+            <span>Revisão do Dia</span>
+            <span class="nav-badge" id="badge-review">0</span>
+          </button>
+        </li>
+
+        <li class="nav-section-title">Treino de Prova</li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="simulado" onclick="switchView('simulado')">
+            <span>Simulado</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="discursive" onclick="switchView('discursive')">
+            <span>Discursiva (50 pts)</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="flashcards" onclick="switchView('flashcards')">
+            <span>Flashcards</span>
+          </button>
+        </li>
+
+        <li class="nav-section-title">Referência &amp; Dados</li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="edital" onclick="switchView('edital')">
+            <span>Edital Verticalizado</span>
+          </button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-btn" data-view="handoff" onclick="switchView('handoff')">
+            <span>Dados, Backup &amp; IA</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-row">
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
+          Tema
+        </button>
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
+          Backup
+        </button>
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
+          Restaurar
+        </button>
+      </div>
+      <input type="file" id="import-json-input" accept=".json" style="display:none;" onchange="importProgressJsonFile(event)" />
+      <div id="save-status-indicator" class="save-indicator">
+        <span class="save-dot"></span> Salvo no navegador
+      </div>
+    </div>
+  </aside>
+
+  <!-- ÁREA PRINCIPAL -->
+  <div class="main-wrapper">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn mobile-only" onclick="openMobileMenu()" aria-label="Abrir menu">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="topbar-title" id="topbar-view-title">Visão Geral</span>
+      </div>
+      <div class="topbar-actions">
+        <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
+        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Fazer login para salvar progresso na nuvem">
+          Nuvem / Entrar
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">
+          Praticar
+        </button>
+      </div>
+    </header>
+
+    <main class="content-area">
+      <!-- 1. DASHBOARD -->
+      <section id="view-dashboard" class="view-section active">
+        <div id="dashboard-content"></div>
+      </section>
+
+      <!-- 2. QUESTÕES -->
+      <section id="view-diagnostic" class="view-section">
+        <div id="diagnostic-content"></div>
+      </section>
+
+      <!-- 3. CADERNO DE ERROS -->
+      <section id="view-errors" class="view-section">
+        <div id="errors-content"></div>
+      </section>
+
+      <!-- 4. AULAS E REFORÇO -->
+      <section id="view-remediation" class="view-section">
+        <div id="remediation-content"></div>
+      </section>
+
+      <!-- 5. REVISÃO DO DIA -->
+      <section id="view-review" class="view-section">
+        <div id="review-content"></div>
+      </section>
+
+      <!-- 6. SIMULADO -->
+      <section id="view-simulado" class="view-section">
+        <div id="simulado-content"></div>
+      </section>
+
+      <!-- 7. PROVA DISCURSIVA -->
+      <section id="view-discursive" class="view-section">
+        <div id="discursive-content"></div>
+      </section>
+
+      <!-- 8. FLASHCARDS -->
+      <section id="view-flashcards" class="view-section">
+        <div id="flashcards-content"></div>
+      </section>
+
+      <!-- 9. EDITAL VERTICALIZADO -->
+      <section id="view-edital" class="view-section">
+        <div id="edital-content"></div>
+      </section>
+
+      <!-- 10. DADOS, BACKUP & GOVERNANÇA -->
+      <section id="view-handoff" class="view-section">
+        <div id="handoff-content"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- BARRA INFERIOR MOBILE (ERGONOMIA MOBILE-FIRST) -->
+  <nav class="bottom-nav mobile-only" aria-label="Navegação rápida">
+    <button class="bnav-btn active" data-view="dashboard" onclick="switchView('dashboard')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Início</span>
+    </button>
+    <button class="bnav-btn" data-view="diagnostic" onclick="switchView('diagnostic')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span>Questões</span>
+    </button>
+    <button class="bnav-btn" data-view="errors" onclick="switchView('errors')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span>Erros</span>
+    </button>
+    <button class="bnav-btn" data-view="remediation" onclick="switchView('remediation')">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      <span>Aulas</span>
+    </button>
+    <button class="bnav-btn" onclick="openMobileMenu()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span>Menu</span>
+    </button>
+  </nav>
+
+  <!-- SCRIPTS DE DADOS E MOTOR DA APLICAÇÃO -->
+  <script src="data/edital_data.js"></script>
+  <script src="data/questions_reais.js"></script>
+  <script src="data/questions_basic.js"></script>
+  <script src="data/questions_specific_1.js"></script>
+  <script src="data/questions_specific_2.js"></script>
+  <script src="data/questions_specific_3.js"></script>
+  <script src="data/questions_bancas.js"></script>
+  <script src="data/lessons_data.js"></script>
+  <script src="data/discursive_data.js"></script>
+  <script src="js/ai_tutor.js"></script>
+  <script src="js/cloud_sync.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

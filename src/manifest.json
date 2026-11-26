@@ -1,0 +1,9 @@
+{
+  "name": "DPDF TI — Sistema de Aprovação",
+  "short_name": "DPDF TI",
+  "description": "Sistema adaptativo de estudo para o concurso DPDF TI com questões reais, caderno de erros e aulas personalizadas por IA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a"
+}
