@@ -7,10 +7,10 @@
   <title>Estuda Edital — Plataforma Adaptativa Multi-Concurso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/styles.css" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#0c0d10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Estuda Edital" />
@@ -42,12 +42,14 @@
         <label class="track-switcher-label" for="role-select">Cargo / Especialidade</label>
         <select id="role-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
       </div>
-      <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
-        + Novo Concurso (Wizard)
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
-        📄 Subir Provas (PDF / JSON)
-      </button>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
+          + Concurso
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="flex:1;" onclick="switchView('import')">
+          Subir provas
+        </button>
+      </div>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -125,17 +127,14 @@
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn btn-primary btn-sm" data-pwa-install-btn style="width:100%; margin-bottom:6px;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
-        📲 Instalar App
+      <button class="btn btn-outline btn-sm" data-pwa-install-btn style="width:100%;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
+        Instalar aplicativo
       </button>
       <div class="sidebar-footer-row">
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
-          Tema
-        </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
           Backup
         </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
           Restaurar
         </button>
       </div>
@@ -156,21 +155,11 @@
         <span class="topbar-title" id="topbar-view-title">Visão Geral</span>
       </div>
       <div class="topbar-actions">
-        <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
-        <button class="btn btn-outline btn-sm" data-pwa-install-btn onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar como aplicativo no celular">
-          📲 Instalar
+        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Entrar para sincronizar progresso na nuvem">
+          Entrar
         </button>
-        <button class="btn btn-outline btn-sm desktop-only" onclick="window.OnboardingWizard && OnboardingWizard.open(1)" title="Abrir assistente passo a passo">
-          Wizard
-        </button>
-        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Fazer login para salvar progresso na nuvem">
-          Nuvem / Entrar
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <button class="icon-btn" style="display:inline-flex;" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">
-          Praticar
         </button>
       </div>
     </header>

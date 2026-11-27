@@ -7,7 +7,7 @@
   <title>Estuda Edital — Plataforma Adaptativa Multi-Concurso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
 /* ============================================================================
    DESIGN SYSTEM — DPDF TI (ESTUDO ADAPTATIVO POR QUESTÕES REAIS)
@@ -15,63 +15,77 @@
    ============================================================================ */
 
 :root {
-  --bg-primary: #0b1120;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --bg-card: #131c2e;
-  --bg-elevated: #192438;
-  --bg-hover: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border-color: rgba(148, 163, 184, 0.16);
-  --border-strong: rgba(148, 163, 184, 0.28);
+  --bg-primary: #0c0d10;
+  --bg-secondary: #121419;
+  --bg-tertiary: #1e222b;
+  --bg-card: #15181f;
+  --bg-elevated: #1b1f28;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --text-primary: #f4f4f6;
+  --text-secondary: #b8bec9;
+  --text-muted: #7c8494;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-soft: rgba(59, 130, 246, 0.14);
+  /* High-contrast primary CTA (ink-white on dark) + warm amber brand accent */
+  --cta-bg: #f4f4f6;
+  --cta-hover: #ffffff;
+  --cta-text: #0c0d10;
+
+  --accent-primary: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --accent: #f59e0b;
 
   --success: #10b981;
   --success-text: #34d399;
-  --success-soft: rgba(16, 185, 129, 0.13);
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --success-bg: rgba(16, 185, 129, 0.12);
 
   --warning: #f59e0b;
   --warning-text: #fbbf24;
-  --warning-soft: rgba(245, 158, 11, 0.13);
+  --warning-soft: rgba(245, 158, 11, 0.12);
 
   --danger: #ef4444;
   --danger-text: #f87171;
-  --danger-soft: rgba(239, 68, 68, 0.13);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.12);
 
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
-  --shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-  --sidebar-w: 248px;
-  --topbar-h: 56px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --shadow-sm: none;
+  --shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --sidebar-w: 244px;
+  --topbar-h: 54px;
 }
 
 body.light-theme {
-  --bg-primary: #f8fafc;
+  --bg-primary: #fafaf8;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e2e8f0;
+  --bg-tertiary: #eceae4;
   --bg-card: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-hover: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --bg-elevated: #f4f3ef;
+  --bg-hover: rgba(20, 22, 26, 0.045);
+  --text-primary: #14161a;
+  --text-secondary: #434853;
+  --text-muted: #6e7480;
+  --border-color: rgba(20, 22, 26, 0.09);
+  --border-strong: rgba(20, 22, 26, 0.18);
 
-  --accent-primary: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  --cta-bg: #14161a;
+  --cta-hover: #272b33;
+  --cta-text: #ffffff;
+
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-soft: rgba(217, 119, 6, 0.1);
+  --accent: #d97706;
 
   --success: #059669;
   --success-text: #047857;
   --success-soft: rgba(5, 150, 105, 0.1);
+  --success-bg: rgba(5, 150, 105, 0.1);
 
   --warning: #d97706;
   --warning-text: #b45309;
@@ -80,9 +94,10 @@ body.light-theme {
   --danger: #dc2626;
   --danger-text: #b91c1c;
   --danger-soft: rgba(220, 38, 38, 0.09);
+  --danger-bg: rgba(220, 38, 38, 0.09);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.04);
+  --shadow: 0 10px 28px -6px rgba(20, 22, 26, 0.1);
 }
 
 * {
@@ -96,13 +111,22 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   display: flex;
   min-height: 100vh;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+code, pre, .kpi-val, .cd-days, .nav-badge {
+  font-variant-numeric: tabular-nums;
 }
 
 code, pre {
@@ -274,7 +298,7 @@ code, pre {
 
 .nav-btn.active .nav-badge {
   background: var(--accent-primary);
-  color: #fff;
+  color: #0c0d10;
 }
 
 .nav-badge.alert {
@@ -408,33 +432,37 @@ code, pre {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 15px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
   white-space: nowrap;
 }
 
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn-sm {
-  padding: 6px 11px;
+  padding: 6px 12px;
   font-size: 0.79rem;
 }
 
 .btn-primary {
-  background-color: var(--accent-primary);
-  color: #ffffff;
+  background-color: var(--cta-bg);
+  color: var(--cta-text);
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--cta-hover);
 }
 
 .btn-success {
@@ -448,7 +476,7 @@ code, pre {
 .btn-warning {
   background-color: var(--warning-soft);
   color: var(--warning-text);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.28);
 }
 .btn-warning:hover:not(:disabled) {
   background-color: rgba(245, 158, 11, 0.2);
@@ -469,12 +497,22 @@ code, pre {
   color: var(--text-primary);
 }
 
+.btn-ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .segmented-tabs {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
-  background: var(--bg-elevated);
-  padding: 4px;
+  gap: 2px;
+  background: var(--bg-secondary);
+  padding: 3px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
 }
@@ -484,12 +522,12 @@ code, pre {
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 11px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .seg-btn:hover {
@@ -497,13 +535,12 @@ code, pre {
 }
 
 .seg-btn.active {
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================================================
-   CARDS, HERO & KPI STRIP
+   CARDS, HERO & UNIFIED STAT STRIP
    ============================================================================ */
 .section-head {
   display: flex;
@@ -511,19 +548,19 @@ code, pre {
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .section-head h2 {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.25;
 }
 
 .section-head p {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   margin-top: 3px;
 }
 
@@ -533,7 +570,6 @@ code, pre {
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -546,82 +582,93 @@ code, pre {
 }
 
 .card-title {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .action-hero {
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 20px 22px;
-  margin-bottom: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 4px 0 22px;
+  margin-bottom: 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
 .action-hero-eyebrow {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--accent-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .action-hero h3 {
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 6px;
 }
 
 .action-hero p {
   font-size: 0.88rem;
-  color: var(--text-secondary);
-  max-width: 620px;
+  color: var(--text-muted);
+  max-width: 540px;
 }
 
+/* Unified single-row metric bar (replaces 4 heavy boxed KPI cards) */
 .kpi-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.kpi-box {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.kpi-box {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 14px 18px;
+}
+
+.kpi-box:last-child {
+  border-right: none;
 }
 
 .kpi-label {
-  font-size: 0.73rem;
+  font-size: 0.71rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .kpi-val {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.38rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   margin: 4px 0 2px;
 }
 
 .kpi-sub {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
 /* ============================================================================
-   SUBJECTS GRID (CLEAN & COMPACT)
+   SUBJECTS GRID (QUIET, SCANNABLE, ZERO BUTTON FATIGUE)
    ============================================================================ */
 .subjects-grid {
   display: grid;
@@ -633,17 +680,16 @@ code, pre {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 14px;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .subject-card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 .subj-top {
@@ -655,29 +701,28 @@ code, pre {
 }
 
 .subj-code {
-  font-size: 0.71rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--bg-elevated);
   color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .subj-pts {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .subj-title {
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .progress-bar-wrap {
   background: var(--bg-tertiary);
-  height: 6px;
+  height: 3px;
   border-radius: 99px;
   overflow: hidden;
   margin: 8px 0 4px;
@@ -686,20 +731,20 @@ code, pre {
 .progress-bar-fill {
   height: 100%;
   background: var(--accent-primary);
-  transition: width 0.3s ease;
+  transition: width 260ms ease;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.71rem;
   font-weight: 600;
 }
 
-.status-untested { background: var(--bg-elevated); color: var(--text-muted); }
+.status-untested { background: transparent; color: var(--text-muted); padding-left: 0; }
 .status-weak { background: var(--danger-soft); color: var(--danger-text); }
 .status-evolving { background: var(--warning-soft); color: var(--warning-text); }
 .status-mastered { background: var(--success-soft); color: var(--success-text); }
@@ -789,7 +834,7 @@ code, pre {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
 .conf-chip:hover {
@@ -1212,7 +1257,7 @@ textarea.form-control {
   flex-shrink: 0;
 }
 .wiz-step.active .wiz-step-dot {
-  background: var(--accent, #3b82f6);
+  background: var(--accent, #f59e0b);
   color: #fff;
   border-color: transparent;
 }
@@ -1250,7 +1295,7 @@ textarea.form-control {
   line-height: 1.6;
 }
 .wiz-guide-box a {
-  color: var(--accent, #3b82f6);
+  color: var(--accent, #f59e0b);
   font-weight: 600;
 }
 .wiz-mode-tabs {
@@ -1273,8 +1318,8 @@ textarea.form-control {
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 .wiz-preset-card.selected {
-  border-color: var(--accent, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+  border-color: var(--accent, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.22);
 }
 .wiz-upload-row {
   display: flex;
@@ -1321,7 +1366,7 @@ textarea.form-control {
   background: var(--bg-elevated);
 }
 .wiz-pack-item.selected {
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent, #f59e0b);
 }
 .wiz-pack-check {
   display: flex;
@@ -1385,10 +1430,35 @@ textarea.form-control {
   .wiz-steps {
     grid-template-columns: repeat(2, 1fr);
   }
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kpi-box:nth-child(2n) {
+    border-right: none;
+  }
+  .kpi-box:nth-child(1),
+  .kpi-box:nth-child(2) {
+    border-bottom: 1px solid var(--border-color);
+  }
+  .action-hero {
+    padding-bottom: 18px;
+  }
+  .action-hero h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 </style>
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#0c0d10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Estuda Edital" />
@@ -1420,12 +1490,14 @@ textarea.form-control {
         <label class="track-switcher-label" for="role-select">Cargo / Especialidade</label>
         <select id="role-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
       </div>
-      <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
-        + Novo Concurso (Wizard)
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
-        📄 Subir Provas (PDF / JSON)
-      </button>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
+          + Concurso
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="flex:1;" onclick="switchView('import')">
+          Subir provas
+        </button>
+      </div>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -1503,17 +1575,14 @@ textarea.form-control {
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn btn-primary btn-sm" data-pwa-install-btn style="width:100%; margin-bottom:6px;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
-        📲 Instalar App
+      <button class="btn btn-outline btn-sm" data-pwa-install-btn style="width:100%;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
+        Instalar aplicativo
       </button>
       <div class="sidebar-footer-row">
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
-          Tema
-        </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
           Backup
         </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
           Restaurar
         </button>
       </div>
@@ -1534,21 +1603,11 @@ textarea.form-control {
         <span class="topbar-title" id="topbar-view-title">Visão Geral</span>
       </div>
       <div class="topbar-actions">
-        <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
-        <button class="btn btn-outline btn-sm" data-pwa-install-btn onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar como aplicativo no celular">
-          📲 Instalar
+        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Entrar para sincronizar progresso na nuvem">
+          Entrar
         </button>
-        <button class="btn btn-outline btn-sm desktop-only" onclick="window.OnboardingWizard && OnboardingWizard.open(1)" title="Abrir assistente passo a passo">
-          Wizard
-        </button>
-        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Fazer login para salvar progresso na nuvem">
-          Nuvem / Entrar
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <button class="icon-btn" style="display:inline-flex;" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">
-          Praticar
         </button>
       </div>
     </header>
@@ -11757,7 +11816,7 @@ window.QUESTIONS_REAIS = [
   <title>Estuda Edital — Plataforma Adaptativa Multi-Concurso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
 /* ============================================================================
    DESIGN SYSTEM — DPDF TI (ESTUDO ADAPTATIVO POR QUESTÕES REAIS)
@@ -11765,63 +11824,77 @@ window.QUESTIONS_REAIS = [
    ============================================================================ */
 
 :root {
-  --bg-primary: #0b1120;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --bg-card: #131c2e;
-  --bg-elevated: #192438;
-  --bg-hover: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border-color: rgba(148, 163, 184, 0.16);
-  --border-strong: rgba(148, 163, 184, 0.28);
+  --bg-primary: #0c0d10;
+  --bg-secondary: #121419;
+  --bg-tertiary: #1e222b;
+  --bg-card: #15181f;
+  --bg-elevated: #1b1f28;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --text-primary: #f4f4f6;
+  --text-secondary: #b8bec9;
+  --text-muted: #7c8494;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-soft: rgba(59, 130, 246, 0.14);
+  /* High-contrast primary CTA (ink-white on dark) + warm amber brand accent */
+  --cta-bg: #f4f4f6;
+  --cta-hover: #ffffff;
+  --cta-text: #0c0d10;
+
+  --accent-primary: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --accent: #f59e0b;
 
   --success: #10b981;
   --success-text: #34d399;
-  --success-soft: rgba(16, 185, 129, 0.13);
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --success-bg: rgba(16, 185, 129, 0.12);
 
   --warning: #f59e0b;
   --warning-text: #fbbf24;
-  --warning-soft: rgba(245, 158, 11, 0.13);
+  --warning-soft: rgba(245, 158, 11, 0.12);
 
   --danger: #ef4444;
   --danger-text: #f87171;
-  --danger-soft: rgba(239, 68, 68, 0.13);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.12);
 
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
-  --shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-  --sidebar-w: 248px;
-  --topbar-h: 56px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --shadow-sm: none;
+  --shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --sidebar-w: 244px;
+  --topbar-h: 54px;
 }
 
 body.light-theme {
-  --bg-primary: #f8fafc;
+  --bg-primary: #fafaf8;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e2e8f0;
+  --bg-tertiary: #eceae4;
   --bg-card: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-hover: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --bg-elevated: #f4f3ef;
+  --bg-hover: rgba(20, 22, 26, 0.045);
+  --text-primary: #14161a;
+  --text-secondary: #434853;
+  --text-muted: #6e7480;
+  --border-color: rgba(20, 22, 26, 0.09);
+  --border-strong: rgba(20, 22, 26, 0.18);
 
-  --accent-primary: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  --cta-bg: #14161a;
+  --cta-hover: #272b33;
+  --cta-text: #ffffff;
+
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-soft: rgba(217, 119, 6, 0.1);
+  --accent: #d97706;
 
   --success: #059669;
   --success-text: #047857;
   --success-soft: rgba(5, 150, 105, 0.1);
+  --success-bg: rgba(5, 150, 105, 0.1);
 
   --warning: #d97706;
   --warning-text: #b45309;
@@ -11830,9 +11903,10 @@ body.light-theme {
   --danger: #dc2626;
   --danger-text: #b91c1c;
   --danger-soft: rgba(220, 38, 38, 0.09);
+  --danger-bg: rgba(220, 38, 38, 0.09);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.04);
+  --shadow: 0 10px 28px -6px rgba(20, 22, 26, 0.1);
 }
 
 * {
@@ -11846,13 +11920,22 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   display: flex;
   min-height: 100vh;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+code, pre, .kpi-val, .cd-days, .nav-badge {
+  font-variant-numeric: tabular-nums;
 }
 
 code, pre {
@@ -12024,7 +12107,7 @@ code, pre {
 
 .nav-btn.active .nav-badge {
   background: var(--accent-primary);
-  color: #fff;
+  color: #0c0d10;
 }
 
 .nav-badge.alert {
@@ -12158,33 +12241,37 @@ code, pre {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 15px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
   white-space: nowrap;
 }
 
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn-sm {
-  padding: 6px 11px;
+  padding: 6px 12px;
   font-size: 0.79rem;
 }
 
 .btn-primary {
-  background-color: var(--accent-primary);
-  color: #ffffff;
+  background-color: var(--cta-bg);
+  color: var(--cta-text);
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--cta-hover);
 }
 
 .btn-success {
@@ -12198,7 +12285,7 @@ code, pre {
 .btn-warning {
   background-color: var(--warning-soft);
   color: var(--warning-text);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.28);
 }
 .btn-warning:hover:not(:disabled) {
   background-color: rgba(245, 158, 11, 0.2);
@@ -12219,12 +12306,22 @@ code, pre {
   color: var(--text-primary);
 }
 
+.btn-ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .segmented-tabs {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
-  background: var(--bg-elevated);
-  padding: 4px;
+  gap: 2px;
+  background: var(--bg-secondary);
+  padding: 3px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
 }
@@ -12234,12 +12331,12 @@ code, pre {
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 11px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .seg-btn:hover {
@@ -12247,13 +12344,12 @@ code, pre {
 }
 
 .seg-btn.active {
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================================================
-   CARDS, HERO & KPI STRIP
+   CARDS, HERO & UNIFIED STAT STRIP
    ============================================================================ */
 .section-head {
   display: flex;
@@ -12261,19 +12357,19 @@ code, pre {
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .section-head h2 {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.25;
 }
 
 .section-head p {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   margin-top: 3px;
 }
 
@@ -12283,7 +12379,6 @@ code, pre {
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -12296,82 +12391,93 @@ code, pre {
 }
 
 .card-title {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .action-hero {
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 20px 22px;
-  margin-bottom: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 4px 0 22px;
+  margin-bottom: 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
 .action-hero-eyebrow {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--accent-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .action-hero h3 {
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 6px;
 }
 
 .action-hero p {
   font-size: 0.88rem;
-  color: var(--text-secondary);
-  max-width: 620px;
+  color: var(--text-muted);
+  max-width: 540px;
 }
 
+/* Unified single-row metric bar (replaces 4 heavy boxed KPI cards) */
 .kpi-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.kpi-box {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.kpi-box {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 14px 18px;
+}
+
+.kpi-box:last-child {
+  border-right: none;
 }
 
 .kpi-label {
-  font-size: 0.73rem;
+  font-size: 0.71rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .kpi-val {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.38rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   margin: 4px 0 2px;
 }
 
 .kpi-sub {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
 /* ============================================================================
-   SUBJECTS GRID (CLEAN & COMPACT)
+   SUBJECTS GRID (QUIET, SCANNABLE, ZERO BUTTON FATIGUE)
    ============================================================================ */
 .subjects-grid {
   display: grid;
@@ -12383,17 +12489,16 @@ code, pre {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 14px;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .subject-card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 .subj-top {
@@ -12405,29 +12510,28 @@ code, pre {
 }
 
 .subj-code {
-  font-size: 0.71rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--bg-elevated);
   color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .subj-pts {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .subj-title {
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .progress-bar-wrap {
   background: var(--bg-tertiary);
-  height: 6px;
+  height: 3px;
   border-radius: 99px;
   overflow: hidden;
   margin: 8px 0 4px;
@@ -12436,20 +12540,20 @@ code, pre {
 .progress-bar-fill {
   height: 100%;
   background: var(--accent-primary);
-  transition: width 0.3s ease;
+  transition: width 260ms ease;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.71rem;
   font-weight: 600;
 }
 
-.status-untested { background: var(--bg-elevated); color: var(--text-muted); }
+.status-untested { background: transparent; color: var(--text-muted); padding-left: 0; }
 .status-weak { background: var(--danger-soft); color: var(--danger-text); }
 .status-evolving { background: var(--warning-soft); color: var(--warning-text); }
 .status-mastered { background: var(--success-soft); color: var(--success-text); }
@@ -12539,7 +12643,7 @@ code, pre {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
 .conf-chip:hover {
@@ -12962,7 +13066,7 @@ textarea.form-control {
   flex-shrink: 0;
 }
 .wiz-step.active .wiz-step-dot {
-  background: var(--accent, #3b82f6);
+  background: var(--accent, #f59e0b);
   color: #fff;
   border-color: transparent;
 }
@@ -13000,7 +13104,7 @@ textarea.form-control {
   line-height: 1.6;
 }
 .wiz-guide-box a {
-  color: var(--accent, #3b82f6);
+  color: var(--accent, #f59e0b);
   font-weight: 600;
 }
 .wiz-mode-tabs {
@@ -13023,8 +13127,8 @@ textarea.form-control {
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 .wiz-preset-card.selected {
-  border-color: var(--accent, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+  border-color: var(--accent, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.22);
 }
 .wiz-upload-row {
   display: flex;
@@ -13071,7 +13175,7 @@ textarea.form-control {
   background: var(--bg-elevated);
 }
 .wiz-pack-item.selected {
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent, #f59e0b);
 }
 .wiz-pack-check {
   display: flex;
@@ -13135,10 +13239,35 @@ textarea.form-control {
   .wiz-steps {
     grid-template-columns: repeat(2, 1fr);
   }
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kpi-box:nth-child(2n) {
+    border-right: none;
+  }
+  .kpi-box:nth-child(1),
+  .kpi-box:nth-child(2) {
+    border-bottom: 1px solid var(--border-color);
+  }
+  .action-hero {
+    padding-bottom: 18px;
+  }
+  .action-hero h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 </style>
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#0c0d10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Estuda Edital" />
@@ -13170,12 +13299,14 @@ textarea.form-control {
         <label class="track-switcher-label" for="role-select">Cargo / Especialidade</label>
         <select id="role-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
       </div>
-      <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
-        + Novo Concurso (Wizard)
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
-        📄 Subir Provas (PDF / JSON)
-      </button>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
+          + Concurso
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="flex:1;" onclick="switchView('import')">
+          Subir provas
+        </button>
+      </div>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -13253,17 +13384,14 @@ textarea.form-control {
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn btn-primary btn-sm" data-pwa-install-btn style="width:100%; margin-bottom:6px;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
-        📲 Instalar App
+      <button class="btn btn-outline btn-sm" data-pwa-install-btn style="width:100%;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
+        Instalar aplicativo
       </button>
       <div class="sidebar-footer-row">
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
-          Tema
-        </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
           Backup
         </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
           Restaurar
         </button>
       </div>
@@ -13284,21 +13412,11 @@ textarea.form-control {
         <span class="topbar-title" id="topbar-view-title">Visão Geral</span>
       </div>
       <div class="topbar-actions">
-        <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
-        <button class="btn btn-outline btn-sm" data-pwa-install-btn onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar como aplicativo no celular">
-          📲 Instalar
+        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Entrar para sincronizar progresso na nuvem">
+          Entrar
         </button>
-        <button class="btn btn-outline btn-sm desktop-only" onclick="window.OnboardingWizard && OnboardingWizard.open(1)" title="Abrir assistente passo a passo">
-          Wizard
-        </button>
-        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Fazer login para salvar progresso na nuvem">
-          Nuvem / Entrar
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <button class="icon-btn" style="display:inline-flex;" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">
-          Praticar
         </button>
       </div>
     </header>
@@ -13397,7 +13515,7 @@ textarea.form-control {
   <title>Estuda Edital — Plataforma Adaptativa Multi-Concurso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
 /* ============================================================================
    DESIGN SYSTEM — DPDF TI (ESTUDO ADAPTATIVO POR QUESTÕES REAIS)
@@ -13405,63 +13523,77 @@ textarea.form-control {
    ============================================================================ */
 
 :root {
-  --bg-primary: #0b1120;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --bg-card: #131c2e;
-  --bg-elevated: #192438;
-  --bg-hover: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border-color: rgba(148, 163, 184, 0.16);
-  --border-strong: rgba(148, 163, 184, 0.28);
+  --bg-primary: #0c0d10;
+  --bg-secondary: #121419;
+  --bg-tertiary: #1e222b;
+  --bg-card: #15181f;
+  --bg-elevated: #1b1f28;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --text-primary: #f4f4f6;
+  --text-secondary: #b8bec9;
+  --text-muted: #7c8494;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-soft: rgba(59, 130, 246, 0.14);
+  /* High-contrast primary CTA (ink-white on dark) + warm amber brand accent */
+  --cta-bg: #f4f4f6;
+  --cta-hover: #ffffff;
+  --cta-text: #0c0d10;
+
+  --accent-primary: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --accent: #f59e0b;
 
   --success: #10b981;
   --success-text: #34d399;
-  --success-soft: rgba(16, 185, 129, 0.13);
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --success-bg: rgba(16, 185, 129, 0.12);
 
   --warning: #f59e0b;
   --warning-text: #fbbf24;
-  --warning-soft: rgba(245, 158, 11, 0.13);
+  --warning-soft: rgba(245, 158, 11, 0.12);
 
   --danger: #ef4444;
   --danger-text: #f87171;
-  --danger-soft: rgba(239, 68, 68, 0.13);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.12);
 
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
-  --shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-  --sidebar-w: 248px;
-  --topbar-h: 56px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --shadow-sm: none;
+  --shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --sidebar-w: 244px;
+  --topbar-h: 54px;
 }
 
 body.light-theme {
-  --bg-primary: #f8fafc;
+  --bg-primary: #fafaf8;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e2e8f0;
+  --bg-tertiary: #eceae4;
   --bg-card: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-hover: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --bg-elevated: #f4f3ef;
+  --bg-hover: rgba(20, 22, 26, 0.045);
+  --text-primary: #14161a;
+  --text-secondary: #434853;
+  --text-muted: #6e7480;
+  --border-color: rgba(20, 22, 26, 0.09);
+  --border-strong: rgba(20, 22, 26, 0.18);
 
-  --accent-primary: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  --cta-bg: #14161a;
+  --cta-hover: #272b33;
+  --cta-text: #ffffff;
+
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-soft: rgba(217, 119, 6, 0.1);
+  --accent: #d97706;
 
   --success: #059669;
   --success-text: #047857;
   --success-soft: rgba(5, 150, 105, 0.1);
+  --success-bg: rgba(5, 150, 105, 0.1);
 
   --warning: #d97706;
   --warning-text: #b45309;
@@ -13470,9 +13602,10 @@ body.light-theme {
   --danger: #dc2626;
   --danger-text: #b91c1c;
   --danger-soft: rgba(220, 38, 38, 0.09);
+  --danger-bg: rgba(220, 38, 38, 0.09);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.04);
+  --shadow: 0 10px 28px -6px rgba(20, 22, 26, 0.1);
 }
 
 * {
@@ -13486,13 +13619,22 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   display: flex;
   min-height: 100vh;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+code, pre, .kpi-val, .cd-days, .nav-badge {
+  font-variant-numeric: tabular-nums;
 }
 
 code, pre {
@@ -13664,7 +13806,7 @@ code, pre {
 
 .nav-btn.active .nav-badge {
   background: var(--accent-primary);
-  color: #fff;
+  color: #0c0d10;
 }
 
 .nav-badge.alert {
@@ -13798,33 +13940,37 @@ code, pre {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 15px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
   white-space: nowrap;
 }
 
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn-sm {
-  padding: 6px 11px;
+  padding: 6px 12px;
   font-size: 0.79rem;
 }
 
 .btn-primary {
-  background-color: var(--accent-primary);
-  color: #ffffff;
+  background-color: var(--cta-bg);
+  color: var(--cta-text);
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--cta-hover);
 }
 
 .btn-success {
@@ -13838,7 +13984,7 @@ code, pre {
 .btn-warning {
   background-color: var(--warning-soft);
   color: var(--warning-text);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.28);
 }
 .btn-warning:hover:not(:disabled) {
   background-color: rgba(245, 158, 11, 0.2);
@@ -13859,12 +14005,22 @@ code, pre {
   color: var(--text-primary);
 }
 
+.btn-ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .segmented-tabs {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
-  background: var(--bg-elevated);
-  padding: 4px;
+  gap: 2px;
+  background: var(--bg-secondary);
+  padding: 3px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
 }
@@ -13874,12 +14030,12 @@ code, pre {
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 11px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .seg-btn:hover {
@@ -13887,13 +14043,12 @@ code, pre {
 }
 
 .seg-btn.active {
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================================================
-   CARDS, HERO & KPI STRIP
+   CARDS, HERO & UNIFIED STAT STRIP
    ============================================================================ */
 .section-head {
   display: flex;
@@ -13901,19 +14056,19 @@ code, pre {
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .section-head h2 {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.25;
 }
 
 .section-head p {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   margin-top: 3px;
 }
 
@@ -13923,7 +14078,6 @@ code, pre {
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -13936,82 +14090,93 @@ code, pre {
 }
 
 .card-title {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .action-hero {
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 20px 22px;
-  margin-bottom: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 4px 0 22px;
+  margin-bottom: 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
 .action-hero-eyebrow {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--accent-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .action-hero h3 {
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 6px;
 }
 
 .action-hero p {
   font-size: 0.88rem;
-  color: var(--text-secondary);
-  max-width: 620px;
+  color: var(--text-muted);
+  max-width: 540px;
 }
 
+/* Unified single-row metric bar (replaces 4 heavy boxed KPI cards) */
 .kpi-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.kpi-box {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.kpi-box {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 14px 18px;
+}
+
+.kpi-box:last-child {
+  border-right: none;
 }
 
 .kpi-label {
-  font-size: 0.73rem;
+  font-size: 0.71rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .kpi-val {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.38rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   margin: 4px 0 2px;
 }
 
 .kpi-sub {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
 /* ============================================================================
-   SUBJECTS GRID (CLEAN & COMPACT)
+   SUBJECTS GRID (QUIET, SCANNABLE, ZERO BUTTON FATIGUE)
    ============================================================================ */
 .subjects-grid {
   display: grid;
@@ -14023,17 +14188,16 @@ code, pre {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 14px;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .subject-card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 .subj-top {
@@ -14045,29 +14209,28 @@ code, pre {
 }
 
 .subj-code {
-  font-size: 0.71rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--bg-elevated);
   color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .subj-pts {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .subj-title {
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .progress-bar-wrap {
   background: var(--bg-tertiary);
-  height: 6px;
+  height: 3px;
   border-radius: 99px;
   overflow: hidden;
   margin: 8px 0 4px;
@@ -14076,20 +14239,20 @@ code, pre {
 .progress-bar-fill {
   height: 100%;
   background: var(--accent-primary);
-  transition: width 0.3s ease;
+  transition: width 260ms ease;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.71rem;
   font-weight: 600;
 }
 
-.status-untested { background: var(--bg-elevated); color: var(--text-muted); }
+.status-untested { background: transparent; color: var(--text-muted); padding-left: 0; }
 .status-weak { background: var(--danger-soft); color: var(--danger-text); }
 .status-evolving { background: var(--warning-soft); color: var(--warning-text); }
 .status-mastered { background: var(--success-soft); color: var(--success-text); }
@@ -14179,7 +14342,7 @@ code, pre {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
 .conf-chip:hover {
@@ -14602,7 +14765,7 @@ textarea.form-control {
   flex-shrink: 0;
 }
 .wiz-step.active .wiz-step-dot {
-  background: var(--accent, #3b82f6);
+  background: var(--accent, #f59e0b);
   color: #fff;
   border-color: transparent;
 }
@@ -14640,7 +14803,7 @@ textarea.form-control {
   line-height: 1.6;
 }
 .wiz-guide-box a {
-  color: var(--accent, #3b82f6);
+  color: var(--accent, #f59e0b);
   font-weight: 600;
 }
 .wiz-mode-tabs {
@@ -14663,8 +14826,8 @@ textarea.form-control {
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 .wiz-preset-card.selected {
-  border-color: var(--accent, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+  border-color: var(--accent, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.22);
 }
 .wiz-upload-row {
   display: flex;
@@ -14711,7 +14874,7 @@ textarea.form-control {
   background: var(--bg-elevated);
 }
 .wiz-pack-item.selected {
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent, #f59e0b);
 }
 .wiz-pack-check {
   display: flex;
@@ -14775,10 +14938,35 @@ textarea.form-control {
   .wiz-steps {
     grid-template-columns: repeat(2, 1fr);
   }
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kpi-box:nth-child(2n) {
+    border-right: none;
+  }
+  .kpi-box:nth-child(1),
+  .kpi-box:nth-child(2) {
+    border-bottom: 1px solid var(--border-color);
+  }
+  .action-hero {
+    padding-bottom: 18px;
+  }
+  .action-hero h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 </style>
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#0c0d10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Estuda Edital" />
@@ -14810,12 +14998,14 @@ textarea.form-control {
         <label class="track-switcher-label" for="role-select">Cargo / Especialidade</label>
         <select id="role-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
       </div>
-      <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
-        + Novo Concurso (Wizard)
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
-        📄 Subir Provas (PDF / JSON)
-      </button>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
+          + Concurso
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="flex:1;" onclick="switchView('import')">
+          Subir provas
+        </button>
+      </div>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -14893,17 +15083,14 @@ textarea.form-control {
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn btn-primary btn-sm" data-pwa-install-btn style="width:100%; margin-bottom:6px;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
-        📲 Instalar App
+      <button class="btn btn-outline btn-sm" data-pwa-install-btn style="width:100%;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
+        Instalar aplicativo
       </button>
       <div class="sidebar-footer-row">
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
-          Tema
-        </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
           Backup
         </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
           Restaurar
         </button>
       </div>
@@ -14924,21 +15111,11 @@ textarea.form-control {
         <span class="topbar-title" id="topbar-view-title">Visão Geral</span>
       </div>
       <div class="topbar-actions">
-        <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
-        <button class="btn btn-outline btn-sm" data-pwa-install-btn onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar como aplicativo no celular">
-          📲 Instalar
+        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Entrar para sincronizar progresso na nuvem">
+          Entrar
         </button>
-        <button class="btn btn-outline btn-sm desktop-only" onclick="window.OnboardingWizard && OnboardingWizard.open(1)" title="Abrir assistente passo a passo">
-          Wizard
-        </button>
-        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Fazer login para salvar progresso na nuvem">
-          Nuvem / Entrar
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <button class="icon-btn" style="display:inline-flex;" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">
-          Praticar
         </button>
       </div>
     </header>
@@ -15036,7 +15213,7 @@ textarea.form-control {
   <title>Estuda Edital — Plataforma Adaptativa Multi-Concurso</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
 /* ============================================================================
    DESIGN SYSTEM — DPDF TI (ESTUDO ADAPTATIVO POR QUESTÕES REAIS)
@@ -15044,63 +15221,77 @@ textarea.form-control {
    ============================================================================ */
 
 :root {
-  --bg-primary: #0b1120;
-  --bg-secondary: #111827;
-  --bg-tertiary: #1f2937;
-  --bg-card: #131c2e;
-  --bg-elevated: #192438;
-  --bg-hover: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --border-color: rgba(148, 163, 184, 0.16);
-  --border-strong: rgba(148, 163, 184, 0.28);
+  --bg-primary: #0c0d10;
+  --bg-secondary: #121419;
+  --bg-tertiary: #1e222b;
+  --bg-card: #15181f;
+  --bg-elevated: #1b1f28;
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --text-primary: #f4f4f6;
+  --text-secondary: #b8bec9;
+  --text-muted: #7c8494;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
 
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-soft: rgba(59, 130, 246, 0.14);
+  /* High-contrast primary CTA (ink-white on dark) + warm amber brand accent */
+  --cta-bg: #f4f4f6;
+  --cta-hover: #ffffff;
+  --cta-text: #0c0d10;
+
+  --accent-primary: #f59e0b;
+  --accent-hover: #fbbf24;
+  --accent-soft: rgba(245, 158, 11, 0.12);
+  --accent: #f59e0b;
 
   --success: #10b981;
   --success-text: #34d399;
-  --success-soft: rgba(16, 185, 129, 0.13);
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --success-bg: rgba(16, 185, 129, 0.12);
 
   --warning: #f59e0b;
   --warning-text: #fbbf24;
-  --warning-soft: rgba(245, 158, 11, 0.13);
+  --warning-soft: rgba(245, 158, 11, 0.12);
 
   --danger: #ef4444;
   --danger-text: #f87171;
-  --danger-soft: rgba(239, 68, 68, 0.13);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.12);
 
   --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28);
-  --shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.4);
-  --sidebar-w: 248px;
-  --topbar-h: 56px;
+  --radius-md: 11px;
+  --radius-lg: 14px;
+  --shadow-sm: none;
+  --shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  --sidebar-w: 244px;
+  --topbar-h: 54px;
 }
 
 body.light-theme {
-  --bg-primary: #f8fafc;
+  --bg-primary: #fafaf8;
   --bg-secondary: #ffffff;
-  --bg-tertiary: #e2e8f0;
+  --bg-tertiary: #eceae4;
   --bg-card: #ffffff;
-  --bg-elevated: #f1f5f9;
-  --bg-hover: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --bg-elevated: #f4f3ef;
+  --bg-hover: rgba(20, 22, 26, 0.045);
+  --text-primary: #14161a;
+  --text-secondary: #434853;
+  --text-muted: #6e7480;
+  --border-color: rgba(20, 22, 26, 0.09);
+  --border-strong: rgba(20, 22, 26, 0.18);
 
-  --accent-primary: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  --cta-bg: #14161a;
+  --cta-hover: #272b33;
+  --cta-text: #ffffff;
+
+  --accent-primary: #d97706;
+  --accent-hover: #b45309;
+  --accent-soft: rgba(217, 119, 6, 0.1);
+  --accent: #d97706;
 
   --success: #059669;
   --success-text: #047857;
   --success-soft: rgba(5, 150, 105, 0.1);
+  --success-bg: rgba(5, 150, 105, 0.1);
 
   --warning: #d97706;
   --warning-text: #b45309;
@@ -15109,9 +15300,10 @@ body.light-theme {
   --danger: #dc2626;
   --danger-text: #b91c1c;
   --danger-soft: rgba(220, 38, 38, 0.09);
+  --danger-bg: rgba(220, 38, 38, 0.09);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --shadow: 0 6px 20px -4px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 1px 2px rgba(20, 22, 26, 0.04);
+  --shadow: 0 10px 28px -6px rgba(20, 22, 26, 0.1);
 }
 
 * {
@@ -15125,13 +15317,22 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
   display: flex;
   min-height: 100vh;
-  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+code, pre, .kpi-val, .cd-days, .nav-badge {
+  font-variant-numeric: tabular-nums;
 }
 
 code, pre {
@@ -15303,7 +15504,7 @@ code, pre {
 
 .nav-btn.active .nav-badge {
   background: var(--accent-primary);
-  color: #fff;
+  color: #0c0d10;
 }
 
 .nav-badge.alert {
@@ -15437,33 +15638,37 @@ code, pre {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 9px 15px;
+  padding: 9px 16px;
   border-radius: var(--radius-sm);
-  font-size: 0.86rem;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
   white-space: nowrap;
 }
 
+.btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
 .btn-sm {
-  padding: 6px 11px;
+  padding: 6px 12px;
   font-size: 0.79rem;
 }
 
 .btn-primary {
-  background-color: var(--accent-primary);
-  color: #ffffff;
+  background-color: var(--cta-bg);
+  color: var(--cta-text);
 }
 .btn-primary:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--cta-hover);
 }
 
 .btn-success {
@@ -15477,7 +15682,7 @@ code, pre {
 .btn-warning {
   background-color: var(--warning-soft);
   color: var(--warning-text);
-  border-color: rgba(245, 158, 11, 0.3);
+  border-color: rgba(245, 158, 11, 0.28);
 }
 .btn-warning:hover:not(:disabled) {
   background-color: rgba(245, 158, 11, 0.2);
@@ -15498,12 +15703,22 @@ code, pre {
   color: var(--text-primary);
 }
 
+.btn-ghost {
+  background-color: transparent;
+  border-color: transparent;
+  color: var(--text-muted);
+}
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 .segmented-tabs {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
-  background: var(--bg-elevated);
-  padding: 4px;
+  gap: 2px;
+  background: var(--bg-secondary);
+  padding: 3px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
 }
@@ -15513,12 +15728,12 @@ code, pre {
   background: transparent;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 0.8rem;
+  font-size: 0.79rem;
   font-weight: 600;
-  padding: 6px 12px;
+  padding: 6px 11px;
   border-radius: 6px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background-color 140ms ease, color 140ms ease;
 }
 
 .seg-btn:hover {
@@ -15526,13 +15741,12 @@ code, pre {
 }
 
 .seg-btn.active {
-  background: var(--bg-card);
+  background: var(--bg-elevated);
   color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================================================
-   CARDS, HERO & KPI STRIP
+   CARDS, HERO & UNIFIED STAT STRIP
    ============================================================================ */
 .section-head {
   display: flex;
@@ -15540,19 +15754,19 @@ code, pre {
   align-items: flex-end;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
 }
 
 .section-head h2 {
-  font-size: 1.35rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.18rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   line-height: 1.25;
 }
 
 .section-head p {
   color: var(--text-muted);
-  font-size: 0.88rem;
+  font-size: 0.84rem;
   margin-top: 3px;
 }
 
@@ -15562,7 +15776,6 @@ code, pre {
   border-radius: var(--radius-md);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
 }
 
 .card-header {
@@ -15575,82 +15788,93 @@ code, pre {
 }
 
 .card-title {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .action-hero {
-  background: var(--bg-card);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-md);
-  padding: 20px 22px;
-  margin-bottom: 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 4px 0 22px;
+  margin-bottom: 20px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
 }
 
 .action-hero-eyebrow {
   font-size: 0.72rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   color: var(--accent-primary);
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .action-hero h3 {
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  margin-bottom: 4px;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 6px;
 }
 
 .action-hero p {
   font-size: 0.88rem;
-  color: var(--text-secondary);
-  max-width: 620px;
+  color: var(--text-muted);
+  max-width: 540px;
 }
 
+/* Unified single-row metric bar (replaces 4 heavy boxed KPI cards) */
 .kpi-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.kpi-box {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.kpi-box {
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border-color);
+  border-radius: 0;
+  padding: 14px 18px;
+}
+
+.kpi-box:last-child {
+  border-right: none;
 }
 
 .kpi-label {
-  font-size: 0.73rem;
+  font-size: 0.71rem;
   color: var(--text-muted);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .kpi-val {
-  font-size: 1.55rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: 1.38rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
   margin: 4px 0 2px;
 }
 
 .kpi-sub {
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
 /* ============================================================================
-   SUBJECTS GRID (CLEAN & COMPACT)
+   SUBJECTS GRID (QUIET, SCANNABLE, ZERO BUTTON FATIGUE)
    ============================================================================ */
 .subjects-grid {
   display: grid;
@@ -15662,17 +15886,16 @@ code, pre {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  padding: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 12px;
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  gap: 14px;
+  transition: border-color 140ms ease, background-color 140ms ease;
 }
 
 .subject-card:hover {
   border-color: var(--border-strong);
-  transform: translateY(-1px);
 }
 
 .subj-top {
@@ -15684,29 +15907,28 @@ code, pre {
 }
 
 .subj-code {
-  font-size: 0.71rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 5px;
-  background: var(--bg-elevated);
   color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .subj-pts {
   font-size: 0.72rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-muted);
 }
 
 .subj-title {
   font-size: 0.96rem;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.35;
+  letter-spacing: -0.01em;
 }
 
 .progress-bar-wrap {
   background: var(--bg-tertiary);
-  height: 6px;
+  height: 3px;
   border-radius: 99px;
   overflow: hidden;
   margin: 8px 0 4px;
@@ -15715,20 +15937,20 @@ code, pre {
 .progress-bar-fill {
   height: 100%;
   background: var(--accent-primary);
-  transition: width 0.3s ease;
+  transition: width 260ms ease;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 0.71rem;
   font-weight: 600;
 }
 
-.status-untested { background: var(--bg-elevated); color: var(--text-muted); }
+.status-untested { background: transparent; color: var(--text-muted); padding-left: 0; }
 .status-weak { background: var(--danger-soft); color: var(--danger-text); }
 .status-evolving { background: var(--warning-soft); color: var(--warning-text); }
 .status-mastered { background: var(--success-soft); color: var(--success-text); }
@@ -15818,7 +16040,7 @@ code, pre {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.14s ease;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
 }
 
 .conf-chip:hover {
@@ -16241,7 +16463,7 @@ textarea.form-control {
   flex-shrink: 0;
 }
 .wiz-step.active .wiz-step-dot {
-  background: var(--accent, #3b82f6);
+  background: var(--accent, #f59e0b);
   color: #fff;
   border-color: transparent;
 }
@@ -16279,7 +16501,7 @@ textarea.form-control {
   line-height: 1.6;
 }
 .wiz-guide-box a {
-  color: var(--accent, #3b82f6);
+  color: var(--accent, #f59e0b);
   font-weight: 600;
 }
 .wiz-mode-tabs {
@@ -16302,8 +16524,8 @@ textarea.form-control {
   transition: border-color 0.15s ease, transform 0.15s ease;
 }
 .wiz-preset-card.selected {
-  border-color: var(--accent, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.22);
+  border-color: var(--accent, #f59e0b);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.22);
 }
 .wiz-upload-row {
   display: flex;
@@ -16350,7 +16572,7 @@ textarea.form-control {
   background: var(--bg-elevated);
 }
 .wiz-pack-item.selected {
-  border-color: var(--accent, #3b82f6);
+  border-color: var(--accent, #f59e0b);
 }
 .wiz-pack-check {
   display: flex;
@@ -16414,10 +16636,35 @@ textarea.form-control {
   .wiz-steps {
     grid-template-columns: repeat(2, 1fr);
   }
+  .kpi-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .kpi-box:nth-child(2n) {
+    border-right: none;
+  }
+  .kpi-box:nth-child(1),
+  .kpi-box:nth-child(2) {
+    border-bottom: 1px solid var(--border-color);
+  }
+  .action-hero {
+    padding-bottom: 18px;
+  }
+  .action-hero h3 {
+    font-size: 1.2rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 </style>
-  <meta name="theme-color" content="#0b1120" />
+  <meta name="theme-color" content="#0c0d10" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Estuda Edital" />
@@ -16449,12 +16696,14 @@ textarea.form-control {
         <label class="track-switcher-label" for="role-select">Cargo / Especialidade</label>
         <select id="role-select" class="form-control track-select" onchange="switchTrack(this.value)"></select>
       </div>
-      <button class="btn btn-primary btn-sm" style="width:100%; margin-top:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
-        + Novo Concurso (Wizard)
-      </button>
-      <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="width:100%; margin-top:6px;" onclick="switchView('import')">
-        📄 Subir Provas (PDF / JSON)
-      </button>
+      <div style="display:flex; gap:6px; margin-top:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'custom')">
+          + Concurso
+        </button>
+        <button class="btn btn-outline btn-sm" id="btn-upload-exams" style="flex:1;" onclick="switchView('import')">
+          Subir provas
+        </button>
+      </div>
     </div>
 
     <div class="countdown-chip" id="countdown-chip">
@@ -16532,17 +16781,14 @@ textarea.form-control {
     </nav>
 
     <div class="sidebar-footer">
-      <button class="btn btn-primary btn-sm" data-pwa-install-btn style="width:100%; margin-bottom:6px;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
-        📲 Instalar App
+      <button class="btn btn-outline btn-sm" data-pwa-install-btn style="width:100%;" onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar Estuda Edital como aplicativo no celular ou PC">
+        Instalar aplicativo
       </button>
       <div class="sidebar-footer-row">
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="toggleTheme()" title="Alternar tema claro ou escuro">
-          Tema
-        </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="exportProgressJson()" title="Baixar backup do progresso">
           Backup
         </button>
-        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="triggerImportBackup()" title="Restaurar backup JSON">
           Restaurar
         </button>
       </div>
@@ -16563,21 +16809,11 @@ textarea.form-control {
         <span class="topbar-title" id="topbar-view-title">Visão Geral</span>
       </div>
       <div class="topbar-actions">
-        <span id="topbar-save-status" class="topbar-save desktop-only">Salvo automaticamente</span>
-        <button class="btn btn-outline btn-sm" data-pwa-install-btn onclick="window.PWAInstall && PWAInstall.promptInstall()" title="Instalar como aplicativo no celular">
-          📲 Instalar
+        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Entrar para sincronizar progresso na nuvem">
+          Entrar
         </button>
-        <button class="btn btn-outline btn-sm desktop-only" onclick="window.OnboardingWizard && OnboardingWizard.open(1)" title="Abrir assistente passo a passo">
-          Wizard
-        </button>
-        <button id="topbar-cloud-btn" class="btn btn-outline btn-sm" onclick="window.CloudSync && CloudSync.openAuthModal()" title="Fazer login para salvar progresso na nuvem">
-          Nuvem / Entrar
-        </button>
-        <button class="btn btn-outline btn-sm" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
+        <button class="icon-btn" style="display:inline-flex;" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">
-          Praticar
         </button>
       </div>
     </header>
@@ -90754,7 +90990,7 @@ window.QUESTIONS_QUADRIX = [
 
     if (btnEl) {
       btnEl.disabled = true;
-      btnEl.textContent = "⏳ Gerando explicação com IA...";
+      btnEl.textContent = "Gerando dica com IA...";
     }
     if (statusEl) {
       statusEl.style.display = "block";
@@ -90828,7 +91064,7 @@ window.QUESTIONS_QUADRIX = [
     } catch (err) {
       if (btnEl) {
         btnEl.disabled = false;
-        btnEl.textContent = "✨ Gerar explicação com IA";
+        btnEl.textContent = "Gerar dica com IA";
       }
       if (statusEl) {
         statusEl.style.display = "block";
@@ -91280,33 +91516,34 @@ window.QUESTIONS_QUADRIX = [
     let heroBtn = "";
 
     if (dueCount > 0) {
-      heroEyebrow = "Revisão espaçada pendente";
-      heroTitle = `Você tem ${dueCount} questão(ões) vencida(s) para revisar hoje`;
-      heroDesc = "Revisar no intervalo programado consolida a memória de longo prazo antes de avançar para novos blocos.";
+      heroEyebrow = "Revisão do dia";
+      heroTitle = `${dueCount} ${dueCount === 1 ? "questão pendente" : "questões pendentes"} para revisar`;
+      heroDesc = "Revise os erros anteriores antes de avançar para blocos novos.";
       heroBtn = `<button class="btn btn-primary" onclick="switchView('review')">Revisar agora</button>`;
     } else if (g.weakSubjects.length > 0) {
       const worst = g.weakSubjects.slice().sort((a, b) => (a.stats.accuracy || 0) - (b.stats.accuracy || 0))[0];
-      heroEyebrow = `Atenção prioritária • ${g.weakSubjects.length} ponto(s) fraco(s)`;
-      heroTitle = `Reforçar ${worst.disciplina.nome} (${worst.stats.accuracy}% de acerto)`;
-      heroDesc = "Você errou questões importantes neste tema. Revise o resumo cirúrgico ou gere uma aula sob medida dos seus erros.";
+      heroEyebrow = `Prioridade · ${g.weakSubjects.length} ${g.weakSubjects.length === 1 ? "ponto fraco" : "pontos fracos"}`;
+      heroTitle = `Reforçar ${worst.disciplina.nome} (${worst.stats.accuracy}%)`;
+      heroDesc = "Revise seus erros recentes nesta disciplina ou gere uma aula focada.";
       heroBtn = `
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="switchView('remediation', '${worst.disciplina.id}')">Abrir aula focada</button>
-          <button class="btn btn-outline" onclick="switchView('errors')">Ver caderno de erros</button>
+          <button class="btn btn-primary" onclick="switchView('remediation', '${worst.disciplina.id}')">Abrir aula</button>
+          <button class="btn btn-outline" onclick="switchView('errors')">Ver erros</button>
         </div>
       `;
     } else if (g.answeredCount === 0) {
-      heroEyebrow = "Comece por aqui";
-      heroTitle = "Inicie sua avaliação diagnóstica por questões";
-      heroDesc = "Responda questões reais para mapear o que você já domina e registrar automaticamente onde precisa de aula.";
+      const meta = window.EDITAL_DATA.metadata || {};
+      heroEyebrow = meta.banca ? `${meta.concurso || "Estuda Edital"} · ${meta.banca}` : (meta.concurso || "Estuda Edital");
+      heroTitle = "Comece pelas questões reais";
+      heroDesc = "Responda no seu ritmo. Cada erro vai direto para o caderno de revisão.";
       const firstD = (window.EDITAL_DATA.disciplinas || []).find(d => ALL_QUESTIONS.some(q => q.subjectId === d.id)) || (window.EDITAL_DATA.disciplinas || [])[0];
       heroBtn = firstD
-        ? `<button class="btn btn-primary" onclick="switchView('diagnostic', '${escapeHtml(firstD.id)}')">Começar por ${escapeHtml(firstD.nome)}</button>`
+        ? `<button class="btn btn-primary" onclick="switchView('diagnostic', '${escapeHtml(firstD.id)}')">Começar ${escapeHtml(firstD.nome)}</button>`
         : `<button class="btn btn-primary" onclick="switchView('diagnostic')">Começar questões</button>`;
     } else {
-      heroEyebrow = "Ritmo consistente";
-      heroTitle = "Continue avançando no banco de questões";
-      heroDesc = `Você já respondeu ${g.answeredCount} de ${g.totalQ} questões com ${g.overallAccuracy}% de aproveitamento.`;
+      heroEyebrow = "Em andamento";
+      heroTitle = `${g.answeredCount} de ${g.totalQ} questões respondidas`;
+      heroDesc = `Aproveitamento atual de ${g.overallAccuracy}%. Continue praticando para consolidar o edital.`;
       heroBtn = `<button class="btn btn-primary" onclick="switchView('diagnostic')">Continuar questões</button>`;
     }
 
@@ -91325,22 +91562,22 @@ window.QUESTIONS_QUADRIX = [
             <div class="subject-card">
               <div>
                 <div class="subj-top">
-                  <span class="subj-code">${escapeHtml(d.codigo)} • Peso ${d.peso}</span>
-                  <span class="subj-pts">${d.pontosProva.toFixed(0)} pts na prova</span>
+                  <span class="subj-code">${escapeHtml(d.codigo)} · Peso ${d.peso}</span>
+                  <span class="subj-pts">${d.pontosProva.toFixed(0)} pts</span>
                 </div>
                 <h4 class="subj-title" title="${escapeHtml(d.descricao)}">${escapeHtml(d.nome)}</h4>
               </div>
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                   <span class="status-badge ${st.statusClass}">${st.statusLabel}</span>
-                  <span style="font-size:0.75rem; color:var(--text-muted);">${st.answered}/${st.totalQuestions}</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">${st.answered}/${st.totalQuestions}</span>
                 </div>
                 <div class="progress-bar-wrap">
                   <div class="progress-bar-fill" style="width:${pct}%;"></div>
                 </div>
                 <div style="display:flex; gap:6px; margin-top:10px;">
-                  <button class="btn btn-primary btn-sm" style="flex:1;" onclick="switchView('diagnostic', '${d.id}')">Questões</button>
-                  <button class="btn btn-outline btn-sm" style="flex:1;" onclick="switchView('remediation', '${d.id}')">Aula</button>
+                  <button class="btn btn-outline btn-sm" style="flex:1;" onclick="switchView('diagnostic', '${d.id}')">Questões</button>
+                  <button class="btn btn-ghost btn-sm" onclick="switchView('remediation', '${d.id}')">Aula</button>
                 </div>
               </div>
             </div>
@@ -91361,44 +91598,34 @@ window.QUESTIONS_QUADRIX = [
       <div class="kpi-strip">
         <div class="kpi-box">
           <div class="kpi-label">Resolvidas</div>
-          <div class="kpi-val">${g.answeredCount}<span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">/${g.totalQ}</span></div>
-          <div class="kpi-sub">${g.wrongCount} erro(s) registrado(s)</div>
+          <div class="kpi-val">${g.answeredCount}<span style="font-size:0.86rem; color:var(--text-muted); font-weight:500;">/${g.totalQ}</span></div>
+          <div class="kpi-sub">${g.wrongCount} ${g.wrongCount === 1 ? "erro" : "erros"}</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-label">Aproveitamento</div>
           <div class="kpi-val" style="color:${g.answeredCount === 0 ? "var(--text-primary)" : g.overallAccuracy >= 75 ? "var(--success-text)" : "var(--warning-text)"};">${g.overallAccuracy}%</div>
-          <div class="kpi-sub">Meta recomendada: 75%+</div>
+          <div class="kpi-sub">Meta: 75%+</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-label">Projeção Objetiva</div>
-          <div class="kpi-val">${g.projectedTotalPts}<span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">/119</span></div>
-          <div class="kpi-sub">Bás: ${g.projectedBasicPts} • Esp: ${g.projectedSpecPts}</div>
+          <div class="kpi-label">Projeção</div>
+          <div class="kpi-val">${g.projectedTotalPts}<span style="font-size:0.86rem; color:var(--text-muted); font-weight:500;">/119</span></div>
+          <div class="kpi-sub">Bás ${g.projectedBasicPts} · Esp ${g.projectedSpecPts}</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-label">Pontos Fracos</div>
-          <div class="kpi-val" style="color:${g.weakSubjects.length > 0 ? "var(--danger-text)" : "var(--success-text)"};">${g.weakSubjects.length}</div>
-          <div class="kpi-sub">${dueCount} revisão(ões) hoje</div>
+          <div class="kpi-label">Pontos fracos</div>
+          <div class="kpi-val" style="color:${g.weakSubjects.length > 0 ? "var(--danger-text)" : "var(--text-primary)"};">${g.weakSubjects.length}</div>
+          <div class="kpi-sub">${dueCount} ${dueCount === 1 ? "revisão hoje" : "revisões hoje"}</div>
         </div>
       </div>
-
-      <details class="guide-box" style="margin-bottom:20px;">
-        <summary>Como funciona o ciclo de estudo adaptativo?</summary>
-        <div class="guide-body" style="font-size:0.87rem; color:var(--text-secondary); display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
-          <div><strong>1. Questões Primeiro:</strong> teste seu domínio direto nas questões reais, marcando se respondeu com certeza, dúvida ou chute.</div>
-          <div><strong>2. Registro de Erros:</strong> se acertar com certeza, avança rápido; se errar, o tópico e a alternativa marcada ficam salvos.</div>
-          <div><strong>3. Aula Cirúrgica:</strong> estude apenas o que foi ruim na aba Aulas ou gere uma explicação sob medida com sua API Key.</div>
-          <div><strong>4. Revisão Espaçada:</strong> erros retornam em 2 dias e avançam gradualmente (7, 21 e 45 dias) até o dia da prova.</div>
-        </div>
-      </details>
 
       <div class="section-head">
         <div>
           <h2>Disciplinas do Edital</h2>
-          <p>${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.concurso) || "Meu Concurso")} • ${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.cargo) || "")}${window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.banca ? " • " + escapeHtml(window.EDITAL_DATA.metadata.banca) : ""}</p>
+          <p>${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.cargo) || (window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.concurso) || "")}</p>
         </div>
         <div class="segmented-tabs">
           <button class="seg-btn ${filter === "ALL" ? "active" : ""}" onclick="setDashFilter('ALL')">Todas (${window.EDITAL_DATA.disciplinas.length})</button>
-          <button class="seg-btn ${filter === "WEAK" ? "active" : ""}" onclick="setDashFilter('WEAK')">Pontos Fracos (${g.weakSubjects.length})</button>
+          <button class="seg-btn ${filter === "WEAK" ? "active" : ""}" onclick="setDashFilter('WEAK')">Fracos (${g.weakSubjects.length})</button>
           <button class="seg-btn ${filter === "SPEC" ? "active" : ""}" onclick="setDashFilter('SPEC')">Específicos (${window.EDITAL_DATA.disciplinas.filter(d => d.categoria === "especificos").length})</button>
           <button class="seg-btn ${filter === "BASIC" ? "active" : ""}" onclick="setDashFilter('BASIC')">Básicos (${window.EDITAL_DATA.disciplinas.filter(d => d.categoria === "basicos").length})</button>
         </div>
@@ -91507,8 +91734,8 @@ window.QUESTIONS_QUADRIX = [
       if (!rem) ensureSharedExplanationLoaded(q);
       const displayExplanation = (rem && rem.generatedByAi && rem.explanation) ? rem.explanation : (q.explanation || "");
       const summaryPrefix = rem && rem.fromCommunity
-        ? "🌐 Dica da comunidade (IA): "
-        : (rem && rem.generatedByAi ? "✨ Dica cirúrgica (IA): " : "Resumo cirúrgico: ");
+        ? "Dica da comunidade: "
+        : (rem && rem.generatedByAi ? "Dica cirúrgica (IA): " : "Resumo cirúrgico: ");
       feedbackHtml = `
         <div class="feedback-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
@@ -91530,8 +91757,8 @@ window.QUESTIONS_QUADRIX = [
                 <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                   ${rem.sharedToCommunity ? `<span style="font-size:0.78rem; color:var(--success-text); font-weight:600;">✓ Compartilhada com a comunidade</span>` : ""}
                   ${rem.fromCommunity ? `
-                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">👍 Útil (${rem.upvotes || 0})</button>
-                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">⚠️ Reportar erro</button>
+                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">Útil (${rem.upvotes || 0})</button>
+                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">Reportar erro</button>
                   ` : ""}
                   ${rem.generatedByAi ? `<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ ${rem.fromCommunity ? "Gerar outra com minha IA" : "Gerar novamente com IA"}</button>` : ""}
                   <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
@@ -91542,7 +91769,7 @@ window.QUESTIONS_QUADRIX = [
             </details>
           ` : `
             <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-              <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">✨ Gerar explicação com IA</button>
+              <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">Gerar dica com IA</button>
               <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
               ${!ans.correct ? `<button class="btn btn-outline btn-sm" onclick="switchView('errors')">Caderno de Erros</button>` : ""}
             </div>
@@ -91556,11 +91783,13 @@ window.QUESTIONS_QUADRIX = [
 
     return `
       <div class="question-card" id="qcard-${escapeHtml(q.id)}">
-        <div class="q-meta">
-          <span class="q-tag" style="font-weight:700; color:var(--accent-primary);">${posIdx + 1} / ${totalFiltered}</span>
-          ${originBadge}
-          <span class="q-tag">${escapeHtml(bancaClean)}</span>
-          <span class="q-tag">${escapeHtml(subj ? subj.codigo : q.subjectId)}</span>
+        <div class="q-meta" style="font-size:0.78rem; color:var(--text-muted); gap:8px;">
+          <span style="font-weight:700; color:var(--accent-primary); font-variant-numeric:tabular-nums;">${posIdx + 1}/${totalFiltered}</span>
+          <span>·</span>
+          <span>${escapeHtml(bancaClean)}</span>
+          ${q.year ? `<span>·</span><span>${escapeHtml(String(q.year))}</span>` : ""}
+          <span>·</span>
+          <span>${escapeHtml(subj ? subj.codigo : q.subjectId)}</span>
         </div>
         <div style="font-size:0.78rem; color:var(--text-muted); margin:-6px 0 14px; font-weight:500;">
           ${escapeHtml(subj ? subj.nome : "")}${q.topicName ? " • " + escapeHtml(q.topicName) : ""}
@@ -91632,7 +91861,7 @@ window.QUESTIONS_QUADRIX = [
             <button class="seg-btn ${!isFocus ? "active" : ""}" onclick="setDiagMode('list')">Lista (${filtered.length})</button>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-            <button class="btn btn-outline btn-sm" id="btn-reshuffle-diag" onclick="reshuffleDiagQuestions()" title="Sortear nova ordem aleatória das questões deste filtro">🔀 Embaralhar</button>
+            <button class="btn btn-outline btn-sm" id="btn-reshuffle-diag" onclick="reshuffleDiagQuestions()" title="Sortear nova ordem aleatória das questões deste filtro">Embaralhar</button>
             <button class="btn btn-outline btn-sm" id="btn-toggle-shuffle" onclick="toggleDiagShuffle()" title="Alternar entre ordem aleatória e ordem original das provas">Ordem: ${state.diagShuffle !== false ? "Aleatória" : "Original"}</button>
             ${subjFilter !== "ALL" ? `<button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(subjFilter)}')">Abrir aula desta matéria</button>` : ""}
           </div>
@@ -92106,7 +92335,7 @@ window.QUESTIONS_QUADRIX = [
                   <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.orgao || "")} ${escapeHtml(String(q.year || ""))}</h4>
                   <p style="font-size:0.88rem; margin:6px 0;">${escapeHtml((q.statement || "").slice(0, 400))}${(q.statement || "").length > 400 ? "…" : ""}</p>
                   <p style="font-size:0.84rem; color:var(--success-text); margin-bottom:8px;"><strong>Gabarito oficial:</strong> ${escapeHtml(String((q.options || [])[q.correctIndex] ?? ""))}</p>
-                  <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">✨ Gerar explicação com IA</button>
+                  <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">Gerar dica com IA</button>
                   <div id="ai-q-status-${escapeHtml(q.id)}" style="display:none; font-size:0.82rem; margin-top:6px;"></div>
                 </div>
               `;

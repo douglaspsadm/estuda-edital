@@ -210,7 +210,7 @@
 
     if (btnEl) {
       btnEl.disabled = true;
-      btnEl.textContent = "⏳ Gerando explicação com IA...";
+      btnEl.textContent = "Gerando dica com IA...";
     }
     if (statusEl) {
       statusEl.style.display = "block";
@@ -284,7 +284,7 @@
     } catch (err) {
       if (btnEl) {
         btnEl.disabled = false;
-        btnEl.textContent = "✨ Gerar explicação com IA";
+        btnEl.textContent = "Gerar dica com IA";
       }
       if (statusEl) {
         statusEl.style.display = "block";
@@ -736,33 +736,34 @@
     let heroBtn = "";
 
     if (dueCount > 0) {
-      heroEyebrow = "Revisão espaçada pendente";
-      heroTitle = `Você tem ${dueCount} questão(ões) vencida(s) para revisar hoje`;
-      heroDesc = "Revisar no intervalo programado consolida a memória de longo prazo antes de avançar para novos blocos.";
+      heroEyebrow = "Revisão do dia";
+      heroTitle = `${dueCount} ${dueCount === 1 ? "questão pendente" : "questões pendentes"} para revisar`;
+      heroDesc = "Revise os erros anteriores antes de avançar para blocos novos.";
       heroBtn = `<button class="btn btn-primary" onclick="switchView('review')">Revisar agora</button>`;
     } else if (g.weakSubjects.length > 0) {
       const worst = g.weakSubjects.slice().sort((a, b) => (a.stats.accuracy || 0) - (b.stats.accuracy || 0))[0];
-      heroEyebrow = `Atenção prioritária • ${g.weakSubjects.length} ponto(s) fraco(s)`;
-      heroTitle = `Reforçar ${worst.disciplina.nome} (${worst.stats.accuracy}% de acerto)`;
-      heroDesc = "Você errou questões importantes neste tema. Revise o resumo cirúrgico ou gere uma aula sob medida dos seus erros.";
+      heroEyebrow = `Prioridade · ${g.weakSubjects.length} ${g.weakSubjects.length === 1 ? "ponto fraco" : "pontos fracos"}`;
+      heroTitle = `Reforçar ${worst.disciplina.nome} (${worst.stats.accuracy}%)`;
+      heroDesc = "Revise seus erros recentes nesta disciplina ou gere uma aula focada.";
       heroBtn = `
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
-          <button class="btn btn-primary" onclick="switchView('remediation', '${worst.disciplina.id}')">Abrir aula focada</button>
-          <button class="btn btn-outline" onclick="switchView('errors')">Ver caderno de erros</button>
+          <button class="btn btn-primary" onclick="switchView('remediation', '${worst.disciplina.id}')">Abrir aula</button>
+          <button class="btn btn-outline" onclick="switchView('errors')">Ver erros</button>
         </div>
       `;
     } else if (g.answeredCount === 0) {
-      heroEyebrow = "Comece por aqui";
-      heroTitle = "Inicie sua avaliação diagnóstica por questões";
-      heroDesc = "Responda questões reais para mapear o que você já domina e registrar automaticamente onde precisa de aula.";
+      const meta = window.EDITAL_DATA.metadata || {};
+      heroEyebrow = meta.banca ? `${meta.concurso || "Estuda Edital"} · ${meta.banca}` : (meta.concurso || "Estuda Edital");
+      heroTitle = "Comece pelas questões reais";
+      heroDesc = "Responda no seu ritmo. Cada erro vai direto para o caderno de revisão.";
       const firstD = (window.EDITAL_DATA.disciplinas || []).find(d => ALL_QUESTIONS.some(q => q.subjectId === d.id)) || (window.EDITAL_DATA.disciplinas || [])[0];
       heroBtn = firstD
-        ? `<button class="btn btn-primary" onclick="switchView('diagnostic', '${escapeHtml(firstD.id)}')">Começar por ${escapeHtml(firstD.nome)}</button>`
+        ? `<button class="btn btn-primary" onclick="switchView('diagnostic', '${escapeHtml(firstD.id)}')">Começar ${escapeHtml(firstD.nome)}</button>`
         : `<button class="btn btn-primary" onclick="switchView('diagnostic')">Começar questões</button>`;
     } else {
-      heroEyebrow = "Ritmo consistente";
-      heroTitle = "Continue avançando no banco de questões";
-      heroDesc = `Você já respondeu ${g.answeredCount} de ${g.totalQ} questões com ${g.overallAccuracy}% de aproveitamento.`;
+      heroEyebrow = "Em andamento";
+      heroTitle = `${g.answeredCount} de ${g.totalQ} questões respondidas`;
+      heroDesc = `Aproveitamento atual de ${g.overallAccuracy}%. Continue praticando para consolidar o edital.`;
       heroBtn = `<button class="btn btn-primary" onclick="switchView('diagnostic')">Continuar questões</button>`;
     }
 
@@ -781,22 +782,22 @@
             <div class="subject-card">
               <div>
                 <div class="subj-top">
-                  <span class="subj-code">${escapeHtml(d.codigo)} • Peso ${d.peso}</span>
-                  <span class="subj-pts">${d.pontosProva.toFixed(0)} pts na prova</span>
+                  <span class="subj-code">${escapeHtml(d.codigo)} · Peso ${d.peso}</span>
+                  <span class="subj-pts">${d.pontosProva.toFixed(0)} pts</span>
                 </div>
                 <h4 class="subj-title" title="${escapeHtml(d.descricao)}">${escapeHtml(d.nome)}</h4>
               </div>
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                   <span class="status-badge ${st.statusClass}">${st.statusLabel}</span>
-                  <span style="font-size:0.75rem; color:var(--text-muted);">${st.answered}/${st.totalQuestions}</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">${st.answered}/${st.totalQuestions}</span>
                 </div>
                 <div class="progress-bar-wrap">
                   <div class="progress-bar-fill" style="width:${pct}%;"></div>
                 </div>
                 <div style="display:flex; gap:6px; margin-top:10px;">
-                  <button class="btn btn-primary btn-sm" style="flex:1;" onclick="switchView('diagnostic', '${d.id}')">Questões</button>
-                  <button class="btn btn-outline btn-sm" style="flex:1;" onclick="switchView('remediation', '${d.id}')">Aula</button>
+                  <button class="btn btn-outline btn-sm" style="flex:1;" onclick="switchView('diagnostic', '${d.id}')">Questões</button>
+                  <button class="btn btn-ghost btn-sm" onclick="switchView('remediation', '${d.id}')">Aula</button>
                 </div>
               </div>
             </div>
@@ -817,44 +818,34 @@
       <div class="kpi-strip">
         <div class="kpi-box">
           <div class="kpi-label">Resolvidas</div>
-          <div class="kpi-val">${g.answeredCount}<span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">/${g.totalQ}</span></div>
-          <div class="kpi-sub">${g.wrongCount} erro(s) registrado(s)</div>
+          <div class="kpi-val">${g.answeredCount}<span style="font-size:0.86rem; color:var(--text-muted); font-weight:500;">/${g.totalQ}</span></div>
+          <div class="kpi-sub">${g.wrongCount} ${g.wrongCount === 1 ? "erro" : "erros"}</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-label">Aproveitamento</div>
           <div class="kpi-val" style="color:${g.answeredCount === 0 ? "var(--text-primary)" : g.overallAccuracy >= 75 ? "var(--success-text)" : "var(--warning-text)"};">${g.overallAccuracy}%</div>
-          <div class="kpi-sub">Meta recomendada: 75%+</div>
+          <div class="kpi-sub">Meta: 75%+</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-label">Projeção Objetiva</div>
-          <div class="kpi-val">${g.projectedTotalPts}<span style="font-size:0.9rem; color:var(--text-muted); font-weight:500;">/119</span></div>
-          <div class="kpi-sub">Bás: ${g.projectedBasicPts} • Esp: ${g.projectedSpecPts}</div>
+          <div class="kpi-label">Projeção</div>
+          <div class="kpi-val">${g.projectedTotalPts}<span style="font-size:0.86rem; color:var(--text-muted); font-weight:500;">/119</span></div>
+          <div class="kpi-sub">Bás ${g.projectedBasicPts} · Esp ${g.projectedSpecPts}</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-label">Pontos Fracos</div>
-          <div class="kpi-val" style="color:${g.weakSubjects.length > 0 ? "var(--danger-text)" : "var(--success-text)"};">${g.weakSubjects.length}</div>
-          <div class="kpi-sub">${dueCount} revisão(ões) hoje</div>
+          <div class="kpi-label">Pontos fracos</div>
+          <div class="kpi-val" style="color:${g.weakSubjects.length > 0 ? "var(--danger-text)" : "var(--text-primary)"};">${g.weakSubjects.length}</div>
+          <div class="kpi-sub">${dueCount} ${dueCount === 1 ? "revisão hoje" : "revisões hoje"}</div>
         </div>
       </div>
-
-      <details class="guide-box" style="margin-bottom:20px;">
-        <summary>Como funciona o ciclo de estudo adaptativo?</summary>
-        <div class="guide-body" style="font-size:0.87rem; color:var(--text-secondary); display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px;">
-          <div><strong>1. Questões Primeiro:</strong> teste seu domínio direto nas questões reais, marcando se respondeu com certeza, dúvida ou chute.</div>
-          <div><strong>2. Registro de Erros:</strong> se acertar com certeza, avança rápido; se errar, o tópico e a alternativa marcada ficam salvos.</div>
-          <div><strong>3. Aula Cirúrgica:</strong> estude apenas o que foi ruim na aba Aulas ou gere uma explicação sob medida com sua API Key.</div>
-          <div><strong>4. Revisão Espaçada:</strong> erros retornam em 2 dias e avançam gradualmente (7, 21 e 45 dias) até o dia da prova.</div>
-        </div>
-      </details>
 
       <div class="section-head">
         <div>
           <h2>Disciplinas do Edital</h2>
-          <p>${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.concurso) || "Meu Concurso")} • ${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.cargo) || "")}${window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.banca ? " • " + escapeHtml(window.EDITAL_DATA.metadata.banca) : ""}</p>
+          <p>${escapeHtml((window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.cargo) || (window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.concurso) || "")}</p>
         </div>
         <div class="segmented-tabs">
           <button class="seg-btn ${filter === "ALL" ? "active" : ""}" onclick="setDashFilter('ALL')">Todas (${window.EDITAL_DATA.disciplinas.length})</button>
-          <button class="seg-btn ${filter === "WEAK" ? "active" : ""}" onclick="setDashFilter('WEAK')">Pontos Fracos (${g.weakSubjects.length})</button>
+          <button class="seg-btn ${filter === "WEAK" ? "active" : ""}" onclick="setDashFilter('WEAK')">Fracos (${g.weakSubjects.length})</button>
           <button class="seg-btn ${filter === "SPEC" ? "active" : ""}" onclick="setDashFilter('SPEC')">Específicos (${window.EDITAL_DATA.disciplinas.filter(d => d.categoria === "especificos").length})</button>
           <button class="seg-btn ${filter === "BASIC" ? "active" : ""}" onclick="setDashFilter('BASIC')">Básicos (${window.EDITAL_DATA.disciplinas.filter(d => d.categoria === "basicos").length})</button>
         </div>
@@ -963,8 +954,8 @@
       if (!rem) ensureSharedExplanationLoaded(q);
       const displayExplanation = (rem && rem.generatedByAi && rem.explanation) ? rem.explanation : (q.explanation || "");
       const summaryPrefix = rem && rem.fromCommunity
-        ? "🌐 Dica da comunidade (IA): "
-        : (rem && rem.generatedByAi ? "✨ Dica cirúrgica (IA): " : "Resumo cirúrgico: ");
+        ? "Dica da comunidade: "
+        : (rem && rem.generatedByAi ? "Dica cirúrgica (IA): " : "Resumo cirúrgico: ");
       feedbackHtml = `
         <div class="feedback-panel">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
@@ -986,8 +977,8 @@
                 <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
                   ${rem.sharedToCommunity ? `<span style="font-size:0.78rem; color:var(--success-text); font-weight:600;">✓ Compartilhada com a comunidade</span>` : ""}
                   ${rem.fromCommunity ? `
-                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">👍 Útil (${rem.upvotes || 0})</button>
-                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">⚠️ Reportar erro</button>
+                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">Útil (${rem.upvotes || 0})</button>
+                    <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">Reportar erro</button>
                   ` : ""}
                   ${rem.generatedByAi ? `<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ ${rem.fromCommunity ? "Gerar outra com minha IA" : "Gerar novamente com IA"}</button>` : ""}
                   <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
@@ -998,7 +989,7 @@
             </details>
           ` : `
             <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-              <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">✨ Gerar explicação com IA</button>
+              <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">Gerar dica com IA</button>
               <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
               ${!ans.correct ? `<button class="btn btn-outline btn-sm" onclick="switchView('errors')">Caderno de Erros</button>` : ""}
             </div>
@@ -1012,11 +1003,13 @@
 
     return `
       <div class="question-card" id="qcard-${escapeHtml(q.id)}">
-        <div class="q-meta">
-          <span class="q-tag" style="font-weight:700; color:var(--accent-primary);">${posIdx + 1} / ${totalFiltered}</span>
-          ${originBadge}
-          <span class="q-tag">${escapeHtml(bancaClean)}</span>
-          <span class="q-tag">${escapeHtml(subj ? subj.codigo : q.subjectId)}</span>
+        <div class="q-meta" style="font-size:0.78rem; color:var(--text-muted); gap:8px;">
+          <span style="font-weight:700; color:var(--accent-primary); font-variant-numeric:tabular-nums;">${posIdx + 1}/${totalFiltered}</span>
+          <span>·</span>
+          <span>${escapeHtml(bancaClean)}</span>
+          ${q.year ? `<span>·</span><span>${escapeHtml(String(q.year))}</span>` : ""}
+          <span>·</span>
+          <span>${escapeHtml(subj ? subj.codigo : q.subjectId)}</span>
         </div>
         <div style="font-size:0.78rem; color:var(--text-muted); margin:-6px 0 14px; font-weight:500;">
           ${escapeHtml(subj ? subj.nome : "")}${q.topicName ? " • " + escapeHtml(q.topicName) : ""}
@@ -1088,7 +1081,7 @@
             <button class="seg-btn ${!isFocus ? "active" : ""}" onclick="setDiagMode('list')">Lista (${filtered.length})</button>
           </div>
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-            <button class="btn btn-outline btn-sm" id="btn-reshuffle-diag" onclick="reshuffleDiagQuestions()" title="Sortear nova ordem aleatória das questões deste filtro">🔀 Embaralhar</button>
+            <button class="btn btn-outline btn-sm" id="btn-reshuffle-diag" onclick="reshuffleDiagQuestions()" title="Sortear nova ordem aleatória das questões deste filtro">Embaralhar</button>
             <button class="btn btn-outline btn-sm" id="btn-toggle-shuffle" onclick="toggleDiagShuffle()" title="Alternar entre ordem aleatória e ordem original das provas">Ordem: ${state.diagShuffle !== false ? "Aleatória" : "Original"}</button>
             ${subjFilter !== "ALL" ? `<button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(subjFilter)}')">Abrir aula desta matéria</button>` : ""}
           </div>
@@ -1562,7 +1555,7 @@
                   <h4>[${escapeHtml(q.id)}] ${escapeHtml(q.orgao || "")} ${escapeHtml(String(q.year || ""))}</h4>
                   <p style="font-size:0.88rem; margin:6px 0;">${escapeHtml((q.statement || "").slice(0, 400))}${(q.statement || "").length > 400 ? "…" : ""}</p>
                   <p style="font-size:0.84rem; color:var(--success-text); margin-bottom:8px;"><strong>Gabarito oficial:</strong> ${escapeHtml(String((q.options || [])[q.correctIndex] ?? ""))}</p>
-                  <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">✨ Gerar explicação com IA</button>
+                  <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">Gerar dica com IA</button>
                   <div id="ai-q-status-${escapeHtml(q.id)}" style="display:none; font-size:0.82rem; margin-top:6px;"></div>
                 </div>
               `;
