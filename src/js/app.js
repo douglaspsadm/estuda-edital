@@ -4,7 +4,7 @@
 // ============================================================================
 
 (function () {
-  const STEPS = [2, 7, 21, 45];
+  const STEPS = [1, 7, 21, 45];
   const REASONS = [
     ["conteudo", "Conteúdo"],
     ["atencao", "Atenção"],
@@ -1098,6 +1098,14 @@
     `;
   }
 
+  let sessionAnsweredCount = 0;
+  let sessionReminderDismissedAt = 0;
+
+  window.dismissSessionCycleBanner = function () {
+    sessionReminderDismissedAt = sessionAnsweredCount;
+    renderDiagnosticView();
+  };
+
   function renderDiagnosticView() {
     const container = document.getElementById("diagnostic-content");
     if (!container) return;
@@ -1114,15 +1122,32 @@
     if (state.diagFocusIdx >= filtered.length) state.diagFocusIdx = Math.max(0, filtered.length - 1);
     if (state.diagFocusIdx < 0) state.diagFocusIdx = 0;
 
-    const activeFiltersCount = [subjFilter !== "ALL", originFilter !== "ALL", bancaFilter !== "ALL", statusFilter !== "ALL"].filter(Boolean).length;
+    const secondaryFiltersCount = [originFilter !== "ALL", bancaFilter !== "ALL", statusFilter !== "ALL"].filter(Boolean).length;
+    const totalUnansweredAll = ALL_QUESTIONS.filter(q => !state.answers[q.id]).length;
+    const filteredUnanswered = filtered.filter(q => !state.answers[q.id]).length;
 
     const optionsSubjects = [
-      `<option value="ALL" ${subjFilter === "ALL" ? "selected" : ""}>Todas as disciplinas (${ALL_QUESTIONS.length})</option>`,
+      `<option value="ALL" ${subjFilter === "ALL" ? "selected" : ""}>Todas as disciplinas (${totalUnansweredAll} inéditas / ${ALL_QUESTIONS.length})</option>`,
       ...window.EDITAL_DATA.disciplinas.map(d => {
-        const count = ALL_QUESTIONS.filter(q => q.subjectId === d.id).length;
-        return `<option value="${d.id}" ${subjFilter === d.id ? "selected" : ""}>[${escapeHtml(d.codigo)}] ${escapeHtml(d.nome)} (${count})</option>`;
+        const subQs = ALL_QUESTIONS.filter(q => q.subjectId === d.id);
+        const rem = subQs.filter(q => !state.answers[q.id]).length;
+        return `<option value="${d.id}" ${subjFilter === d.id ? "selected" : ""}>[${escapeHtml(d.codigo)}] ${escapeHtml(d.nome)} (${rem} inéditas / ${subQs.length})</option>`;
       })
     ].join("");
+
+    const showCycleBanner = sessionAnsweredCount >= 25 && (sessionAnsweredCount - sessionReminderDismissedAt) >= 25;
+    const cycleBannerHtml = showCycleBanner ? `
+      <div class="card" id="diag-cycle-banner" style="padding:12px 14px; margin-bottom:12px; border:1px solid var(--accent-primary); display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="font-size:0.84rem; color:var(--text-secondary);">
+          <strong>${sessionAnsweredCount} questões feitas nesta sessão.</strong> Para fixar melhor (intercalação), vale alternar a disciplina acima ou fazer uma revisão rápida de 5 min.
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="switchView('review')">Revisão rápida</button>
+          <button class="btn btn-outline btn-sm" onclick="switchView('flashcards')">Flashcards</button>
+          <button class="btn btn-outline btn-sm" onclick="dismissSessionCycleBanner()">Continuar</button>
+        </div>
+      </div>
+    ` : "";
 
     let mainQuestionsHtml = "";
     if (!filtered.length) {
@@ -1149,6 +1174,14 @@
 
     container.innerHTML = `
       <div class="focus-Stage">
+        <div id="diag-subject-bar" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px;">
+          <div style="flex:1; min-width:220px;">
+            <label class="field-label" for="diag-subject-select" style="margin-bottom:4px; display:block;">Disciplina ativa (${filteredUnanswered} não respondida(s))</label>
+            <select id="diag-subject-select" class="form-control" onchange="changeDiagSubject(this.value)">${optionsSubjects}</select>
+          </div>
+          ${subjFilter !== "ALL" ? `<button class="btn btn-outline btn-sm" style="align-self:flex-end;" onclick="switchView('remediation', '${escapeJsStr(subjFilter)}')">Abrir aula desta matéria</button>` : ""}
+        </div>
+
         <div class="q-toolbar">
           <div class="segmented-tabs">
             <button class="seg-btn ${isFocus ? "active" : ""}" onclick="setDiagMode('focus')">Modo Foco (1 por vez)</button>
@@ -1157,18 +1190,13 @@
           <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
             <button class="btn btn-outline btn-sm" id="btn-reshuffle-diag" onclick="reshuffleDiagQuestions()" title="Sortear nova ordem aleatória das questões deste filtro">Embaralhar</button>
             <button class="btn btn-outline btn-sm" id="btn-toggle-shuffle" onclick="toggleDiagShuffle()" title="Alternar entre ordem aleatória e ordem original das provas">Ordem: ${state.diagShuffle !== false ? "Aleatória" : "Original"}</button>
-            ${subjFilter !== "ALL" ? `<button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(subjFilter)}')">Abrir aula desta matéria</button>` : ""}
           </div>
         </div>
 
-        <details class="guide-box" ${activeFiltersCount > 0 && filtered.length === 0 ? "open" : ""}>
-          <summary>Filtros de questões ${activeFiltersCount > 0 ? `(${activeFiltersCount} ativo${activeFiltersCount > 1 ? "s" : ""})` : ""}</summary>
+        <details class="guide-box" ${secondaryFiltersCount > 0 && filtered.length === 0 ? "open" : ""}>
+          <summary>Mais filtros ${secondaryFiltersCount > 0 ? `(${secondaryFiltersCount} ativo${secondaryFiltersCount > 1 ? "s" : ""})` : "(Origem, Banca, Status)"}</summary>
           <div class="guide-body">
             <div class="filter-grid">
-              <div>
-                <label class="field-label">Disciplina</label>
-                <select class="form-control" onchange="changeDiagSubject(this.value)">${optionsSubjects}</select>
-              </div>
               <div>
                 <label class="field-label">Origem</label>
                 <select class="form-control" onchange="changeDiagOrigin(this.value)">
@@ -1197,10 +1225,11 @@
                 </select>
               </div>
             </div>
-            ${activeFiltersCount > 0 ? `<div style="margin-top:10px; display:flex; justify-content:flex-end;"><button class="btn btn-outline btn-sm" onclick="resetDiagFilters()">Limpar todos os filtros</button></div>` : ""}
+            ${(secondaryFiltersCount > 0 || subjFilter !== "ALL") ? `<div style="margin-top:10px; display:flex; justify-content:flex-end;"><button class="btn btn-outline btn-sm" onclick="resetDiagFilters()">Limpar todos os filtros</button></div>` : ""}
           </div>
         </details>
 
+        ${cycleBannerHtml}
         ${mainQuestionsHtml}
       </div>
     `;
@@ -1278,6 +1307,7 @@
     const optOrder = PERM[q.id] ? PERM[q.id].slice() : q.options.map((_, i) => i);
 
     diagJustAnsweredId = questionId;
+    sessionAnsweredCount += 1;
     state.answers[questionId] = {
       selectedIndex,
       correct: ok,
@@ -1798,29 +1828,150 @@
     window.scrollTo({ top: y });
   };
 
+  let earlyReviewIds = [];
+
+  window.startEarlyReview = function () {
+    ensure();
+    const now = Date.now();
+    // Prioriza: 1) questões erradas ainda agendadas, 2) dúvidas/chutes, 3) próximas a vencer
+    const scheduled = Object.entries(state.reviews || {})
+      .map(([id, r]) => ({ id, due: Date.parse(r.due) || now, q: QUESTION_MAP.get(id), ans: state.answers[id] }))
+      .filter(x => x.q);
+
+    scheduled.sort((a, b) => {
+      const aErr = a.ans && !a.ans.correct ? 0 : 1;
+      const bErr = b.ans && !b.ans.correct ? 0 : 1;
+      if (aErr !== bErr) return aErr - bErr;
+      return a.due - b.due;
+    });
+
+    earlyReviewIds = scheduled.slice(0, 10).map(x => x.id);
+    if (!earlyReviewIds.length) {
+      if (typeof window.showToast === "function") window.showToast("Responda algumas questões primeiro para montar uma revisão.", "info");
+      return;
+    }
+    renderReview();
+  };
+
+  window.clearEarlyReview = function () {
+    earlyReviewIds = [];
+    renderReview();
+  };
+
   function renderReview() {
     ensure();
     const container = document.getElementById("review-content");
     if (!container) return;
-    const ids = Array.from(new Set(dueIds().concat(Array.from(REVDONE))));
-    const qs = ids.map(id => QUESTION_MAP.get(id)).filter(Boolean);
+
+    const now = Date.now();
+    const dayMs = 864e5;
+    const dueNow = dueIds();
+    const activeIds = Array.from(new Set(dueNow.concat(earlyReviewIds).concat(Array.from(REVDONE))));
+    const qs = activeIds.map(id => QUESTION_MAP.get(id)).filter(Boolean);
+
+    // Agrupa próximas revisões por janela temporal e disciplina
+    const buckets = {
+      tomorrow: { label: "Amanhã (24h)", items: [], bySubj: {} },
+      week: { label: "Próximos 7 dias", items: [], bySubj: {} },
+      later: { label: "Mais adiante (8+ dias)", items: [], bySubj: {} }
+    };
+    const totalScheduled = Object.keys(state.reviews || {}).length;
+    Object.entries(state.reviews || {}).forEach(([id, r]) => {
+      const dueTs = Date.parse(r.due);
+      if (!dueTs || dueTs <= now) return;
+      const q = QUESTION_MAP.get(id);
+      if (!q) return;
+      const diffDays = (dueTs - now) / dayMs;
+      const bucket = diffDays <= 1.5 ? buckets.tomorrow : diffDays <= 7.5 ? buckets.week : buckets.later;
+      bucket.items.push(id);
+      const sName = subjName(q.subjectId);
+      bucket.bySubj[sName] = (bucket.bySubj[sName] || 0) + 1;
+    });
+
+    const fcAll = typeof getActiveFlashcards === "function" ? getActiveFlashcards() : [];
+    const fcDue = typeof isFcDue === "function" ? fcAll.filter(isFcDue).length : 0;
+    const fcAiCount = fcAll.filter(c => c.source === "ai_lesson" || c.source === "ai_tip" || c.source === "manual").length;
+    const wrongCount = ALL_QUESTIONS.filter(q => state.answers[q.id] && !state.answers[q.id].correct).length;
+
+    const renderBucketHtml = (b) => {
+      if (!b.items.length) return "";
+      const subjChips = Object.entries(b.bySubj)
+        .sort((a, b2) => b2[1] - a[1])
+        .map(([name, cnt]) => `<span class="q-tag">${escapeHtml(name)} (${cnt})</span>`)
+        .join("");
+      return `
+        <div class="card" style="padding:14px 16px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+            <strong style="font-size:0.92rem;">${escapeHtml(b.label)}</strong>
+            <span style="font-size:0.8rem; color:var(--text-muted);">${b.items.length} questão(ões)</span>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">${subjChips}</div>
+        </div>
+      `;
+    };
+
+    const scheduleHtml = [buckets.tomorrow, buckets.week, buckets.later].map(renderBucketHtml).filter(Boolean).join("");
 
     container.innerHTML = `
       <div class="focus-Stage">
         <div class="section-head">
           <div>
             <h2>Revisão Espaçada do Dia</h2>
-            <p>${Object.keys(state.reviews).length} questão(ões) agendada(s) no ciclo de memória (2, 7, 21 e 45 dias).</p>
+            <p>Ciclo: Questões → Erros & Aula Cirúrgica → Revisão (1, 7, 21 e 45 dias) + Flashcards.</p>
+          </div>
+          ${totalScheduled > 0 && !dueNow.length && !earlyReviewIds.length
+            ? `<button class="btn btn-primary btn-sm" id="btn-early-review" onclick="startEarlyReview()">Antecipar revisão rápida (10)</button>`
+            : earlyReviewIds.length
+              ? `<button class="btn btn-outline btn-sm" onclick="clearEarlyReview()">Encerrar revisão antecipada</button>`
+              : ""}
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:10px; margin-bottom:16px;">
+          <div class="card" style="padding:12px 14px;">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Questões para hoje</div>
+            <div style="font-size:1.3rem; font-weight:700; margin-top:2px;">${dueNow.length}</div>
+            <div style="font-size:0.76rem; color:var(--text-secondary);">${totalScheduled} no ciclo de memória</div>
+          </div>
+          <div class="card" style="padding:12px 14px; cursor:pointer;" onclick="switchView('flashcards')">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Flashcards (Aulas & Dicas)</div>
+            <div style="font-size:1.3rem; font-weight:700; margin-top:2px;">${fcDue > 0 ? `${fcDue} vencido(s)` : `${fcAiCount} IA`}</div>
+            <div style="font-size:0.76rem; color:var(--accent-primary);">Abrir Flashcards →</div>
+          </div>
+          <div class="card" style="padding:12px 14px; cursor:pointer;" onclick="switchView('errors')">
+            <div style="font-size:0.75rem; color:var(--text-muted);">Caderno de Erros</div>
+            <div style="font-size:1.3rem; font-weight:700; margin-top:2px;">${wrongCount}</div>
+            <div style="font-size:0.76rem; color:var(--accent-primary);">Gerar Aula Cirúrgica →</div>
           </div>
         </div>
+
         ${qs.length
-          ? qs.map(q => miniCardHtml(q, "rev")).join("")
-          : `<div class="card" style="text-align:center; padding:32px 20px;">
-              <h3 style="font-size:1.05rem; margin-bottom:6px;">Tudo em dia!</h3>
-              <p style="color:var(--text-muted); font-size:0.88rem; margin-bottom:14px;">Não há questões vencidas para revisar agora.</p>
-              <button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">Resolver novas questões</button>
+          ? `
+            <h3 style="font-size:0.95rem; margin:6px 0 10px;">
+              ${earlyReviewIds.length && !dueNow.length ? "Revisão rápida antecipada (priorizando erros e próximas a vencer)" : "Questões vencidas para revisar agora"}
+            </h3>
+            ${qs.map(q => miniCardHtml(q, "rev")).join("")}
+          `
+          : `<div class="card" style="text-align:center; padding:26px 20px; margin-bottom:16px;">
+              <h3 style="font-size:1.02rem; margin-bottom:6px;">Tudo em dia por hoje!</h3>
+              <p style="color:var(--text-muted); font-size:0.86rem; margin-bottom:14px;">
+                ${totalScheduled > 0
+                  ? "Suas questões respondidas já estão agendadas na curva de 1, 7, 21 e 45 dias abaixo. Se quiser reforçar agora, antecipe uma revisão rápida."
+                  : "Responda questões na aba Questões para iniciar automaticamente seu ciclo de revisão espaçada (1, 7, 21 e 45 dias)."}
+              </p>
+              <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+                ${totalScheduled > 0 ? `<button class="btn btn-primary btn-sm" onclick="startEarlyReview()">Antecipar revisão rápida</button>` : ""}
+                <button class="btn btn-outline btn-sm" onclick="switchView('diagnostic')">Resolver novas questões</button>
+                ${fcAll.length ? `<button class="btn btn-outline btn-sm" onclick="switchView('flashcards')">Revisar Flashcards</button>` : ""}
+              </div>
             </div>`
         }
+
+        ${scheduleHtml ? `
+          <div style="margin-top:18px;">
+            <h3 style="font-size:0.95rem; margin-bottom:10px;">Agenda das próximas revisões (por disciplina)</h3>
+            ${scheduleHtml}
+          </div>
+        ` : ""}
       </div>
     `;
   }
