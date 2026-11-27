@@ -1420,6 +1420,11 @@
       "5. Encerre com a seção `## Flashcards de Revisão` contendo 3 cartões objetivos exatamente no formato:",
       "   - **Frente:** <pergunta curta e direta de prova> | **Verso:** <regra-chave, pegadinha e macete>",
       "",
+      "## FORMATO DE SAÍDA ESPERADO (Markdown limpo para importar no app)",
+      "- Responda diretamente em Markdown (sem saudações antes nem depois, sem envolver a resposta inteira em bloco de código).",
+      "- Use `## Nome do Tópico` para cada lacuna, seguido de **Conceito-chave**, **Por que errei**, **Pegadinha da banca** e **Exemplo prático**.",
+      "- Finalize com `## Checklist de Revisão` (5 itens) e `## Flashcards de Revisão` (3 cartões no formato `- **Frente:** ... | **Verso:** ...`).",
+      "",
       `## MEUS ERROS REGISTRADOS (${wrong.length} questão(ões))`,
       ""
     ];
@@ -1633,6 +1638,76 @@
     switchView("review");
   };
 
+  let importLessonFormOpen = false;
+
+  function normalizeImportedLessonMarkdown(raw) {
+    let text = String(raw || "").replace(/\r\n/g, "\n").trim();
+    // Remove cerca markdown externa se a IA devolveu tudo dentro de ```markdown ... ```
+    text = text.replace(/^```(?:markdown|md)?\s*\n([\s\S]*?)\n```\s*$/i, "$1").trim();
+    // Se não tiver nenhum título markdown, estrutura automaticamente o texto em seções legíveis
+    if (!/^#{1,3}\s+/m.test(text)) {
+      const blocks = text.split(/\n{2,}/).map(b => b.trim()).filter(Boolean);
+      if (blocks.length > 1) {
+        const firstLine = blocks[0].split("\n")[0].replace(/^[*#\-\s]+/, "").slice(0, 90);
+        text = `## ${firstLine || "Aula Importada"}\n\n${blocks.join("\n\n")}`;
+      } else if (text) {
+        text = `## Aula Importada\n\n${text}`;
+      }
+    }
+    return text;
+  }
+
+  window.toggleImportLessonForm = function (force) {
+    importLessonFormOpen = typeof force === "boolean" ? force : !importLessonFormOpen;
+    renderErrors();
+  };
+
+  window.handleImportLessonFile = function (event) {
+    const file = event && event.target && event.target.files ? event.target.files[0] : null;
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function () {
+      const ta = document.getElementById("import-lesson-textarea");
+      if (ta) ta.value = String(reader.result || "");
+    };
+    reader.readAsText(file, "utf-8");
+    event.target.value = "";
+  };
+
+  window.saveImportedExternalLesson = function (filterSubjectId) {
+    ensure();
+    const ta = document.getElementById("import-lesson-textarea");
+    const raw = ta ? ta.value : "";
+    const markdown = normalizeImportedLessonMarkdown(raw);
+    if (!markdown || markdown.length < 20) {
+      if (typeof window.showToast === "function") window.showToast("Cole o texto da aula ou envie um arquivo .md/.txt primeiro.", "error");
+      return;
+    }
+
+    const activeSubj = filterSubjectId || state.errorTopicFilter || "ALL";
+    const allWrong = ALL_QUESTIONS
+      .filter(q => state.answers[q.id] && state.answers[q.id].correct === false)
+      .filter(q => !activeSubj || activeSubj === "ALL" || q.subjectId === activeSubj);
+    const coveredQs = errorsIncludeCovered ? allWrong : allWrong.filter(q => !isWrongQuestionCoveredByLesson(q));
+
+    const lessonId = "AIL-EXT-" + Date.now();
+    const res = window.saveGeneratedAiLesson({
+      id: lessonId,
+      createdAt: new Date().toISOString(),
+      subjectFilter: activeSubj,
+      provider: "externa",
+      model: "Aula importada",
+      coveredQuestionIds: coveredQs.map(q => q.id),
+      coveredSummary: coveredQs.length ? summarizeCoveredSubjects(coveredQs) : (activeSubj !== "ALL" ? subjName(activeSubj) : "Aula importada"),
+      markdown
+    });
+    importLessonFormOpen = false;
+    const fcN = res && res.createdFlashcards ? res.createdFlashcards : 0;
+    if (typeof window.showToast === "function") {
+      window.showToast(`Aula importada e formatada${fcN ? ` + ${fcN} flashcard(s) criado(s)!` : "!"}`, "success");
+    }
+  };
+
   window.setErrorsTab = function (tab) {
     errorsActiveTab = tab === "lessons" ? "lessons" : "errors";
     if (errorsActiveTab === "errors") lastGeneratedLessonId = null;
@@ -1679,6 +1754,26 @@
     const aiSavedHtml = renderSavedAiLessonsHtml(activeSubj);
     const targetCountForLesson = errorsIncludeCovered ? wrongBySubj.length : uncoveredInSubj.length;
 
+    const importLessonHtml = importLessonFormOpen ? `
+      <div class="card" id="import-lesson-panel" style="margin-bottom:14px; border:1px solid var(--accent-primary);">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+          <strong style="font-size:0.92rem;">Importar aula gerada em outra IA</strong>
+          <label class="btn btn-outline btn-sm" style="cursor:pointer; margin:0;">
+            Enviar .md / .txt
+            <input type="file" accept=".md,.txt,text/markdown,text/plain" style="display:none;" onchange="handleImportLessonFile(event)" />
+          </label>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">
+          Cole abaixo a resposta do ChatGPT, Claude ou Gemini. O app formata automaticamente, vincula aos <strong>${targetCountForLesson} erro(s)</strong> atuais e cria os flashcards de revisão.
+        </p>
+        <textarea id="import-lesson-textarea" class="form-control" rows="6" placeholder="Cole aqui a aula gerada (Markdown ou texto simples)..."></textarea>
+        <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
+          <button class="btn btn-outline btn-sm" onclick="toggleImportLessonForm(false)">Cancelar</button>
+          <button class="btn btn-primary btn-sm" id="btn-save-imported-lesson" onclick="saveImportedExternalLesson('${escapeJsStr(activeSubj)}')">Salvar e formatar aula</button>
+        </div>
+      </div>
+    ` : "";
+
     const errorsTabHtml = `
       ${allWrong.length > 0 ? `
         <div class="card" style="padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
@@ -1686,7 +1781,7 @@
             <strong>${uncoveredInSubj.length} erro(s) novo(s) sem aula</strong>
             <span style="color:var(--text-muted);"> • ${coveredInSubjCount} já coberto(s) por aula anterior</span>
             <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
-              Ao gerar aula agora, a IA vai focar em <strong>${targetCountForLesson} questão(ões)</strong>${!errorsIncludeCovered ? " (somente os erros novos)" : " (todos os erros do filtro)"}. · Ou clique em <strong>Copiar Prompt</strong> e cole em qualquer IA (ChatGPT, Claude, Gemini…).
+              Ao gerar aula agora, a IA vai focar em <strong>${targetCountForLesson} questão(ões)</strong>${!errorsIncludeCovered ? " (somente os erros novos)" : " (todos os erros do filtro)"}. · Ou clique em <strong>Copiar Prompt</strong>, gere em qualquer IA e traga de volta em <strong>Importar aula</strong>.
             </div>
           </div>
           ${coveredInSubjCount > 0 ? `
@@ -1767,7 +1862,7 @@
       ` : ""}
       ${aiSavedHtml || `
         <div class="card" style="text-align:center; padding:32px 20px; color:var(--text-muted);">
-          Nenhuma aula gerada ainda neste filtro. Volte na aba <strong>Meus Erros</strong> e clique em <strong>Gerar Aula dos Meus Erros</strong>.
+          Nenhuma aula gerada ainda neste filtro. Gere na aba <strong>Meus Erros</strong> ou clique em <strong>Importar aula</strong> acima.
         </div>
       `}
     `;
@@ -1779,13 +1874,16 @@
             <h2>Caderno de Erros</h2>
             <p>${allWrong.length} erro(s) acumulado(s) • ${totalLessons} aula(s) gerada(s)</p>
           </div>
-          ${allWrong.length ? `
-            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" id="btn-open-import-lesson" onclick="toggleImportLessonForm()">+ Importar aula</button>
+            ${allWrong.length ? `
               <button class="btn btn-outline btn-sm" onclick="copyPersonalizedLessonPrompt('${escapeJsStr(activeSubj)}')">Copiar Prompt</button>
               <button class="btn btn-outline btn-sm" onclick="downloadErrorReportMd('${escapeJsStr(activeSubj)}')">Baixar .md</button>
-            </div>
-          ` : ""}
+            ` : ""}
+          </div>
         </div>
+
+        ${importLessonHtml}
 
         <div class="segmented-tabs" style="margin-bottom:14px;">
           <button class="seg-btn ${errorsActiveTab === "errors" ? "active" : ""}" id="tab-errors-list" onclick="setErrorsTab('errors')">Meus Erros (${allWrong.length})</button>
