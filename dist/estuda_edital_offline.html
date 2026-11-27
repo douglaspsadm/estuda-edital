@@ -115302,6 +115302,37 @@ window.SHARED_DISCURSIVE_BANK = [
           }
         });
       }
+      if (Array.isArray(window.QUESTIONS_SEEDF)) {
+        const dpdfSubjects = new Set((track.edital && track.edital.disciplinas ? track.edital.disciplinas : []).map(d => d.id));
+        const mapSeedfToDpdfSubject = (q) => {
+          const text = `${q.statement || ""} ${q.topicId || ""}`.toLowerCase();
+          if (q.sharedPackId === "pack_portugues" || q.subjectId === "seedf_bas_port") return "bas_port";
+          if (q.sharedPackId === "pack_informatica" || q.subjectId === "seedf_bas_info") return "bas_info";
+          if (q.sharedPackId === "pack_seedf_df" || q.subjectId === "seedf_bas_df") {
+            if (/840|servidor|estatut|pad\b|sindic[âa]ncia/.test(text)) return "bas_lc840";
+            if (/lei org[âa]nica|lodf|c[âa]mara legislativa/.test(text)) return "bas_lodf";
+            return "bas_df_mulher";
+          }
+          if (q.sharedPackId === "pack_ti_dev" || q.subjectId === "seedf_esp_informatica") {
+            if (/banco de dados|sql|sgbd|normaliza|acid|chave prim/.test(text)) return "esp_4";
+            if (/seguran[çc]a|criptograf|owasp|firewall|phishing|lgpd|hash/.test(text)) return "esp_7";
+            if (/devops|docker|kubernetes|ci\/cd|git\b|container/.test(text)) return "esp_6";
+            if (/teste\b|tdd|caixa preta|caixa branca|qualidade/.test(text)) return "esp_5";
+            if (/governan[çc]a|itil|cobit|pmbok|scrum|kanban|gest[ãa]o de ti/.test(text)) return "esp_9";
+            if (/arquitetura|microsserv|rest\b|api\b|mvc|solid/.test(text)) return "esp_3";
+            if (/requisito|uml|caso de uso|engenharia de software/.test(text)) return "esp_1";
+            return "esp_2";
+          }
+          return null;
+        };
+        window.QUESTIONS_SEEDF.forEach(q => {
+          if (!q || !q.id) return;
+          const targetSubj = mapSeedfToDpdfSubject(q);
+          if (targetSubj && dpdfSubjects.has(targetSubj)) {
+            map.set(q.id, Object.assign({}, q, { originalSubjectId: q.subjectId, subjectId: targetSubj }));
+          }
+        });
+      }
     } else if (window.SHARED_BANK && Array.isArray(track.enabledSharedPacks) && track.enabledSharedPacks.length) {
       // 2. Pacotes da Base Compartilhada ligados nesta trilha (com remapeamento de subjectId!)
       const mapped = window.SHARED_BANK.buildMappedQuestionsForTrack(track.enabledSharedPacks, track.packMapping);

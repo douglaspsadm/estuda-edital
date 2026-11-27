@@ -16,7 +16,14 @@
   - Atualização de Edital (`TracksManager.updateTrackEdital` + `#btn-update-edital`): permite atualizar o edital de qualquer trilha futura sem perder progresso.
   - Flashcards Unificados + Auto-Geração por IA (`src/js/app.js` + `src/js/ai_tutor.js`): Aulas por IA (3 cartões) e Dicas Cirúrgicas por IA (1 cartão) criam flashcards automaticamente com IDs estáveis (`state.fc[card.id]`), filtros (`Todos`, `Vencidos`, `Aulas & Dicas IA`, `Erros`, por disciplina), soma com preset da trilha e criação manual.
 
+## Agentes & Skills (`.agents/`)
+- **6 Agentes** (`.agents/agents/`): `exam-ingestor`, `edital-curator`, `study-content-factory`, `ui-ux-guardian`, `qa-verifier`, `token-optimizer`.
+- **6 Skills** (`.agents/skills/`): `exam-ingestor`, `edital-curator`, `study-content-factory`, `ui-ux-guardian`, `qa-verifier`, `perf-stack`.
+- **Setup de economia de tokens**: `scripts/setup-perf-tools.sh` + tabela de roteamento em `AGENTS.md`.
+
 ## Validação
 - `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (**3.078 questões reais**, 0 erros, 6/6 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
-- E2E Playwright contra `public/`: validados SEEDF 20 cargos, atualização de edital sem perda de progresso, auto-geração de flashcards de Aulas IA, criação manual, revisão espaçada por ID estável e soma ao preset no DPDF — 0 erros de console/página.
+- Cobertura validada por concurso: `DPDF TI` (**1.625q**, +80 SEEDF), `COFEN 404` (**1.757q**, +84 SEEDF), `COFEN 411` (**1.470q**, +45 SEEDF), `SEEDF Atividades` (**972q**), `Base Comum` (**1.350q**).
+- E2E Playwright contra `public/`: validados SEEDF 20 cargos, atualização de edital sem perda de progresso, auto-geração de flashcards de Aulas IA, criação manual, revisão espaçada por ID estável, soma ao preset no DPDF e reordenação sem repetir respondidas — 0 erros de console/página.
+
 
