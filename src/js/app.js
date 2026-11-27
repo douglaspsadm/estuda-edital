@@ -2415,16 +2415,20 @@
           <textarea class="form-control" rows="12" placeholder="Escreva sua resposta aqui (use Enter a cada linha para simular as linhas da folha oficial)..." oninput="onDiscursiveDraftInput('${escapeJsStr(selected.id)}', ${selected.maxLinhas}, this.value)">${escapeHtml(draft.text)}</textarea>
         </div>
 
-        <details class="guide-box">
-          <summary>Ver espelho oficial nota máxima e critérios da banca</summary>
-          <div class="guide-body">
-            <p style="white-space:pre-line; font-size:0.9rem; margin-bottom:12px;">${escapeHtml(selected.espelho)}</p>
-            <strong style="font-size:0.84rem; color:var(--accent-primary);">Critérios de correção:</strong>
-            <ul class="lesson-list" style="margin-top:6px;">
-              ${selected.checklist.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
-            </ul>
-          </div>
-        </details>
+        ${selected.espelho || (Array.isArray(selected.checklist) && selected.checklist.length) ? `
+          <details class="guide-box">
+            <summary>Ver espelho oficial nota máxima e critérios da banca</summary>
+            <div class="guide-body">
+              ${selected.espelho ? `<p style="white-space:pre-line; font-size:0.9rem; margin-bottom:12px;">${escapeHtml(selected.espelho)}</p>` : ""}
+              ${Array.isArray(selected.checklist) && selected.checklist.length ? `
+                <strong style="font-size:0.84rem; color:var(--accent-primary);">Critérios de correção:</strong>
+                <ul class="lesson-list" style="margin-top:6px;">
+                  ${selected.checklist.map(item => `<li>${escapeHtml(item)}</li>`).join("")}
+                </ul>
+              ` : ""}
+            </div>
+          </details>
+        ` : ""}
       `;
     } else if (tab === "calc") {
       tabBody = `
