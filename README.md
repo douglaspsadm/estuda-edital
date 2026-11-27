@@ -39,7 +39,20 @@ npm run check   # valida questões + roda testes unitários + gera public/ (Verc
 ```
 
 * Edite sempre os arquivos em `src/` (nunca edite `public/` ou `dist/` manualmente).
-* **Deploy na Vercel:** conecte este repositório — o `vercel.json` já usa `buildCommand: "npm run check"` e `outputDirectory: "public"`.
+* **Uso local / 100% offline:** após rodar `npm run check`, você pode abrir `dist/estuda_edital_offline.html` diretamente no navegador (sem servidor) ou servir `public/` localmente (`npx serve public` ou `python3 -m http.server -d public 8080`).
+
+### Deploy Gratuito na Vercel (Passo a Passo)
+O arquivo [`vercel.json`](vercel.json) já deixa tudo pré-configurado:
+1. Acesse [vercel.com](https://vercel.com), clique em **Add New → Project** e importe este repositório (ou o seu fork).
+2. Confira as configurações (a Vercel já detecta automaticamente pelo `vercel.json`):
+   * **Framework Preset:** `Other`
+   * **Root Directory:** `./`
+   * **Build Command:** `npm run check`
+   * **Output Directory:** `public`
+   * **Install Command:** *(não precisa de dependências extras; pode deixar padrão ou vazio — o build usa apenas Node.js nativo)*
+   * **Environment Variables:** nenhuma obrigatória (as chaves de IA são BYOK no navegador do usuário e a chave pública do Supabase fica em `src/js/supabase_env.js`).
+3. Clique em **Deploy**. A cada `git push` na branch `main`, a Vercel roda `npm run check` (validando questões e testes antes de publicar) e atualiza o site automaticamente.
+4. *(Opcional)* Se usar login/nuvem com Supabase, adicione o domínio gerado (`https://seu-projeto.vercel.app/**`) em **Authentication → URL Configuration → Redirect URLs** no painel do Supabase.
 
 ### Usando seu próprio Supabase (para quem fizer fork/clone)
 1. Crie um projeto gratuito no [Supabase](https://supabase.com).
