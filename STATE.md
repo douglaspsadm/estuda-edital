@@ -10,8 +10,13 @@
   - `src/js/ai_tutor.js`: motor BYOK (Gemini/OpenAI) com `askRaw`, `askJson` e `discoverModelsDirect`.
   - `src/js/cloud_sync.js` + `supabase/schema.sql`: sincronização Supabase por `(user_id, track_id)` com fallback gracioso para `user_progress`.
   - `src/data/quadrix_questions.js`: **1.919 questões reais únicas** da banca Instituto Quadrix (40 provas + gabaritos de COREN-AC, COREN-PR, CRF-DF, CRF-PR, CRF-AC, CRF-MS, CRM-ES, CRM-MS, CORE-BA, CRP-13, Fundação ABC).
-  - `src/data/shared_bank.js`: **16 pacotes temáticos** unificando **2.724 questões reais** (805 originais + 1.919 Quadrix) reaproveitadas na Base Nacional Comum (`1.204q`), COFEN 2026 (`1.156q`–`1.523q` por cargo) e DPDF 2026 — TI (`1.431q`).
+  - `src/data/seedf_edital_data.js` + `src/data/seedf_questions.js`: **Pré-Edital SEEDF 2026/2027 (20 cargos, banca Quadrix, TR nº 3/2026)** + **1.467 questões reais únicas** (SEEDF 2023) integradas ao `SHARED_BANK` (`pack_seedf_df`, `pack_seedf_educacao`, `pack_seedf_esp_*`).
+  - `src/data/shared_bank.js`: **19 pacotes temáticos** unificando **3.078 questões reais** reaproveitadas entre SEEDF, COFEN, DPDF e Base Comum.
+  - `src/data/shared_discursive_bank.js`: **43 temas discursivos reais** (Quadrix, CEBRASPE, IADES), incluindo os 5 temas únicos da SEEDF com padrões de resposta definitivos oficiais.
+  - Atualização de Edital (`TracksManager.updateTrackEdital` + `#btn-update-edital`): permite atualizar o edital de qualquer trilha futura sem perder progresso.
+  - Flashcards Unificados + Auto-Geração por IA (`src/js/app.js` + `src/js/ai_tutor.js`): Aulas por IA (3 cartões) e Dicas Cirúrgicas por IA (1 cartão) criam flashcards automaticamente com IDs estáveis (`state.fc[card.id]`), filtros (`Todos`, `Vencidos`, `Aulas & Dicas IA`, `Erros`, por disciplina), soma com preset da trilha e criação manual.
 
 ## Validação
-- `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (**2.724 questões válidas**, 0 erros, 5/5 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
-- E2E Playwright contra `public/`: validado COFEN Enfermeiro (`0/1284`), COFEN Analista de Sistemas (`0/1523`) e DPDF TI (`0/1431`) com 0 `pageerror`s.
+- `npm run check` (`validate_questions.mjs` + `tests/core.test.mjs` + `build.mjs`): passando (**3.078 questões reais**, 0 erros, 6/6 testes unitários, `public/` e `dist/estuda_edital_offline.html` gerados).
+- E2E Playwright contra `public/`: validados SEEDF 20 cargos, atualização de edital sem perda de progresso, auto-geração de flashcards de Aulas IA, criação manual, revisão espaçada por ID estável e soma ao preset no DPDF — 0 erros de console/página.
+

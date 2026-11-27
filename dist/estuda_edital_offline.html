@@ -114997,6 +114997,9 @@ window.SHARED_DISCURSIVE_BANK = [
       errors: {},
       simulados: [],
       fc: {},
+      customFlashcards: [],
+      fcFilter: "all",
+      fcSubjectFilter: "ALL",
       flashcardIndex: 0,
       flashcardFlipped: false,
       currentView: "dashboard",
@@ -116249,8 +116252,9 @@ window.SHARED_DISCURSIVE_BANK = [
         const markdown = await generateLessonWithAi(promptText, cfg);
         clearInterval(timerId);
         const lessonId = "AIL-" + Date.now();
+        let fcCreated = 0;
         if (typeof window.saveGeneratedAiLesson === "function") {
-          window.saveGeneratedAiLesson({
+          const res = window.saveGeneratedAiLesson({
             id: lessonId,
             createdAt: new Date().toISOString(),
             subjectFilter: filterSubjectId || "ALL",
@@ -116258,9 +116262,11 @@ window.SHARED_DISCURSIVE_BANK = [
             model: cfg.model,
             markdown
           });
+          if (res && typeof res.createdFlashcards === "number") fcCreated = res.createdFlashcards;
         }
         if (typeof window.showToast === "function") {
-          window.showToast("Aula gerada e salva com sucesso!", "success");
+          const fcMsg = fcCreated > 0 ? ` + ${fcCreated} flashcard(s) criado(s) para revisão!` : "!";
+          window.showToast(`Aula gerada e salva${fcMsg}`, "success");
         }
         setTimeout(() => {
           const el = document.querySelector(`[data-ai-lesson-id="${lessonId}"]`);
@@ -118948,6 +118954,9 @@ window.SHARED_DISCURSIVE_BANK = [
       errors: {},
       simulados: [],
       fc: {},
+      customFlashcards: [],
+      fcFilter: "all",
+      fcSubjectFilter: "ALL",
       flashcardIndex: 0,
       flashcardFlipped: false,
       currentView: "dashboard",
@@ -119014,6 +119023,9 @@ window.SHARED_DISCURSIVE_BANK = [
     state.simulados = Array.isArray(state.simulados) ? state.simulados : [];
     state.questionExplanations = state.questionExplanations || {};
     state.fc = state.fc || {};
+    state.customFlashcards = Array.isArray(state.customFlashcards) ? state.customFlashcards : [];
+    if (!state.fcFilter) state.fcFilter = "all";
+    if (!state.fcSubjectFilter) state.fcSubjectFilter = "ALL";
     if (!state.diagMode) state.diagMode = "focus";
     if (typeof state.diagFocusIdx !== "number") state.diagFocusIdx = 0;
     if (typeof state.diagShuffle !== "boolean") state.diagShuffle = true;
@@ -119185,6 +119197,7 @@ window.SHARED_DISCURSIVE_BANK = [
 
       ensure();
       state.questionExplanations[qid] = remObj;
+      const fcCreated = createFlashcardFromTip(q, remObj);
       saveState();
 
       // Retroalimenta o cache comunitário para questões oficiais (sem bloquear a UI)
@@ -119199,7 +119212,7 @@ window.SHARED_DISCURSIVE_BANK = [
       }
 
       if (typeof window.refreshActiveView === "function") window.refreshActiveView();
-      window.showToast("Dica cirúrgica pronta!", "success");
+      window.showToast(fcCreated ? "Dica cirúrgica pronta + 1 flashcard criado para revisão!" : "Dica cirúrgica pronta!", "success");
     } catch (err) {
       clearInterval(timerId);
       const msg = err && err.message ? err.message : String(err);
@@ -120182,6 +120195,8 @@ window.SHARED_DISCURSIVE_BANK = [
       "   - Crie uma tabela comparativa ou regra rápida para fixação.",
       "3. Se meu erro foi marcado como 'certeza' (erro confiante / falso positivo), dê atenção dobrada: explique qual conceito confundi.",
       "4. Ao final, entregue um checklist de revisão ativa de 5 pontos-chave.",
+      "5. Encerre com a seção `## Flashcards de Revisão` contendo 3 cartões objetivos exatamente no formato:",
+      "   - **Frente:** <pergunta curta e direta de prova> | **Verso:** <regra-chave, pegadinha e macete>",
       "",
       `## MEUS ERROS REGISTRADOS (${wrong.length} questão(ões))`,
       ""
@@ -120217,7 +120232,23 @@ window.SHARED_DISCURSIVE_BANK = [
     ensure();
     state.aiLessons.unshift(lessonObj);
     if (state.aiLessons.length > 25) state.aiLessons = state.aiLessons.slice(0, 25);
+    const scope = lessonObj.subjectFilter && lessonObj.subjectFilter !== "ALL" ? subjName(lessonObj.subjectFilter) : "Revisão Geral";
+    const createdFlashcards = createFlashcardsFromLesson(lessonObj, scope);
     saveState();
+    window.refreshActiveView();
+    return { createdFlashcards };
+  };
+
+  window.createFlashcardsFromSavedLesson = function (lessonId) {
+    ensure();
+    const l = state.aiLessons.find(x => x.id === lessonId);
+    if (!l) return;
+    const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Revisão Geral";
+    const n = createFlashcardsFromLesson(l, scope);
+    saveState();
+    if (typeof window.showToast === "function") {
+      window.showToast(n > 0 ? `${n} flashcard(s) criado(s) desta aula!` : "Os flashcards desta aula já estavam no seu baralho.", "success");
+    }
     window.refreshActiveView();
   };
 
@@ -120238,14 +120269,18 @@ window.SHARED_DISCURSIVE_BANK = [
     return list.map((l, idx) => {
       const dt = l.createdAt ? new Date(l.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
       const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Todos os erros";
+      const linkedCount = (state.customFlashcards || []).filter(fc => fc.lessonId === l.id).length;
       return `
         <details class="guide-box" data-ai-lesson-id="${escapeHtml(l.id)}" ${idx === 0 ? "open" : ""}>
           <summary>
-            <span>Aula IA: ${escapeHtml(scope)} <small style="color:var(--text-muted); font-weight:400;">• ${escapeHtml(dt)} (${escapeHtml(l.model || "IA")})</small></span>
+            <span>Aula IA: ${escapeHtml(scope)} <small style="color:var(--text-muted); font-weight:400;">• ${escapeHtml(dt)} (${escapeHtml(l.model || "IA")})${linkedCount ? ` • ${linkedCount} flashcard(s)` : ""}</small></span>
           </summary>
           <div class="guide-body">
             ${renderMd(l.markdown)}
-            <div style="margin-top:14px; display:flex; justify-content:flex-end;">
+            <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+              ${linkedCount
+                ? `<button class="btn btn-outline btn-sm" onclick="setFcFilter('ai'); switchView('flashcards');">Revisar ${linkedCount} flashcard(s) desta aula →</button>`
+                : `<button class="btn btn-outline btn-sm" onclick="createFlashcardsFromSavedLesson('${escapeJsStr(l.id)}')">+ Criar flashcards desta aula</button>`}
               <button class="btn btn-outline btn-sm" style="color:var(--danger-text);" onclick="deleteAiLesson('${escapeJsStr(l.id)}')">Apagar aula</button>
             </div>
           </div>
@@ -121391,30 +121426,223 @@ window.SHARED_DISCURSIVE_BANK = [
   };
 
   // ==========================================================================
-  // 7. FLASHCARDS DE REVISÃO ATIVA
+  // 7. FLASHCARDS DE REVISÃO ATIVA (UNIFICADO + AUTO-GERAÇÃO POR IA)
   // ==========================================================================
+  let fcManualFormOpen = false;
+
+  function normFcKey(str) {
+    return String(str || "").toLowerCase().replace(/\s+/g, " ").trim().slice(0, 120);
+  }
+
+  function upsertCustomFlashcard(card) {
+    ensure();
+    if (!card || !card.frente || !card.verso) return false;
+    const id = card.id || ("fc-custom-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6));
+    const frenteKey = normFcKey(card.frente);
+    const existingIdx = state.customFlashcards.findIndex(c => c.id === id || normFcKey(c.frente) === frenteKey);
+    const normalized = {
+      id,
+      disciplina: String(card.disciplina || "Geral").trim(),
+      frente: String(card.frente).trim(),
+      verso: String(card.verso).trim(),
+      source: card.source || "manual",
+      sourceLabel: card.sourceLabel || (card.source === "ai_lesson" ? "Aula IA" : card.source === "ai_tip" ? "Dica IA" : "Manual"),
+      lessonId: card.lessonId || "",
+      questionId: card.questionId || "",
+      createdAt: card.createdAt || new Date().toISOString()
+    };
+    if (existingIdx >= 0) {
+      state.customFlashcards[existingIdx] = Object.assign({}, state.customFlashcards[existingIdx], normalized);
+      return false;
+    }
+    state.customFlashcards.unshift(normalized);
+    if (state.customFlashcards.length > 200) state.customFlashcards = state.customFlashcards.slice(0, 200);
+    return true;
+  }
+
+  function createFlashcardFromTip(q, remObj) {
+    if (!q || !remObj || (!remObj.coreConcept && !remObj.explanation)) return false;
+    const disc = subjName(q.subjectId);
+    const title = remObj.title || `${disc} — Ponto-chave`;
+    const frente = `${title}\n\nQual é a regra-chave cobrada pela banca${q.banca ? " " + q.banca : ""}?`;
+    const parts = [];
+    if (remObj.coreConcept) parts.push(remObj.coreConcept);
+    if (remObj.explanation && remObj.explanation !== remObj.coreConcept) parts.push(`Explicação: ${remObj.explanation}`);
+    if (remObj.accessTrap) parts.push(`Pegadinha: ${remObj.accessTrap}`);
+    if (remObj.mnemonic) parts.push(`Macete: ${remObj.mnemonic}`);
+    return upsertCustomFlashcard({
+      id: `fc-tip-${q.id}`,
+      disciplina: disc,
+      frente,
+      verso: parts.join("\n\n"),
+      source: "ai_tip",
+      sourceLabel: "Dica IA",
+      questionId: q.id
+    });
+  }
+
+  function extractFlashcardsFromLessonMarkdown(markdown, scopeName, lessonId) {
+    const md = String(markdown || "");
+    const cards = [];
+    const lines = md.split(/\r?\n/);
+
+    // 1. Formato explícito: - **Frente:** ... | **Verso:** ...
+    lines.forEach(line => {
+      const m = line.match(/\*{0,2}Frente:?\*{0,2}\s*(.+?)\s*\|\s*\*{0,2}Verso:?\*{0,2}\s*(.+)$/i);
+      if (m) {
+        const f = m[1].replace(/^\*+|\*+$/g, "").trim();
+        const v = m[2].replace(/^\*+|\*+$/g, "").trim();
+        if (f.length >= 6 && v.length >= 6) {
+          cards.push({ frente: f, verso: v });
+        }
+      }
+    });
+
+    // 2. Fallback: se a IA não seguiu o formato exato, extrai dos tópicos/checklist da aula
+    if (!cards.length) {
+      const headings = [];
+      let curHead = "";
+      let curBody = [];
+      lines.forEach(line => {
+        const hm = line.match(/^#{2,3}\s+(.+)/);
+        if (hm) {
+          if (curHead && curBody.length) headings.push({ head: curHead, body: curBody.join(" ").trim() });
+          curHead = hm[1].replace(/[*#]/g, "").trim();
+          curBody = [];
+        } else if (curHead && line.trim() && !line.trim().startsWith("|")) {
+          curBody.push(line.replace(/^[-*•\d.)]+\s*/, "").replace(/\*\*/g, "").trim());
+        }
+      });
+      if (curHead && curBody.length) headings.push({ head: curHead, body: curBody.join(" ").trim() });
+
+      headings
+        .filter(h => !/^(miss[ãa]o|meus erros|flashcards)/i.test(h.head) && h.body.length >= 25)
+        .slice(0, 3)
+        .forEach(h => {
+          cards.push({
+            frente: `${h.head}\n\nQual é o ponto-chave que não pode errar na prova?`,
+            verso: trimToSentence(h.body, 320)
+          });
+        });
+    }
+
+    return cards.slice(0, 5).map((c, idx) => ({
+      id: `fc-ail-${lessonId || Date.now()}-${idx + 1}`,
+      disciplina: scopeName || "Revisão Geral",
+      frente: c.frente,
+      verso: c.verso,
+      source: "ai_lesson",
+      sourceLabel: "Aula IA",
+      lessonId: lessonId || ""
+    }));
+  }
+
+  function createFlashcardsFromLesson(lessonObj, scopeName) {
+    if (!lessonObj || !lessonObj.markdown) return 0;
+    const extracted = extractFlashcardsFromLessonMarkdown(lessonObj.markdown, scopeName, lessonObj.id);
+    let created = 0;
+    extracted.forEach(card => {
+      if (upsertCustomFlashcard(card)) created++;
+    });
+    return created;
+  }
+
   function getActiveFlashcards() {
-    const preset = (window.DISCURSIVE_AND_FLASHCARDS && Array.isArray(window.DISCURSIVE_AND_FLASHCARDS.flashcards))
-      ? window.DISCURSIVE_AND_FLASHCARDS.flashcards
-      : [];
-    if (preset.length) return preset;
-    // Gera flashcards automáticos a partir das micro-aulas das questões da trilha!
-    const generated = [];
-    const seen = new Set();
+    ensure();
+    const list = [];
+    const seenIds = new Set();
+    const seenFrentes = new Set();
+
+    const pushUnique = (card) => {
+      if (!card || !card.frente || !card.verso) return;
+      const fk = normFcKey(card.frente);
+      if (seenIds.has(card.id) || seenFrentes.has(fk)) return;
+      seenIds.add(card.id);
+      seenFrentes.add(fk);
+      list.push(card);
+    };
+
+    // 1. Flashcards criados por Aulas IA, Dicas Cirúrgicas IA e Manuais (prioridade máxima)
+    (state.customFlashcards || []).forEach(c => {
+      pushUnique(Object.assign({
+        source: "manual",
+        sourceLabel: c.source === "ai_lesson" ? "Aula IA" : c.source === "ai_tip" ? "Dica IA" : "Manual"
+      }, c));
+    });
+
+    // 2. Questões que o usuário ERROU (e que tenham dica/explicação útil)
     ALL_QUESTIONS.forEach(q => {
+      const ans = state.answers[q.id];
+      if (!ans || ans.correct) return;
       const rem = getEffectiveRemediation(q);
-      if (rem && rem.title && rem.coreConcept) {
-        const key = rem.title.toLowerCase();
-        if (seen.has(key)) return;
-        seen.add(key);
-        generated.push({
+      if (rem && rem.coreConcept && !isGenericRemediation(rem)) {
+        pushUnique({
+          id: `fc-err-${q.id}`,
           disciplina: subjName(q.subjectId),
-          frente: `${rem.title}\n\nQual é a regra-chave cobrada em prova?`,
-          verso: `${rem.coreConcept}${rem.accessTrap ? "\n\nPegadinha: " + rem.accessTrap : ""}${rem.mnemonic ? "\n\nMacete: " + rem.mnemonic : ""}`
+          frente: `${rem.title || subjName(q.subjectId)}\n\nVocê errou esta questão (${q.banca || "Banca"}). Qual é a regra correta?`,
+          verso: `${rem.coreConcept}${rem.accessTrap ? "\n\nPegadinha: " + rem.accessTrap : ""}${rem.mnemonic ? "\n\nMacete: " + rem.mnemonic : ""}`,
+          source: "error",
+          sourceLabel: "Erro seu",
+          questionId: q.id
         });
       }
     });
-    return generated;
+
+    // 3. Preset da trilha (ex.: DPDF) — agora somado, sem bloquear os demais
+    const preset = (window.DISCURSIVE_AND_FLASHCARDS && Array.isArray(window.DISCURSIVE_AND_FLASHCARDS.flashcards))
+      ? window.DISCURSIVE_AND_FLASHCARDS.flashcards
+      : [];
+    preset.forEach((c, i) => {
+      pushUnique({
+        id: c.id || `fc-preset-${i}`,
+        disciplina: c.disciplina || "Base da Trilha",
+        frente: c.frente,
+        verso: c.verso,
+        source: "preset",
+        sourceLabel: "Base da Trilha"
+      });
+    });
+
+    // 4. Micro-aulas das questões da trilha (não-genéricas)
+    ALL_QUESTIONS.forEach(q => {
+      const rem = getEffectiveRemediation(q);
+      if (rem && rem.title && rem.coreConcept && !isGenericRemediation(rem)) {
+        pushUnique({
+          id: `fc-q-${q.id}`,
+          disciplina: subjName(q.subjectId),
+          frente: `${rem.title}\n\nQual é a regra-chave cobrada em prova?`,
+          verso: `${rem.coreConcept}${rem.accessTrap ? "\n\nPegadinha: " + rem.accessTrap : ""}${rem.mnemonic ? "\n\nMacete: " + rem.mnemonic : ""}`,
+          source: "bank",
+          sourceLabel: "Base da Trilha",
+          questionId: q.id
+        });
+      }
+    });
+
+    return list;
+  }
+
+  function getFcSchedule(card) {
+    if (!card) return null;
+    return state.fc[card.id] || null;
+  }
+
+  function isFcDue(card) {
+    const f = getFcSchedule(card);
+    return !!(f && f.due && Date.parse(f.due) <= Date.now());
+  }
+
+  function getFilteredFlashcards() {
+    const all = getActiveFlashcards();
+    const filter = state.fcFilter || "all";
+    const subj = state.fcSubjectFilter || "ALL";
+    return all.filter(c => {
+      if (subj !== "ALL" && c.disciplina !== subj) return false;
+      if (filter === "due") return isFcDue(c);
+      if (filter === "ai") return c.source === "ai_lesson" || c.source === "ai_tip" || c.source === "manual";
+      if (filter === "errors") return c.source === "error";
+      return true;
+    });
   }
 
   function renderFlashcardsView() {
@@ -121422,42 +121650,112 @@ window.SHARED_DISCURSIVE_BANK = [
     if (!container) return;
     ensure();
 
-    const cards = getActiveFlashcards();
+    const allCards = getActiveFlashcards();
+    const aiCount = allCards.filter(c => c.source === "ai_lesson" || c.source === "ai_tip" || c.source === "manual").length;
+    const errCount = allCards.filter(c => c.source === "error").length;
+    const dueCount = allCards.filter(isFcDue).length;
+    const disciplines = Array.from(new Set(allCards.map(c => c.disciplina).filter(Boolean))).sort();
+    const cards = getFilteredFlashcards();
+
+    const manualFormHtml = fcManualFormOpen ? `
+      <div class="card" style="margin-bottom:16px; border:1px solid var(--accent-primary);">
+        <h3 style="font-size:0.95rem; margin-bottom:10px;">Criar novo flashcard</h3>
+        <div class="filter-grid" style="margin-bottom:10px;">
+          <div>
+            <label class="field-label">Disciplina</label>
+            <input id="fc-new-disc" class="form-control" type="text" placeholder="Ex.: Língua Portuguesa, LDB, Direito Adm." value="${escapeHtml(state.fcSubjectFilter !== "ALL" ? state.fcSubjectFilter : (window.EDITAL_DATA.disciplinas[0]?.nome || "Geral"))}" />
+          </div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <label class="field-label">Frente (Pergunta ou Conceito)</label>
+          <textarea id="fc-new-frente" class="form-control" rows="2" placeholder="Ex.: Qual o prazo de validade do concurso segundo a CF/88?"></textarea>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label class="field-label">Verso (Resposta, Pegadinha e Macete)</label>
+          <textarea id="fc-new-verso" class="form-control" rows="3" placeholder="Ex.: Até 2 anos, prorrogável UMA vez por igual período (Art. 37, III)."></textarea>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn btn-outline btn-sm" onclick="toggleManualFlashcardForm(false)">Cancelar</button>
+          <button class="btn btn-primary btn-sm" onclick="saveManualFlashcard()">Salvar flashcard</button>
+        </div>
+      </div>
+    ` : "";
+
+    const filtersBarHtml = `
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+        <div class="segmented-tabs">
+          <button class="seg-btn ${state.fcFilter === "all" ? "active" : ""}" onclick="setFcFilter('all')">Todos (${allCards.length})</button>
+          <button class="seg-btn ${state.fcFilter === "due" ? "active" : ""}" onclick="setFcFilter('due')">Vencidos (${dueCount})</button>
+          <button class="seg-btn ${state.fcFilter === "ai" ? "active" : ""}" onclick="setFcFilter('ai')">Aulas & Dicas IA (${aiCount})</button>
+          <button class="seg-btn ${state.fcFilter === "errors" ? "active" : ""}" onclick="setFcFilter('errors')">Erros (${errCount})</button>
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          ${disciplines.length > 1 ? `
+            <select class="form-control" style="width:auto; min-width:170px; padding:6px 10px; font-size:0.82rem;" onchange="setFcSubjectFilter(this.value)">
+              <option value="ALL" ${state.fcSubjectFilter === "ALL" ? "selected" : ""}>Todas as disciplinas</option>
+              ${disciplines.map(d => `<option value="${escapeHtml(d)}" ${state.fcSubjectFilter === d ? "selected" : ""}>${escapeHtml(d)}</option>`).join("")}
+            </select>
+          ` : ""}
+          <button class="btn btn-outline btn-sm" onclick="toggleManualFlashcardForm()">+ Novo flashcard</button>
+        </div>
+      </div>
+    `;
+
     if (!cards.length) {
       container.innerHTML = `
         <div class="focus-Stage">
+          <div class="section-head">
+            <div>
+              <h2>Flashcards de Revisão Ativa</h2>
+              <p>Seus cartões de Aulas IA, Dicas Cirúrgicas, erros e base do edital.</p>
+            </div>
+          </div>
+          ${filtersBarHtml}
+          ${manualFormHtml}
           <div class="card" style="text-align:center; padding:28px;">
-            <h3>Nenhum flashcard disponível nesta trilha ainda</h3>
+            <h3>${allCards.length ? "Nenhum flashcard neste filtro" : "Nenhum flashcard disponível nesta trilha ainda"}</h3>
             <p style="font-size:0.86rem; color:var(--text-secondary); margin:8px 0 14px;">
-              Ative pacotes da Base Compartilhada ou importe provas na aba <strong>Importar Provas</strong> para gerar flashcards automáticos.
+              ${allCards.length
+                ? "Troque o filtro acima ou gere uma Aula/Dica Cirúrgica por IA para criar flashcards automáticos."
+                : "Ao pedir uma <strong>Aula por IA</strong> ou <strong>Dica Cirúrgica</strong> em qualquer questão, flashcards de revisão são criados automaticamente aqui."}
             </p>
-            <button class="btn btn-primary btn-sm" onclick="switchView('import')">Importar Provas / Base</button>
+            <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+              ${allCards.length ? `<button class="btn btn-primary btn-sm" onclick="setFcFilter('all'); setFcSubjectFilter('ALL');">Ver todos (${allCards.length})</button>` : `<button class="btn btn-primary btn-sm" onclick="switchView('diagnostic')">Ir para Questões</button>`}
+              <button class="btn btn-outline btn-sm" onclick="toggleManualFlashcardForm(true)">+ Criar flashcard manual</button>
+            </div>
           </div>
         </div>
       `;
       return;
     }
+
     const idx = Math.min(Math.max(0, state.flashcardIndex || 0), cards.length - 1);
     const card = cards[idx];
-    const f = state.fc[idx];
-    const dueCards = Object.keys(state.fc).filter(k => Date.parse(state.fc[k].due) <= Date.now()).length;
+    const f = getFcSchedule(card);
+    const isRemovable = card.source === "ai_lesson" || card.source === "ai_tip" || card.source === "manual";
 
     container.innerHTML = `
       <div class="focus-Stage">
         <div class="section-head">
           <div>
             <h2>Flashcards de Revisão Ativa</h2>
-            <p>Cartão ${idx + 1} de ${cards.length} • ${dueCards} vencido(s) hoje</p>
+            <p>Cartão ${idx + 1} de ${cards.length} • ${dueCount} vencido(s) hoje • ${aiCount} gerado(s) por IA/Manual</p>
           </div>
-          <span class="q-tag">${escapeHtml(card.disciplina)}</span>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span class="q-tag">${escapeHtml(card.sourceLabel || "Base")}</span>
+            <span class="q-tag">${escapeHtml(card.disciplina)}</span>
+          </div>
         </div>
+
+        ${filtersBarHtml}
+        ${manualFormHtml}
 
         <div class="flashcard-container">
           <div class="flashcard-box" onclick="flipFlashcard()">
             <div style="font-size:0.74rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent-primary); font-weight:700; margin-bottom:12px;">
               ${state.flashcardFlipped ? "Resposta oficial (toque para voltar)" : "Pergunta (toque para revelar)"}
             </div>
-            <div style="font-size:1.08rem; font-weight:600; white-space:pre-line; max-width:540px;">
+            <div style="font-size:1.06rem; font-weight:600; white-space:pre-line; max-width:560px;">
               ${escapeHtml(state.flashcardFlipped ? card.verso : card.frente)}
             </div>
           </div>
@@ -121469,15 +121767,68 @@ window.SHARED_DISCURSIVE_BANK = [
           <button class="btn btn-danger" onclick="fcMark(false)">Errei</button>
           <button class="btn btn-success" onclick="fcMark(true)">Acertei</button>
           <button class="btn btn-outline" onclick="nextFlashcard()">Próximo →</button>
+          ${isRemovable ? `<button class="btn btn-outline btn-sm" style="color:var(--danger-text);" onclick="deleteCustomFlashcard('${escapeJsStr(card.id)}')">Apagar</button>` : ""}
         </div>
         ${f ? `<p style="text-align:center; font-size:0.78rem; color:var(--text-muted); margin-top:10px;">Próxima revisão deste cartão: ${new Date(f.due).toLocaleDateString("pt-BR")}</p>` : ""}
       </div>
     `;
   }
 
+  window.setFcFilter = function (f) {
+    ensure();
+    state.fcFilter = f || "all";
+    state.flashcardIndex = 0;
+    state.flashcardFlipped = false;
+    saveState();
+    renderFlashcardsView();
+  };
+
+  window.setFcSubjectFilter = function (subj) {
+    ensure();
+    state.fcSubjectFilter = subj || "ALL";
+    state.flashcardIndex = 0;
+    state.flashcardFlipped = false;
+    saveState();
+    renderFlashcardsView();
+  };
+
+  window.toggleManualFlashcardForm = function (force) {
+    fcManualFormOpen = typeof force === "boolean" ? force : !fcManualFormOpen;
+    renderFlashcardsView();
+  };
+
+  window.saveManualFlashcard = function () {
+    const disc = (document.getElementById("fc-new-disc")?.value || "").trim() || "Geral";
+    const frente = (document.getElementById("fc-new-frente")?.value || "").trim();
+    const verso = (document.getElementById("fc-new-verso")?.value || "").trim();
+    if (!frente || !verso) {
+      if (typeof window.showToast === "function") window.showToast("Preencha a frente e o verso do flashcard.", "error");
+      return;
+    }
+    upsertCustomFlashcard({ disciplina: disc, frente, verso, source: "manual", sourceLabel: "Manual" });
+    fcManualFormOpen = false;
+    state.fcFilter = "ai";
+    state.flashcardIndex = 0;
+    state.flashcardFlipped = false;
+    saveState();
+    if (typeof window.showToast === "function") window.showToast("Flashcard salvo no seu baralho!", "success");
+    renderFlashcardsView();
+  };
+
+  window.deleteCustomFlashcard = function (cardId) {
+    ensure();
+    state.customFlashcards = state.customFlashcards.filter(c => c.id !== cardId);
+    delete state.fc[cardId];
+    state.flashcardIndex = 0;
+    state.flashcardFlipped = false;
+    saveState();
+    if (typeof window.showToast === "function") window.showToast("Flashcard removido.", "info");
+    renderFlashcardsView();
+  };
+
   window.flipFlashcard = function () { state.flashcardFlipped = !state.flashcardFlipped; renderFlashcardsView(); };
   window.nextFlashcard = function () {
-    const total = getActiveFlashcards().length;
+    const total = getFilteredFlashcards().length;
     if (!total) return;
     state.flashcardIndex = (state.flashcardIndex + 1) % total;
     state.flashcardFlipped = false;
@@ -121485,7 +121836,7 @@ window.SHARED_DISCURSIVE_BANK = [
     renderFlashcardsView();
   };
   window.prevFlashcard = function () {
-    const total = getActiveFlashcards().length;
+    const total = getFilteredFlashcards().length;
     if (!total) return;
     state.flashcardIndex = (state.flashcardIndex - 1 + total) % total;
     state.flashcardFlipped = false;
@@ -121494,10 +121845,13 @@ window.SHARED_DISCURSIVE_BANK = [
   };
   window.fcMark = function (ok) {
     ensure();
-    const i = state.flashcardIndex;
-    const p = state.fc[i];
+    const cards = getFilteredFlashcards();
+    if (!cards.length) return;
+    const idx = Math.min(Math.max(0, state.flashcardIndex || 0), cards.length - 1);
+    const card = cards[idx];
+    const p = state.fc[card.id];
     const step = ok ? Math.min((p ? p.step : 0) + 1, STEPS.length - 1) : 0;
-    state.fc[i] = { step, due: new Date(Date.now() + STEPS[step] * 864e5).toISOString() };
+    state.fc[card.id] = { step, due: new Date(Date.now() + STEPS[step] * 864e5).toISOString() };
     saveState();
     window.nextFlashcard();
   };

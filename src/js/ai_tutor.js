@@ -660,8 +660,9 @@
         const markdown = await generateLessonWithAi(promptText, cfg);
         clearInterval(timerId);
         const lessonId = "AIL-" + Date.now();
+        let fcCreated = 0;
         if (typeof window.saveGeneratedAiLesson === "function") {
-          window.saveGeneratedAiLesson({
+          const res = window.saveGeneratedAiLesson({
             id: lessonId,
             createdAt: new Date().toISOString(),
             subjectFilter: filterSubjectId || "ALL",
@@ -669,9 +670,11 @@
             model: cfg.model,
             markdown
           });
+          if (res && typeof res.createdFlashcards === "number") fcCreated = res.createdFlashcards;
         }
         if (typeof window.showToast === "function") {
-          window.showToast("Aula gerada e salva com sucesso!", "success");
+          const fcMsg = fcCreated > 0 ? ` + ${fcCreated} flashcard(s) criado(s) para revisão!` : "!";
+          window.showToast(`Aula gerada e salva${fcMsg}`, "success");
         }
         setTimeout(() => {
           const el = document.querySelector(`[data-ai-lesson-id="${lessonId}"]`);
