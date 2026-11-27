@@ -119807,6 +119807,8 @@ window.SHARED_DISCURSIVE_BANK = [
     return h >>> 0;
   }
 
+  let diagJustAnsweredId = null;
+
   function getFilteredDiagnosticQuestions() {
     const subjFilter = state.currentDiagSubject || "ALL";
     const originFilter = state.currentDiagOrigin || "ALL";
@@ -119822,14 +119824,29 @@ window.SHARED_DISCURSIVE_BANK = [
         if (!b.includes(bancaFilter.toLowerCase())) return false;
       }
       const ans = state.answers[q.id];
-      if (statusFilter === "UNANSWERED" && ans) return false;
+      if (statusFilter === "UNANSWERED" && ans && q.id !== diagJustAnsweredId) return false;
       if (statusFilter === "WRONG" && (!ans || ans.correct)) return false;
       if (statusFilter === "CORRECT" && (!ans || !ans.correct)) return false;
       return true;
     });
 
-    if (state.diagShuffle !== false) {
-      const seed = state.diagOrderSeed || 1;
+    const isAnsweredPast = (q) => Boolean(state.answers[q.id]) && q.id !== diagJustAnsweredId;
+    const seed = state.diagOrderSeed || 1;
+    const useShuffle = state.diagShuffle !== false;
+
+    if (statusFilter === "ALL") {
+      // Sempre coloca questões NÃO respondidas primeiro, preservando ordem aleatória ou original dentro de cada grupo
+      const unanswered = [];
+      const answered = [];
+      list.forEach(q => (isAnsweredPast(q) ? answered : unanswered).push(q));
+      if (useShuffle) {
+        unanswered.sort((a, b) => seededOrderHash(seed, a.id) - seededOrderHash(seed, b.id));
+        answered.sort((a, b) => seededOrderHash(seed, a.id) - seededOrderHash(seed, b.id));
+      }
+      return unanswered.concat(answered);
+    }
+
+    if (useShuffle) {
       return list.slice().sort((a, b) => seededOrderHash(seed, a.id) - seededOrderHash(seed, b.id));
     }
     return list;
@@ -120074,6 +120091,7 @@ window.SHARED_DISCURSIVE_BANK = [
   };
 
   window.reshuffleDiagQuestions = function () {
+    diagJustAnsweredId = null;
     state.diagShuffle = true;
     state.diagOrderSeed = Math.floor(Math.random() * 2147483647) + 1;
     state.diagFocusIdx = 0;
@@ -120083,6 +120101,7 @@ window.SHARED_DISCURSIVE_BANK = [
   };
 
   window.toggleDiagShuffle = function () {
+    diagJustAnsweredId = null;
     state.diagShuffle = state.diagShuffle === false;
     if (state.diagShuffle && !state.diagOrderSeed) {
       state.diagOrderSeed = Math.floor(Math.random() * 2147483647) + 1;
@@ -120094,8 +120113,16 @@ window.SHARED_DISCURSIVE_BANK = [
   };
 
   window.stepDiagQuestion = function (delta) {
+    const before = getFilteredDiagnosticQuestions();
+    const curId = before[state.diagFocusIdx] ? before[state.diagFocusIdx].id : null;
+    const hadJustAnswered = Boolean(diagJustAnsweredId && curId === diagJustAnsweredId);
+    diagJustAnsweredId = null;
     const filtered = getFilteredDiagnosticQuestions();
-    const next = state.diagFocusIdx + delta;
+    let next = state.diagFocusIdx + delta;
+    if (hadJustAnswered && delta > 0 && filtered[state.diagFocusIdx] && filtered[state.diagFocusIdx].id !== curId) {
+      // A questão recém-respondida foi movida para o fim (ou filtrada), então o índice atual já aponta para a próxima inédita
+      next = state.diagFocusIdx;
+    }
     if (next >= 0 && next < filtered.length) {
       state.diagFocusIdx = next;
       curConf = "certeza";
@@ -120106,6 +120133,7 @@ window.SHARED_DISCURSIVE_BANK = [
   };
 
   window.resetDiagFilters = function () {
+    diagJustAnsweredId = null;
     state.currentDiagSubject = "ALL";
     state.currentDiagOrigin = "ALL";
     state.currentDiagBanca = "ALL";
@@ -120115,10 +120143,10 @@ window.SHARED_DISCURSIVE_BANK = [
     renderDiagnosticView();
   };
 
-  window.changeDiagSubject = function (val) { state.currentDiagSubject = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
-  window.changeDiagOrigin = function (val) { state.currentDiagOrigin = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
-  window.changeDiagBanca = function (val) { state.currentDiagBanca = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
-  window.changeDiagStatus = function (val) { state.currentDiagStatus = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
+  window.changeDiagSubject = function (val) { diagJustAnsweredId = null; state.currentDiagSubject = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
+  window.changeDiagOrigin = function (val) { diagJustAnsweredId = null; state.currentDiagOrigin = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
+  window.changeDiagBanca = function (val) { diagJustAnsweredId = null; state.currentDiagBanca = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
+  window.changeDiagStatus = function (val) { diagJustAnsweredId = null; state.currentDiagStatus = val; state.diagFocusIdx = 0; saveState(); renderDiagnosticView(); };
 
   window.answerQuestion = function (questionId, selectedIndex) {
     const q = QUESTION_MAP.get(questionId);
@@ -120127,6 +120155,7 @@ window.SHARED_DISCURSIVE_BANK = [
     const ok = selectedIndex === q.correctIndex;
     const optOrder = PERM[q.id] ? PERM[q.id].slice() : q.options.map((_, i) => i);
 
+    diagJustAnsweredId = questionId;
     state.answers[questionId] = {
       selectedIndex,
       correct: ok,
