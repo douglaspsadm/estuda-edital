@@ -602,14 +602,28 @@
         }
       }
 
-      if (btn) btn.disabled = true;
-      if (status) status.textContent = `Gerando aula personalizada com ${cfg.model}... (10–25s)`;
+      const origBtnText = btn ? btn.textContent : "";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="ai-spinner" aria-hidden="true"></span> Gerando aula...`;
+      }
+      const startedAt = Date.now();
+      const renderProgress = () => {
+        const secs = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+        if (status) {
+          status.innerHTML = `<div class="ai-loading-banner"><span class="ai-spinner" aria-hidden="true"></span><span>Gerando aula personalizada com <strong>${escapeHtml(cfg.model)}</strong>…</span><span class="ai-elapsed">${secs}s</span></div>`;
+        }
+      };
+      renderProgress();
+      const timerId = setInterval(renderProgress, 1000);
 
       try {
         const markdown = await generateLessonWithAi(promptText, cfg);
+        clearInterval(timerId);
+        const lessonId = "AIL-" + Date.now();
         if (typeof window.saveGeneratedAiLesson === "function") {
           window.saveGeneratedAiLesson({
-            id: "AIL-" + Date.now(),
+            id: lessonId,
             createdAt: new Date().toISOString(),
             subjectFilter: filterSubjectId || "ALL",
             provider: cfg.provider,
@@ -617,11 +631,28 @@
             markdown
           });
         }
-        if (status) status.textContent = "Aula gerada e salva!";
+        if (typeof window.showToast === "function") {
+          window.showToast("Aula gerada e salva com sucesso!", "success");
+        }
+        setTimeout(() => {
+          const el = document.querySelector(`[data-ai-lesson-id="${lessonId}"]`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
       } catch (err) {
-        if (status) status.textContent = "Erro: " + err.message;
+        clearInterval(timerId);
+        const msg = err && err.message ? err.message : String(err);
+        if (status) {
+          status.innerHTML = `<div class="ai-loading-banner" style="border-color:var(--danger); color:var(--danger-text);">Erro ao gerar aula: ${escapeHtml(msg)}</div>`;
+        }
+        if (typeof window.showToast === "function") {
+          window.showToast("Erro ao gerar aula: " + msg, "error");
+        }
       } finally {
-        if (btn) btn.disabled = false;
+        clearInterval(timerId);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = origBtnText || "Gerar Aula dos Meus Erros";
+        }
       }
     }
   };

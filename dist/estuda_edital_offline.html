@@ -1448,6 +1448,89 @@ textarea.form-control {
   }
 }
 
+/* ============================================================================
+   AI LOADING BANNER, SPINNER & TOAST FEEDBACK
+   ============================================================================ */
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: aiSpin 0.75s linear infinite;
+}
+
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 0.83rem;
+  margin-top: 8px;
+}
+
+.ai-loading-banner .ai-elapsed {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.76rem;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.96);
+  opacity: 0;
+  z-index: 10050;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+
+.app-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.app-toast-success {
+  border-color: var(--success);
+  color: var(--success-text);
+}
+
+.app-toast-error {
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+@media (max-width: 768px) {
+  .app-toast {
+    bottom: 76px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -13257,6 +13340,89 @@ textarea.form-control {
   }
 }
 
+/* ============================================================================
+   AI LOADING BANNER, SPINNER & TOAST FEEDBACK
+   ============================================================================ */
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: aiSpin 0.75s linear infinite;
+}
+
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 0.83rem;
+  margin-top: 8px;
+}
+
+.ai-loading-banner .ai-elapsed {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.76rem;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.96);
+  opacity: 0;
+  z-index: 10050;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+
+.app-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.app-toast-success {
+  border-color: var(--success);
+  color: var(--success-text);
+}
+
+.app-toast-error {
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+@media (max-width: 768px) {
+  .app-toast {
+    bottom: 76px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -14956,6 +15122,89 @@ textarea.form-control {
   }
 }
 
+/* ============================================================================
+   AI LOADING BANNER, SPINNER & TOAST FEEDBACK
+   ============================================================================ */
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: aiSpin 0.75s linear infinite;
+}
+
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 0.83rem;
+  margin-top: 8px;
+}
+
+.ai-loading-banner .ai-elapsed {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.76rem;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.96);
+  opacity: 0;
+  z-index: 10050;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+
+.app-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.app-toast-success {
+  border-color: var(--success);
+  color: var(--success-text);
+}
+
+.app-toast-error {
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+@media (max-width: 768px) {
+  .app-toast {
+    bottom: 76px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -16651,6 +16900,89 @@ textarea.form-control {
   }
   .action-hero h3 {
     font-size: 1.2rem;
+  }
+}
+
+/* ============================================================================
+   AI LOADING BANNER, SPINNER & TOAST FEEDBACK
+   ============================================================================ */
+.ai-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-strong);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  animation: aiSpin 0.75s linear infinite;
+}
+
+@keyframes aiSpin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-loading-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-size: 0.83rem;
+  margin-top: 8px;
+}
+
+.ai-loading-banner .ai-elapsed {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.76rem;
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.app-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) scale(0.96);
+  opacity: 0;
+  z-index: 10050;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+  transition: opacity 160ms ease-out, transform 160ms ease-out;
+}
+
+.app-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.app-toast-success {
+  border-color: var(--success);
+  color: var(--success-text);
+}
+
+.app-toast-error {
+  border-color: var(--danger);
+  color: var(--danger-text);
+}
+
+@media (max-width: 768px) {
+  .app-toast {
+    bottom: 76px;
   }
 }
 
@@ -88230,14 +88562,28 @@ window.QUESTIONS_QUADRIX = [
         }
       }
 
-      if (btn) btn.disabled = true;
-      if (status) status.textContent = `Gerando aula personalizada com ${cfg.model}... (10–25s)`;
+      const origBtnText = btn ? btn.textContent : "";
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="ai-spinner" aria-hidden="true"></span> Gerando aula...`;
+      }
+      const startedAt = Date.now();
+      const renderProgress = () => {
+        const secs = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+        if (status) {
+          status.innerHTML = `<div class="ai-loading-banner"><span class="ai-spinner" aria-hidden="true"></span><span>Gerando aula personalizada com <strong>${escapeHtml(cfg.model)}</strong>…</span><span class="ai-elapsed">${secs}s</span></div>`;
+        }
+      };
+      renderProgress();
+      const timerId = setInterval(renderProgress, 1000);
 
       try {
         const markdown = await generateLessonWithAi(promptText, cfg);
+        clearInterval(timerId);
+        const lessonId = "AIL-" + Date.now();
         if (typeof window.saveGeneratedAiLesson === "function") {
           window.saveGeneratedAiLesson({
-            id: "AIL-" + Date.now(),
+            id: lessonId,
             createdAt: new Date().toISOString(),
             subjectFilter: filterSubjectId || "ALL",
             provider: cfg.provider,
@@ -88245,11 +88591,28 @@ window.QUESTIONS_QUADRIX = [
             markdown
           });
         }
-        if (status) status.textContent = "Aula gerada e salva!";
+        if (typeof window.showToast === "function") {
+          window.showToast("Aula gerada e salva com sucesso!", "success");
+        }
+        setTimeout(() => {
+          const el = document.querySelector(`[data-ai-lesson-id="${lessonId}"]`);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 80);
       } catch (err) {
-        if (status) status.textContent = "Erro: " + err.message;
+        clearInterval(timerId);
+        const msg = err && err.message ? err.message : String(err);
+        if (status) {
+          status.innerHTML = `<div class="ai-loading-banner" style="border-color:var(--danger); color:var(--danger-text);">Erro ao gerar aula: ${escapeHtml(msg)}</div>`;
+        }
+        if (typeof window.showToast === "function") {
+          window.showToast("Erro ao gerar aula: " + msg, "error");
+        }
       } finally {
-        if (btn) btn.disabled = false;
+        clearInterval(timerId);
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = origBtnText || "Gerar Aula dos Meus Erros";
+        }
       }
     }
   };
@@ -90973,6 +91336,24 @@ window.QUESTIONS_QUADRIX = [
     return (sp > 0 ? cut.slice(0, sp) : cut).trim() + "…";
   }
 
+  let toastTimer = null;
+  window.showToast = function (message, type) {
+    const existing = document.getElementById("app-toast-el");
+    if (existing) existing.remove();
+    clearTimeout(toastTimer);
+    const el = document.createElement("div");
+    el.id = "app-toast-el";
+    el.setAttribute("role", "status");
+    el.className = `app-toast ${type === "success" ? "app-toast-success" : type === "error" ? "app-toast-error" : ""}`;
+    el.textContent = String(message || "");
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("show"));
+    toastTimer = setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => el.remove(), 200);
+    }, 3800);
+  };
+
   window.generateQuestionExplanation = async function (qid) {
     const q = QUESTION_MAP.get(qid);
     if (!q) return;
@@ -90988,15 +91369,23 @@ window.QUESTIONS_QUADRIX = [
       return;
     }
 
+    const aiCfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
+    const modelLabel = aiCfg.model || "IA";
+    const startedAt = Date.now();
     if (btnEl) {
       btnEl.disabled = true;
-      btnEl.textContent = "Gerando dica com IA...";
+      btnEl.innerHTML = `<span class="ai-spinner" aria-hidden="true"></span> Gerando dica...`;
     }
-    if (statusEl) {
-      statusEl.style.display = "block";
-      statusEl.style.color = "var(--text-muted)";
-      statusEl.textContent = "Consultando sua IA para analisar a questão e o gabarito oficial...";
-    }
+    const renderProgress = () => {
+      const secs = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "";
+        statusEl.innerHTML = `<div class="ai-loading-banner"><span class="ai-spinner" aria-hidden="true"></span><span>Gerando dica cirúrgica com <strong>${escapeHtml(modelLabel)}</strong>…</span><span class="ai-elapsed">${secs}s</span></div>`;
+      }
+    };
+    renderProgress();
+    const timerId = setInterval(renderProgress, 1000);
 
     try {
       const ans = state.answers[qid];
@@ -91029,11 +91418,11 @@ window.QUESTIONS_QUADRIX = [
       ].filter(Boolean).join("\n");
 
       const parsed = await window.AI_TUTOR.askJson(prompt, { temperature: 0.25 });
+      clearInterval(timerId);
       if (!parsed || (!parsed.coreConcept && !parsed.explanation)) {
         throw new Error("A IA retornou uma resposta incompleta. Tente novamente.");
       }
 
-      const aiCfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
       const remObj = {
         title: trimToSentence(parsed.title || `${subjName(q.subjectId)} — Dica IA`, 70),
         explanation: trimToSentence(parsed.explanation, 320),
@@ -91061,16 +91450,19 @@ window.QUESTIONS_QUADRIX = [
       }
 
       if (typeof window.refreshActiveView === "function") window.refreshActiveView();
+      window.showToast("Dica cirúrgica pronta!", "success");
     } catch (err) {
+      clearInterval(timerId);
+      const msg = err && err.message ? err.message : String(err);
       if (btnEl) {
         btnEl.disabled = false;
         btnEl.textContent = "Gerar dica com IA";
       }
       if (statusEl) {
         statusEl.style.display = "block";
-        statusEl.style.color = "var(--danger-text)";
-        statusEl.textContent = "Erro ao gerar explicação: " + (err && err.message ? err.message : String(err));
+        statusEl.innerHTML = `<div class="ai-loading-banner" style="border-color:var(--danger); color:var(--danger-text);">Erro ao gerar dica: ${escapeHtml(msg)}</div>`;
       }
+      window.showToast("Erro ao gerar dica: " + msg, "error");
     }
   };
 
@@ -92097,7 +92489,7 @@ window.QUESTIONS_QUADRIX = [
       const dt = l.createdAt ? new Date(l.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
       const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Todos os erros";
       return `
-        <details class="guide-box" ${idx === 0 ? "open" : ""}>
+        <details class="guide-box" data-ai-lesson-id="${escapeHtml(l.id)}" ${idx === 0 ? "open" : ""}>
           <summary>
             <span>Aula IA: ${escapeHtml(scope)} <small style="color:var(--text-muted); font-weight:400;">• ${escapeHtml(dt)} (${escapeHtml(l.model || "IA")})</small></span>
           </summary>

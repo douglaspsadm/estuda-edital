@@ -193,6 +193,24 @@
     return (sp > 0 ? cut.slice(0, sp) : cut).trim() + "…";
   }
 
+  let toastTimer = null;
+  window.showToast = function (message, type) {
+    const existing = document.getElementById("app-toast-el");
+    if (existing) existing.remove();
+    clearTimeout(toastTimer);
+    const el = document.createElement("div");
+    el.id = "app-toast-el";
+    el.setAttribute("role", "status");
+    el.className = `app-toast ${type === "success" ? "app-toast-success" : type === "error" ? "app-toast-error" : ""}`;
+    el.textContent = String(message || "");
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("show"));
+    toastTimer = setTimeout(() => {
+      el.classList.remove("show");
+      setTimeout(() => el.remove(), 200);
+    }, 3800);
+  };
+
   window.generateQuestionExplanation = async function (qid) {
     const q = QUESTION_MAP.get(qid);
     if (!q) return;
@@ -208,15 +226,23 @@
       return;
     }
 
+    const aiCfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
+    const modelLabel = aiCfg.model || "IA";
+    const startedAt = Date.now();
     if (btnEl) {
       btnEl.disabled = true;
-      btnEl.textContent = "Gerando dica com IA...";
+      btnEl.innerHTML = `<span class="ai-spinner" aria-hidden="true"></span> Gerando dica...`;
     }
-    if (statusEl) {
-      statusEl.style.display = "block";
-      statusEl.style.color = "var(--text-muted)";
-      statusEl.textContent = "Consultando sua IA para analisar a questão e o gabarito oficial...";
-    }
+    const renderProgress = () => {
+      const secs = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.style.color = "";
+        statusEl.innerHTML = `<div class="ai-loading-banner"><span class="ai-spinner" aria-hidden="true"></span><span>Gerando dica cirúrgica com <strong>${escapeHtml(modelLabel)}</strong>…</span><span class="ai-elapsed">${secs}s</span></div>`;
+      }
+    };
+    renderProgress();
+    const timerId = setInterval(renderProgress, 1000);
 
     try {
       const ans = state.answers[qid];
@@ -249,11 +275,11 @@
       ].filter(Boolean).join("\n");
 
       const parsed = await window.AI_TUTOR.askJson(prompt, { temperature: 0.25 });
+      clearInterval(timerId);
       if (!parsed || (!parsed.coreConcept && !parsed.explanation)) {
         throw new Error("A IA retornou uma resposta incompleta. Tente novamente.");
       }
 
-      const aiCfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
       const remObj = {
         title: trimToSentence(parsed.title || `${subjName(q.subjectId)} — Dica IA`, 70),
         explanation: trimToSentence(parsed.explanation, 320),
@@ -281,16 +307,19 @@
       }
 
       if (typeof window.refreshActiveView === "function") window.refreshActiveView();
+      window.showToast("Dica cirúrgica pronta!", "success");
     } catch (err) {
+      clearInterval(timerId);
+      const msg = err && err.message ? err.message : String(err);
       if (btnEl) {
         btnEl.disabled = false;
         btnEl.textContent = "Gerar dica com IA";
       }
       if (statusEl) {
         statusEl.style.display = "block";
-        statusEl.style.color = "var(--danger-text)";
-        statusEl.textContent = "Erro ao gerar explicação: " + (err && err.message ? err.message : String(err));
+        statusEl.innerHTML = `<div class="ai-loading-banner" style="border-color:var(--danger); color:var(--danger-text);">Erro ao gerar dica: ${escapeHtml(msg)}</div>`;
       }
+      window.showToast("Erro ao gerar dica: " + msg, "error");
     }
   };
 
@@ -1317,7 +1346,7 @@
       const dt = l.createdAt ? new Date(l.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
       const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Todos os erros";
       return `
-        <details class="guide-box" ${idx === 0 ? "open" : ""}>
+        <details class="guide-box" data-ai-lesson-id="${escapeHtml(l.id)}" ${idx === 0 ? "open" : ""}>
           <summary>
             <span>Aula IA: ${escapeHtml(scope)} <small style="color:var(--text-muted); font-weight:400;">• ${escapeHtml(dt)} (${escapeHtml(l.model || "IA")})</small></span>
           </summary>
