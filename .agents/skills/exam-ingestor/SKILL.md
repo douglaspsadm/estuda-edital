@@ -5,7 +5,8 @@ description: Pipeline obrigatório para ingestão de provas novas (PDF/Drive/tex
 # Skill: exam-ingestor
 
 ## Quando usar
-**SEMPRE** que o usuário enviar uma prova nova ou pasta de provas (PDF, Google Drive ou texto).
+1. **Fluxo Direto (Prova Nova → Editais Existentes):** **SEMPRE** que o usuário enviar uma prova nova ou pasta de provas (PDF, Google Drive ou texto).
+2. **Fluxo Reverso (Edital Novo/Atualizado → Banco Existente):** acionado em encadeamento pelo `edital-curator` sempre que um concurso/cargo for criado ou atualizado, para herdar imediatamente todas as questões e discursivas já existentes no banco que cabem nas disciplinas do novo edital.
 
 ## Pipeline Obrigatório (5 Etapas)
 1. **Extração com Gabarito Oficial Definitivo:**

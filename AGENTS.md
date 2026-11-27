@@ -23,6 +23,11 @@ Regras obrigatórias e roteamento de agentes/skills para qualquer IA ou contribu
 | Testes, auditoria de cobertura por concurso, Playwright E2E | `qa-verifier` | `qa-verifier`, `perf-stack` |
 | Economia de tokens, setup de ferramentas (`rtk`, `graphify`) | `token-optimizer` | `perf-stack` |
 
+### Encadeamento Obrigatório (Handoffs)
+- **Chegou prova nova:** `exam-ingestor` (audita todos os editais existentes) → `qa-verifier`.
+- **Criou ou atualizou edital:** `edital-curator` → `exam-ingestor` (auditoria reversa: puxa todas as questões e discursivas já existentes que cabem no novo edital) → `qa-verifier`.
+- **Alterou tela/fluxo de estudo ou IA:** `ui-ux-guardian` + `study-content-factory` → `qa-verifier`.
+
 ## 3. Regra Obrigatória: Ingestão de Provas Novas (Pipeline Completo)
 **SEMPRE** que uma nova prova ou pasta de provas for enviada (PDF, Drive ou texto), execute o protocolo de `.agents/skills/exam-ingestor/SKILL.md`:
 1. **Tratar todas as questões objetivas:** extrair enunciados completos, alternativas/itens (C/E ou múltipla escolha), cruzar com o **gabarito oficial definitivo** (descartando anuladas) e deduplicar.
