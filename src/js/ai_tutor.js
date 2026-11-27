@@ -619,7 +619,7 @@
 
       const promptText = window.getPersonalizedLessonPrompt(filterSubjectId);
       if (!promptText) {
-        if (status) status.textContent = "Nenhum erro registrado neste filtro ainda. Resolva questões primeiro!";
+        if (status) status.textContent = "Nenhum erro novo sem aula neste filtro! Se quiser gerar novamente dos erros antigos, marque 'Incluir erros que já tiveram aula'.";
         return;
       }
 

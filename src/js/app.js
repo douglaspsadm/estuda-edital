@@ -1344,13 +1344,54 @@
   // ==========================================================================
   // 3. CADERNO DE ERROS & GERADOR DE AULA PERSONALIZADA
   // ==========================================================================
-  function buildPersonalizedLessonPrompt(filterSubjectId) {
+  let lastLessonPromptMeta = null;
+  let lastGeneratedLessonId = null;
+  let errorsActiveTab = "errors";
+  let errorsIncludeCovered = false;
+  let errorsCoverageFilter = "all";
+
+  function isWrongQuestionCoveredByLesson(q) {
+    if (!q || !q.id) return false;
+    const ans = state.answers[q.id];
+    const errTs = ans && ans.timestamp ? Date.parse(ans.timestamp) : 0;
+    return (state.aiLessons || []).some(l => {
+      if (!l || !Array.isArray(l.coveredQuestionIds)) return false;
+      if (!l.coveredQuestionIds.includes(q.id)) return false;
+      const lessonTs = l.createdAt ? Date.parse(l.createdAt) : 0;
+      return !errTs || !lessonTs || lessonTs >= errTs;
+    });
+  }
+
+  function summarizeCoveredSubjects(qs) {
+    const counts = {};
+    (qs || []).forEach(q => {
+      const name = subjName(q.subjectId);
+      counts[name] = (counts[name] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([n, c]) => `${n} (${c})`)
+      .join(", ");
+  }
+
+  function buildPersonalizedLessonPrompt(filterSubjectId, opts) {
     ensure();
-    const wrong = ALL_QUESTIONS
+    const includeCovered = Boolean((opts && opts.includeCovered) || errorsIncludeCovered);
+    const allWrong = ALL_QUESTIONS
       .filter(q => state.answers[q.id] && state.answers[q.id].correct === false)
       .filter(q => !filterSubjectId || filterSubjectId === "ALL" || q.subjectId === filterSubjectId);
 
-    if (!wrong.length) return null;
+    const wrong = includeCovered ? allWrong : allWrong.filter(q => !isWrongQuestionCoveredByLesson(q));
+
+    if (!wrong.length) {
+      lastLessonPromptMeta = null;
+      return null;
+    }
+
+    lastLessonPromptMeta = {
+      questionIds: wrong.map(q => q.id),
+      subjectsSummary: summarizeCoveredSubjects(wrong)
+    };
 
     const byTopic = {};
     wrong.forEach(q => {
@@ -1364,7 +1405,7 @@
       `Você é meu Tutor Adaptativo de Concursos Públicos, especialista no edital "${meta.concurso || "Meu Concurso"}" (${meta.cargo || "Cargo"}, Banca ${meta.banca || "Multibanca"}).`,
       "",
       "## MISSÃO",
-      "Abaixo estão EXCLUSIVAMENTE as questões que eu ERREI. Não perca tempo com teoria genérica do que eu já sei. Monte uma AULA CIRÚRGICA focada nos meus erros reais.",
+      "Abaixo estão EXCLUSIVAMENTE as questões que eu ERREI (erros novos ainda sem aula). Não perca tempo com teoria genérica do que eu já sei. Monte uma AULA CIRÚRGICA focada nos meus erros reais.",
       "",
       "## REGRAS OBRIGATÓRIAS DA AULA",
       "1. Agrupe a aula pelos tópicos em que mais errei (do mais crítico para o menos crítico).",
@@ -1411,10 +1452,24 @@
 
   window.saveGeneratedAiLesson = function (lessonObj) {
     ensure();
-    state.aiLessons.unshift(lessonObj);
+    const enriched = Object.assign({}, lessonObj);
+    if (!Array.isArray(enriched.coveredQuestionIds) && lastLessonPromptMeta && Array.isArray(lastLessonPromptMeta.questionIds)) {
+      enriched.coveredQuestionIds = lastLessonPromptMeta.questionIds.slice();
+    }
+    if (!enriched.coveredSummary) {
+      if (lastLessonPromptMeta && lastLessonPromptMeta.subjectsSummary) {
+        enriched.coveredSummary = lastLessonPromptMeta.subjectsSummary;
+      } else if (Array.isArray(enriched.coveredQuestionIds) && enriched.coveredQuestionIds.length) {
+        const coveredQs = enriched.coveredQuestionIds.map(id => QUESTION_MAP.get(id)).filter(Boolean);
+        enriched.coveredSummary = summarizeCoveredSubjects(coveredQs);
+      }
+    }
+    state.aiLessons.unshift(enriched);
     if (state.aiLessons.length > 25) state.aiLessons = state.aiLessons.slice(0, 25);
-    const scope = lessonObj.subjectFilter && lessonObj.subjectFilter !== "ALL" ? subjName(lessonObj.subjectFilter) : "Revisão Geral";
-    const createdFlashcards = createFlashcardsFromLesson(lessonObj, scope);
+    const scope = enriched.subjectFilter && enriched.subjectFilter !== "ALL" ? subjName(enriched.subjectFilter) : (enriched.coveredSummary || "Revisão Geral");
+    const createdFlashcards = createFlashcardsFromLesson(enriched, scope);
+    lastGeneratedLessonId = enriched.id;
+    errorsActiveTab = "lessons";
     saveState();
     window.refreshActiveView();
     return { createdFlashcards };
@@ -1424,7 +1479,7 @@
     ensure();
     const l = state.aiLessons.find(x => x.id === lessonId);
     if (!l) return;
-    const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Revisão Geral";
+    const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : (l.coveredSummary || "Revisão Geral");
     const n = createFlashcardsFromLesson(l, scope);
     saveState();
     if (typeof window.showToast === "function") {
@@ -1437,26 +1492,58 @@
     ensure();
     if (!confirm("Remover esta aula salva?")) return;
     state.aiLessons = state.aiLessons.filter(l => l.id !== lessonId);
+    if (lastGeneratedLessonId === lessonId) lastGeneratedLessonId = null;
     saveState();
     window.refreshActiveView();
   };
 
   function renderSavedAiLessonsHtml(filterSubjectId) {
     ensure();
-    const list = state.aiLessons.filter(l => !filterSubjectId || filterSubjectId === "ALL" || l.subjectFilter === "ALL" || l.subjectFilter === filterSubjectId);
+    const list = state.aiLessons.filter(l => {
+      if (!filterSubjectId || filterSubjectId === "ALL") return true;
+      if (l.subjectFilter === filterSubjectId) return true;
+      if (Array.isArray(l.coveredQuestionIds) && l.coveredQuestionIds.some(id => {
+        const q = QUESTION_MAP.get(id);
+        return q && q.subjectId === filterSubjectId;
+      })) return true;
+      return l.subjectFilter === "ALL" && !Array.isArray(l.coveredQuestionIds);
+    });
     if (!list.length) return "";
 
     const renderMd = window.AI_TUTOR ? window.AI_TUTOR.renderMarkdownSafe : (s => `<pre style="white-space:pre-wrap;">${escapeHtml(s)}</pre>`);
-    return list.map((l, idx) => {
+    return list.map(l => {
       const dt = l.createdAt ? new Date(l.createdAt).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "";
-      const scope = l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Todos os erros";
+      const qIds = Array.isArray(l.coveredQuestionIds) ? l.coveredQuestionIds : [];
+      const coveredQs = qIds.map(id => QUESTION_MAP.get(id)).filter(Boolean);
+      const titleScope = l.coveredSummary
+        || (coveredQs.length ? summarizeCoveredSubjects(coveredQs) : "")
+        || (l.subjectFilter && l.subjectFilter !== "ALL" ? subjName(l.subjectFilter) : "Revisão de erros");
       const linkedCount = (state.customFlashcards || []).filter(fc => fc.lessonId === l.id).length;
+      const shouldOpen = Boolean(lastGeneratedLessonId && l.id === lastGeneratedLessonId);
+
+      const coveredListHtml = coveredQs.length ? `
+        <details style="margin-bottom:12px; background:var(--bg-elevated); padding:10px 12px; border-radius:8px;">
+          <summary style="cursor:pointer; font-size:0.82rem; font-weight:600; color:var(--accent-primary);">
+            Ver as ${coveredQs.length} questão(ões) errada(s) coberta(s) por esta aula
+          </summary>
+          <ul style="margin:8px 0 0 18px; font-size:0.82rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:6px;">
+            ${coveredQs.map(q => `<li><strong>${escapeHtml(subjName(q.subjectId))}</strong> (${escapeHtml(q.banca || "Oficial")}): ${escapeHtml(String(q.statement || "").replace(/\s+/g, " ").slice(0, 140))}…</li>`).join("")}
+          </ul>
+        </details>
+      ` : "";
+
       return `
-        <details class="guide-box" data-ai-lesson-id="${escapeHtml(l.id)}" ${idx === 0 ? "open" : ""}>
+        <details class="guide-box" data-ai-lesson-id="${escapeHtml(l.id)}" ${shouldOpen ? "open" : ""}>
           <summary>
-            <span>Aula IA: ${escapeHtml(scope)} <small style="color:var(--text-muted); font-weight:400;">• ${escapeHtml(dt)} (${escapeHtml(l.model || "IA")})${linkedCount ? ` • ${linkedCount} flashcard(s)` : ""}</small></span>
+            <span>
+              <strong>${escapeHtml(titleScope)}</strong>
+              <small style="color:var(--text-muted); font-weight:400;">
+                ${qIds.length ? ` • ${qIds.length} questão(ões)` : ""} • ${escapeHtml(dt)} (${escapeHtml(l.model || "IA")})${linkedCount ? ` • ${linkedCount} flashcard(s)` : ""}
+              </small>
+            </span>
           </summary>
           <div class="guide-body">
+            ${coveredListHtml}
             ${renderMd(l.markdown)}
             <div style="margin-top:14px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
               ${linkedCount
@@ -1546,6 +1633,22 @@
     switchView("review");
   };
 
+  window.setErrorsTab = function (tab) {
+    errorsActiveTab = tab === "lessons" ? "lessons" : "errors";
+    if (errorsActiveTab === "errors") lastGeneratedLessonId = null;
+    renderErrors();
+  };
+
+  window.setErrorsCoverageFilter = function (f) {
+    errorsCoverageFilter = f || "all";
+    renderErrors();
+  };
+
+  window.toggleErrorsIncludeCovered = function (checked) {
+    errorsIncludeCovered = Boolean(checked);
+    renderErrors();
+  };
+
   function renderErrors() {
     ensure();
     const container = document.getElementById("errors-content");
@@ -1553,7 +1656,16 @@
 
     const allWrong = ALL_QUESTIONS.filter(q => state.answers[q.id] && state.answers[q.id].correct === false);
     const activeSubj = state.errorTopicFilter || "ALL";
-    const wrong = activeSubj === "ALL" ? allWrong : allWrong.filter(q => q.subjectId === activeSubj);
+    const wrongBySubj = activeSubj === "ALL" ? allWrong : allWrong.filter(q => q.subjectId === activeSubj);
+    const uncoveredInSubj = wrongBySubj.filter(q => !isWrongQuestionCoveredByLesson(q));
+    const coveredInSubjCount = wrongBySubj.length - uncoveredInSubj.length;
+    const totalLessons = (state.aiLessons || []).length;
+
+    const wrong = wrongBySubj.filter(q => {
+      if (errorsCoverageFilter === "new") return !isWrongQuestionCoveredByLesson(q);
+      if (errorsCoverageFilter === "covered") return isWrongQuestionCoveredByLesson(q);
+      return true;
+    });
 
     const subjCounts = {};
     allWrong.forEach(q => { subjCounts[q.subjectId] = (subjCounts[q.subjectId] || 0) + 1; });
@@ -1565,13 +1677,107 @@
 
     const aiCardHtml = window.AI_TUTOR ? window.AI_TUTOR.renderConfigCard("err", activeSubj) : "";
     const aiSavedHtml = renderSavedAiLessonsHtml(activeSubj);
+    const targetCountForLesson = errorsIncludeCovered ? wrongBySubj.length : uncoveredInSubj.length;
+
+    const errorsTabHtml = `
+      ${allWrong.length > 0 ? `
+        <div class="card" style="padding:12px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+          <div style="font-size:0.85rem;">
+            <strong>${uncoveredInSubj.length} erro(s) novo(s) sem aula</strong>
+            <span style="color:var(--text-muted);"> • ${coveredInSubjCount} já coberto(s) por aula anterior</span>
+            <div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
+              Ao gerar aula agora, a IA vai focar em <strong>${targetCountForLesson} questão(ões)</strong>${!errorsIncludeCovered ? " (somente os erros novos)" : " (todos os erros do filtro)"}.
+            </div>
+          </div>
+          ${coveredInSubjCount > 0 ? `
+            <label style="display:flex; align-items:center; gap:6px; font-size:0.8rem; color:var(--text-secondary); cursor:pointer;">
+              <input type="checkbox" id="chk-errors-include-covered" ${errorsIncludeCovered ? "checked" : ""} onchange="toggleErrorsIncludeCovered(this.checked)" />
+              Incluir erros que já tiveram aula
+            </label>
+          ` : ""}
+        </div>
+      ` : ""}
+
+      ${aiCardHtml}
+
+      ${allWrong.length > 0 ? `
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+          <div class="segmented-tabs">
+            <button class="seg-btn ${activeSubj === "ALL" ? "active" : ""}" onclick="setErrorTopicFilter('ALL')">Todas (${allWrong.length})</button>
+            ${filterChips}
+          </div>
+          <div class="segmented-tabs">
+            <button class="seg-btn ${errorsCoverageFilter === "all" ? "active" : ""}" onclick="setErrorsCoverageFilter('all')">Todos (${wrongBySubj.length})</button>
+            <button class="seg-btn ${errorsCoverageFilter === "new" ? "active" : ""}" onclick="setErrorsCoverageFilter('new')">Sem aula (${uncoveredInSubj.length})</button>
+            <button class="seg-btn ${errorsCoverageFilter === "covered" ? "active" : ""}" onclick="setErrorsCoverageFilter('covered')">Já com aula (${coveredInSubjCount})</button>
+          </div>
+        </div>
+      ` : ""}
+
+      ${wrong.length ? wrong.map(q => {
+        const ans = state.answers[q.id] || {};
+        const chosen = typeof ans.selectedIndex === "number" ? q.options[ans.selectedIndex] : null;
+        const qidEsc = escapeJsStr(q.id);
+        const covered = isWrongQuestionCoveredByLesson(q);
+        return `
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:0.76rem; color:var(--text-muted); margin-bottom:8px; align-items:center;">
+              <span>${escapeHtml(subjName(q.subjectId))} • ${escapeHtml(q.topicName || q.topicId)}</span>
+              <div style="display:flex; gap:6px; align-items:center;">
+                <span class="q-tag" style="${covered ? "opacity:0.75;" : "border-color:var(--accent-primary); color:var(--accent-primary);"}">${covered ? "Já tem aula" : "Sem aula"}</span>
+                <span>${escapeHtml(q.banca)}${ans.conf ? ` • Confiança: ${escapeHtml(ans.conf)}` : ""}</span>
+              </div>
+            </div>
+            <p style="white-space:pre-line; font-size:0.92rem; margin-bottom:10px;">${escapeHtml(q.statement)}</p>
+            ${chosen ? `<div style="font-size:0.84rem; color:var(--danger-text); margin-bottom:4px;">Sua marcação: ${escapeHtml(chosen)}</div>` : ""}
+            <div style="font-size:0.85rem; color:var(--success-text); font-weight:600; margin-bottom:10px;">Gabarito: ${escapeHtml(q.options[q.correctIndex] || "")}</div>
+
+            <details style="margin-bottom:10px;">
+              <summary style="cursor:pointer; font-size:0.82rem; color:var(--accent-primary); font-weight:600;">Ver comentário e resumo cirúrgico</summary>
+              <div style="margin-top:8px; padding:12px; background:var(--bg-elevated); border-radius:8px; font-size:0.86rem; white-space:pre-line; color:var(--text-secondary);">${escapeHtml(q.explanation || "")}</div>
+            </details>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; padding-top:10px; border-top:1px solid var(--border-color);">
+              <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+                <span style="font-size:0.74rem; color:var(--text-muted); margin-right:2px;">Motivo:</span>
+                ${REASONS.map(r => `<button class="btn ${state.errors[q.id] === r[0] ? "btn-primary" : "btn-outline"} btn-sm" onclick="setReason('${qidEsc}', '${r[0]}')">${r[1]}</button>`).join("")}
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Aula</button>
+                <button class="btn btn-primary btn-sm" onclick="reviewNow('${qidEsc}')">Revisar</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("") : `
+        <div class="card" style="text-align:center; padding:32px 20px; color:var(--text-muted);">
+          ${allWrong.length
+            ? "Nenhum erro neste filtro. Troque o filtro acima para ver os demais erros."
+            : "Nenhum erro registrado aqui. Resolva questões na aba <strong>Questões</strong> — o que você errar aparecerá automaticamente neste caderno."}
+        </div>
+      `}
+    `;
+
+    const lessonsTabHtml = `
+      ${allWrong.length > 0 ? `
+        <div class="segmented-tabs" style="margin-bottom:14px;">
+          <button class="seg-btn ${activeSubj === "ALL" ? "active" : ""}" onclick="setErrorTopicFilter('ALL')">Todas as disciplinas</button>
+          ${filterChips}
+        </div>
+      ` : ""}
+      ${aiSavedHtml || `
+        <div class="card" style="text-align:center; padding:32px 20px; color:var(--text-muted);">
+          Nenhuma aula gerada ainda neste filtro. Volte na aba <strong>Meus Erros</strong> e clique em <strong>Gerar Aula dos Meus Erros</strong>.
+        </div>
+      `}
+    `;
 
     container.innerHTML = `
       <div class="focus-Stage">
         <div class="section-head">
           <div>
             <h2>Caderno de Erros</h2>
-            <p>${allWrong.length} erro(s) acumulado(s) • Classifique o motivo e transforme suas falhas em aula.</p>
+            <p>${allWrong.length} erro(s) acumulado(s) • ${totalLessons} aula(s) gerada(s)</p>
           </div>
           ${allWrong.length ? `
             <div style="display:flex; gap:6px; flex-wrap:wrap;">
@@ -1581,52 +1787,12 @@
           ` : ""}
         </div>
 
-        ${aiCardHtml}
-        ${aiSavedHtml}
+        <div class="segmented-tabs" style="margin-bottom:14px;">
+          <button class="seg-btn ${errorsActiveTab === "errors" ? "active" : ""}" id="tab-errors-list" onclick="setErrorsTab('errors')">Meus Erros (${allWrong.length})</button>
+          <button class="seg-btn ${errorsActiveTab === "lessons" ? "active" : ""}" id="tab-errors-lessons" onclick="setErrorsTab('lessons')">Aulas Geradas (${totalLessons})</button>
+        </div>
 
-        ${allWrong.length > 0 ? `
-          <div class="segmented-tabs" style="margin-bottom:14px; width:100%;">
-            <button class="seg-btn ${activeSubj === "ALL" ? "active" : ""}" onclick="setErrorTopicFilter('ALL')">Todas (${allWrong.length})</button>
-            ${filterChips}
-          </div>
-        ` : ""}
-
-        ${wrong.length ? wrong.map(q => {
-          const ans = state.answers[q.id] || {};
-          const chosen = typeof ans.selectedIndex === "number" ? q.options[ans.selectedIndex] : null;
-          const qidEsc = escapeJsStr(q.id);
-          return `
-            <div class="card">
-              <div style="display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; font-size:0.76rem; color:var(--text-muted); margin-bottom:8px;">
-                <span>${escapeHtml(subjName(q.subjectId))} • ${escapeHtml(q.topicName || q.topicId)}</span>
-                <span>${escapeHtml(q.banca)}${ans.conf ? ` • Confiança: ${escapeHtml(ans.conf)}` : ""}</span>
-              </div>
-              <p style="white-space:pre-line; font-size:0.92rem; margin-bottom:10px;">${escapeHtml(q.statement)}</p>
-              ${chosen ? `<div style="font-size:0.84rem; color:var(--danger-text); margin-bottom:4px;">Sua marcação: ${escapeHtml(chosen)}</div>` : ""}
-              <div style="font-size:0.85rem; color:var(--success-text); font-weight:600; margin-bottom:10px;">Gabarito: ${escapeHtml(q.options[q.correctIndex] || "")}</div>
-
-              <details style="margin-bottom:10px;">
-                <summary style="cursor:pointer; font-size:0.82rem; color:var(--accent-primary); font-weight:600;">Ver comentário e resumo cirúrgico</summary>
-                <div style="margin-top:8px; padding:12px; background:var(--bg-elevated); border-radius:8px; font-size:0.86rem; white-space:pre-line; color:var(--text-secondary);">${escapeHtml(q.explanation || "")}</div>
-              </details>
-
-              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; padding-top:10px; border-top:1px solid var(--border-color);">
-                <div style="display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
-                  <span style="font-size:0.74rem; color:var(--text-muted); margin-right:2px;">Motivo:</span>
-                  ${REASONS.map(r => `<button class="btn ${state.errors[q.id] === r[0] ? "btn-primary" : "btn-outline"} btn-sm" onclick="setReason('${qidEsc}', '${r[0]}')">${r[1]}</button>`).join("")}
-                </div>
-                <div style="display:flex; gap:6px;">
-                  <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Aula</button>
-                  <button class="btn btn-primary btn-sm" onclick="reviewNow('${qidEsc}')">Revisar</button>
-                </div>
-              </div>
-            </div>
-          `;
-        }).join("") : `
-          <div class="card" style="text-align:center; padding:32px 20px; color:var(--text-muted);">
-            Nenhum erro registrado aqui. Resolva questões na aba <strong>Questões</strong> — o que você errar aparecerá automaticamente neste caderno.
-          </div>
-        `}
+        ${errorsActiveTab === "lessons" ? lessonsTabHtml : errorsTabHtml}
       </div>
     `;
   }
