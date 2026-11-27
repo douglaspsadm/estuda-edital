@@ -22,6 +22,7 @@
     selectedPacks: [],
     packMapping: {},
     createdTrackId: null,
+    updateTargetId: null,
     busy: false,
     statusMsg: "",
     statusType: "info" // "info" | "success" | "error"
@@ -70,10 +71,23 @@
   function openWizard(startStep, mode) {
     WIZ.open = true;
     WIZ.step = startStep || 1;
-    if (mode === "custom" || mode === "preset") {
-      WIZ.mode = mode;
-    } else if (WIZ.step === 1) {
-      WIZ.mode = "preset";
+    if (mode === "update" && window.TracksManager) {
+      const active = window.TracksManager.getActiveTrack();
+      const meta = (active && active.edital && active.edital.metadata) || {};
+      WIZ.mode = "custom";
+      WIZ.updateTargetId = active ? active.id : null;
+      WIZ.metaConcurso = meta.concurso || (active && active.shortName) || "";
+      WIZ.metaCargo = meta.cargo || (active && active.roleName) || "";
+      WIZ.metaBanca = meta.banca || "";
+      WIZ.metaDataProva = (meta.provas && meta.provas.dataProva) || "";
+      WIZ.draftEdital = null;
+    } else {
+      WIZ.updateTargetId = null;
+      if (mode === "custom" || mode === "preset") {
+        WIZ.mode = mode;
+      } else if (WIZ.step === 1) {
+        WIZ.mode = "preset";
+      }
     }
     WIZ.statusMsg = "";
     WIZ.busy = false;
@@ -230,24 +244,54 @@
       `;
     }
 
+    const updatingTrack = WIZ.updateTargetId && window.TracksManager ? window.TracksManager.getTrackById(WIZ.updateTargetId) : null;
+
     return `
       <div class="wiz-body">
-        <h3 class="wiz-title">Passo 1: Escolha seu Concurso (ou crie a partir do seu Edital)</h3>
-        <div class="wiz-mode-tabs">
-          <button class="btn ${WIZ.mode === "preset" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('preset')">
-            Concursos Disponíveis
-          </button>
-          <button class="btn ${WIZ.mode === "custom" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('custom')">
-            Subir / Colar Meu Edital
-          </button>
-        </div>
+        <h3 class="wiz-title">${updatingTrack ? `Atualizar Edital — ${esc(updatingTrack.shortName)}` : "Passo 1: Escolha seu Concurso (ou crie a partir do seu Edital)"}</h3>
+        ${updatingTrack ? `
+          <div class="wiz-status wiz-status-info" style="margin-bottom:10px;">
+            Suba o PDF ou cole o conteúdo programático do novo edital. <strong>Todas as suas respostas, erros, revisões e aulas salvas serão preservados.</strong>
+          </div>
+        ` : `
+          <div class="wiz-mode-tabs">
+            <button class="btn ${WIZ.mode === "preset" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('preset')">
+              Concursos Disponíveis
+            </button>
+            <button class="btn ${WIZ.mode === "custom" ? "btn-primary" : "btn-outline"} btn-sm" onclick="window.OnboardingWizard.setMode('custom')">
+              Subir / Colar Meu Edital
+            </button>
+          </div>
+        `}
 
         ${WIZ.mode === "preset" ? `
           <div class="wiz-preset-grid" style="margin-top:14px;">
             ${(() => {
               const cofenTracks = builtins.filter(t => t.groupId === "cofen_2026");
+              const seedfTracks = builtins.filter(t => t.groupId === "seedf_2026");
               const standalone = builtins.filter(t => !t.groupId);
               const cards = [];
+
+              if (seedfTracks.length) {
+                const isSeedfSelected = seedfTracks.some(t => t.id === WIZ.selectedPresetId);
+                const activeSeedf = seedfTracks.find(t => t.id === WIZ.selectedPresetId) || seedfTracks.find(t => t.roleCode === "ATIV") || seedfTracks[0];
+                const qCount = window.TracksManager.getQuestionsForTrack(activeSeedf.id).length;
+                cards.push(`
+                  <div class="wiz-preset-card ${isSeedfSelected ? "selected" : ""}" onclick="window.OnboardingWizard.selectPreset('${esc(activeSeedf.id)}')">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                      <strong>SEEDF 2026/2027 (${seedfTracks.length} Cargos — Pré-Edital)</strong>
+                      <span class="status-badge status-mastered">${qCount} questões reais</span>
+                    </div>
+                    <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px;">Instituto Quadrix • 120 itens C/E + Estudo de Caso • 10.604 vagas • Atualizável quando sair o edital</div>
+                    <div style="margin-top:10px;" onclick="event.stopPropagation()">
+                      <label class="field-label" style="font-size:0.75rem;">Escolha seu Cargo na SEEDF:</label>
+                      <select class="form-control" onchange="window.OnboardingWizard.selectPreset(this.value)">
+                        ${seedfTracks.map(c => `<option value="${esc(c.id)}" ${activeSeedf.id === c.id ? "selected" : ""}>${esc(c.roleCode)} — ${esc(c.roleName)} (${esc(c.roleVagas)})</option>`).join("")}
+                      </select>
+                    </div>
+                  </div>
+                `);
+              }
 
               if (cofenTracks.length) {
                 const isCofenSelected = cofenTracks.some(t => t.id === WIZ.selectedPresetId);
@@ -796,6 +840,23 @@
 
     finishCustomTrack() {
       if (!WIZ.draftEdital) return;
+      if (WIZ.updateTargetId && typeof window.TracksManager.updateTrackEdital === "function") {
+        const updated = window.TracksManager.updateTrackEdital(WIZ.updateTargetId, WIZ.draftEdital, {
+          enabledSharedPacks: WIZ.selectedPacks.slice(),
+          packMapping: Object.assign({}, WIZ.packMapping)
+        });
+        WIZ.createdTrackId = updated ? updated.id : WIZ.updateTargetId;
+        WIZ.updateTargetId = null;
+        if (typeof window.switchTrack === "function") {
+          window.switchTrack(WIZ.createdTrackId);
+        }
+        if (typeof window.showToast === "function") {
+          window.showToast("Edital atualizado sem perder seu progresso!", "success");
+        }
+        WIZ.step = 4;
+        renderWizard();
+        return;
+      }
       const created = window.TracksManager.saveCustomTrack({
         edital: WIZ.draftEdital,
         enabledSharedPacks: WIZ.selectedPacks.slice(),

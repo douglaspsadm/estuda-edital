@@ -2687,6 +2687,9 @@
             <h2>Edital Verticalizado</h2>
             <p>${checkedCount} de ${totalTopics} tópicos marcados como revisados.</p>
           </div>
+          <button class="btn btn-outline btn-sm" id="btn-update-edital" onclick="window.OnboardingWizard && OnboardingWizard.open(1, 'update')" title="Atualizar ou substituir o edital desta trilha sem perder seu progresso">
+            Atualizar Edital (PDF / Texto)
+          </button>
         </div>
 
         ${cronograma.length ? `

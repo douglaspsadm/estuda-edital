@@ -213,6 +213,26 @@
       descricao: "Questões reais Quadrix para Contador (Contabilidade Pública, Orçamento, Auditoria e Tributário).",
       sourceSubjectIds: ["cofen_esp_cont"],
       keywords: ["contabilidade", "contador", "orcamento publico", "auditoria", "mcasp"]
+    },
+    {
+      id: "pack_seedf_df",
+      nome: "RIDE-DF, LODF & LC 840/2011 (DF)",
+      categoria: "basicos",
+      universal: true,
+      cor: "#059669",
+      descricao: "Questões reais (IADES/Quadrix) de Realidade do DF, RIDE, Lei Orgânica do DF e Regime Jurídico LC 840/2011.",
+      sourceSubjectIds: ["seedf_bas_df"],
+      keywords: ["lei organica", "lodf", "lc 840", "840/2011", "ride", "distrito federal", "realidade do df", "plano distrital"]
+    },
+    {
+      id: "pack_seedf_educacao",
+      nome: "Legislação Educacional & Pedagogia (LDB, BNCC, ECA, Currículo)",
+      categoria: "especificos",
+      universal: false,
+      cor: "#7c3aed",
+      descricao: "Questões reais (IADES 2023 SEE-DF) de LDB, ECA, BNCC, PNE/PDE, Currículo em Movimento e Temas Educacionais.",
+      sourceSubjectIds: ["seedf_comp_leg", "seedf_comp_ped"],
+      keywords: ["ldb", "9.394", "bncc", "pedagog", "curriculo em movimento", "eca", "educacao especial", "didatica", "projeto politico"]
     }
   ];
 
@@ -229,7 +249,8 @@
   function getAllRealQuestions() {
     const base = Array.isArray(window.QUESTIONS_REAIS) ? window.QUESTIONS_REAIS : [];
     const quadrix = Array.isArray(window.QUESTIONS_QUADRIX) ? window.QUESTIONS_QUADRIX : [];
-    return [...base, ...quadrix];
+    const seedf = Array.isArray(window.QUESTIONS_SEEDF) ? window.QUESTIONS_SEEDF : [];
+    return [...base, ...quadrix, ...seedf];
   }
 
   function belongsToPack(q, pack) {
@@ -240,8 +261,14 @@
 
   function getPackQuestions(packId) {
     const pack = PACK_DEFINITIONS.find(p => p.id === packId);
-    if (!pack) return [];
-    return getAllRealQuestions().filter(q => belongsToPack(q, pack));
+    if (pack) {
+      return getAllRealQuestions().filter(q => belongsToPack(q, pack));
+    }
+    if (String(packId || "").startsWith("pack_seedf_esp_")) {
+      const subjId = String(packId).replace(/^pack_/, "");
+      return getAllRealQuestions().filter(q => q && (q.sharedPackId === packId || q.subjectId === subjId));
+    }
+    return [];
   }
 
   function listPacks() {

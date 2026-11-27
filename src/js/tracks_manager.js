@@ -247,6 +247,10 @@
       list.push(...window.COFEN_2026_DATA.buildTracks());
     }
 
+    if (Array.isArray(window.SEEDF_TRACKS)) {
+      list.push(...window.SEEDF_TRACKS);
+    }
+
     if (DPDF_EDITAL_SNAPSHOT) {
       list.push({
         id: "dpdf_ti_2026",
@@ -423,10 +427,13 @@
 
   function listTracks() {
     const builtins = getBuiltinTracks();
-    const customs = Object.values(workspace.customTracks || {}).sort(
-      (a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0)
-    );
-    return [...customs, ...builtins];
+    const customMap = workspace.customTracks || {};
+    const builtinIds = new Set(builtins.map(b => b.id));
+    const pureCustoms = Object.values(customMap)
+      .filter(t => t && !builtinIds.has(t.id))
+      .sort((a, b) => Date.parse(b.updatedAt || b.createdAt || 0) - Date.parse(a.updatedAt || a.createdAt || 0));
+    const resolvedBuiltins = builtins.map(b => customMap[b.id] || b);
+    return [...pureCustoms, ...resolvedBuiltins];
   }
 
   function getTrackById(trackId) {
@@ -518,6 +525,38 @@
     return track;
   }
 
+  function updateTrackEdital(trackId, newEdital, opts) {
+    const base = getTrackById(trackId);
+    if (!base || !newEdital) return null;
+    const normalized = normalizeEdital(newEdital);
+    const meta = normalized.metadata || {};
+    const options = opts || {};
+    const now = new Date().toISOString();
+
+    const updated = Object.assign({}, JSON.parse(JSON.stringify(base)), {
+      edital: normalized,
+      subtitle: options.subtitle || base.subtitle || `${meta.cargo || "Concurso"} • ${meta.banca || ""}`.replace(/\s*•\s*$/, ""),
+      description: options.description || meta.edital || base.description,
+      updatedAt: now
+    });
+
+    if (Array.isArray(options.enabledSharedPacks)) {
+      const mergedPacks = new Set([...(base.enabledSharedPacks || []), ...options.enabledSharedPacks]);
+      updated.enabledSharedPacks = Array.from(mergedPacks);
+    }
+    if (options.packMapping && typeof options.packMapping === "object") {
+      updated.packMapping = Object.assign({}, base.packMapping || {}, options.packMapping);
+    }
+
+    workspace.customTracks = workspace.customTracks || {};
+    workspace.customTracks[base.id] = updated;
+    persistWorkspace();
+    if (workspace.activeTrackId === base.id) {
+      syncWindowGlobalsForTrack(updated);
+    }
+    return updated;
+  }
+
   function deleteCustomTrack(trackId) {
     if (!workspace.customTracks || !workspace.customTracks[trackId]) return false;
     delete workspace.customTracks[trackId];
@@ -580,7 +619,12 @@
     ].filter(Boolean).join(" ").toLowerCase();
 
     let primaryAreas = ["administracao", "geral"];
-    if (/ti\b|inform[aá]tica|sistema|desenvolvimento|dados|tecnologia/.test(blob)) {
+    if (/seedf|pedagog|professor|educa[çc][ãa]o|ppge/.test(blob)) {
+      primaryAreas = ["educacao", "administracao", "geral"];
+      if (/ti\b|inform[aá]tica/.test(blob)) primaryAreas = ["educacao", "ti", "administracao"];
+      else if (/direito/.test(blob)) primaryAreas = ["educacao", "direito", "administracao"];
+      else if (/contab/.test(blob)) primaryAreas = ["educacao", "contabilidade", "administracao"];
+    } else if (/ti\b|inform[aá]tica|sistema|desenvolvimento|dados|tecnologia/.test(blob)) {
       primaryAreas = ["ti"];
     } else if (/advog|jur[ií]d|direito/.test(blob)) {
       primaryAreas = ["direito"];
@@ -811,6 +855,7 @@
     saveTrackState,
     saveCustomTrack,
     updateTrackSharedPacks,
+    updateTrackEdital,
     deleteCustomTrack,
     getQuestionsForTrack,
     syncWindowGlobalsForTrack,

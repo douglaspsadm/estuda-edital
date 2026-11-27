@@ -39,8 +39,11 @@ function createBrowserSandbox() {
     "src/data/dpdf_lessons_data.js",
     "src/data/dpdf_discursive_data.js",
     "src/data/cofen_edital_data.js",
+    "src/data/seedf_edital_data.js",
     "src/data/quadrix_questions.js",
+    "src/data/seedf_questions.js",
     "src/data/shared_bank.js",
+    "src/data/shared_discursive_bank.js",
     "src/js/tracks_manager.js",
     "src/js/ai_tutor.js",
     "src/js/pdf_importer.js"
@@ -76,7 +79,7 @@ test("SHARED_BANK lista pacotes reais e faz matching automático com edital de o
     ["pack_portugues"],
     { pack_portugues: "d_port" }
   );
-  assert.equal(mappedQs.length, 414);
+  assert.equal(mappedQs.length, 418);
   assert.ok(mappedQs.every(q => q.subjectId === "d_port"));
 });
 
@@ -107,7 +110,7 @@ test("TracksManager isola progresso por track_id e suporta criar, exportar e imp
 
   const stDpdf = tm.getTrackState("dpdf_ti_2026");
   assert.equal(stDpdf.answers["Q_TEST_1"], undefined);
-  assert.equal(tm.getQuestionsForTrack(custom.id).length, 414);
+  assert.equal(tm.getQuestionsForTrack(custom.id).length, 418);
 
   // Exporta e reimporta bundle
   const bundle = tm.exportTrackBundle(custom.id);
@@ -180,3 +183,50 @@ test("COFEN 2026 registra todos os 13 cargos com pacotes Quadrix + Base Comum", 
   const dpdfCount = tm.getQuestionsForTrack("dpdf_ti_2026").length;
   assert.ok(dpdfCount > 1400, `Esperava > 1400 questões para DPDF TI, veio ${dpdfCount}`);
 });
+
+test("SEEDF 2026/2027 registra 20 cargos pré-edital e updateTrackEdital preserva progresso", () => {
+  const { window } = createBrowserSandbox();
+  const tm = window.TracksManager;
+  const seedf = tm.listTracks().filter(t => t.groupId === "seedf_2026");
+  assert.equal(seedf.length, 20, `Esperava 20 cargos SEEDF, veio ${seedf.length}`);
+
+  const firstId = seedf[0].id;
+  const ativ = tm.getTrackById(firstId);
+  assert.ok(ativ, "Primeira trilha SEEDF deve existir");
+  const ativCount = tm.getQuestionsForTrack(firstId).length;
+  assert.ok(ativCount >= 900, `Esperava >= 900 questões para ${firstId}, veio ${ativCount}`);
+
+  // Simula progresso do aluno antes de atualizar o edital
+  tm.setActiveTrack(firstId);
+  const state = tm.getTrackState(firstId);
+  state.answers["Q-TEST-1"] = { correct: true, selected: "C" };
+  state.checkedTopics["t1"] = true;
+  tm.saveTrackState(firstId, state);
+
+  // Atualiza o edital (simulando publicação futura do edital oficial)
+  const newEdital = JSON.parse(JSON.stringify(ativ.edital));
+  newEdital.metadata.banca = "Instituto Quadrix (Edital Oficial 2026)";
+  newEdital.disciplinas.push({
+    id: "seedf_esp_novo",
+    codigo: "NOVO-01",
+    nome: "Tópico Oficial Novo",
+    categoria: "especificos",
+    peso: 1,
+    questoesProva: 5,
+    pontosProva: 5,
+    topicos: [{ id: "novo_t1", titulo: "Novo conteúdo oficial", subitens: "Detalhes" }]
+  });
+  const updated = tm.updateTrackEdital(firstId, newEdital, {
+    subtitle: "Edital Oficial 2026 • Quadrix"
+  });
+  assert.ok(updated);
+  assert.equal(updated.edital.metadata.banca, "Instituto Quadrix (Edital Oficial 2026)");
+
+  // Progresso preservado e trilha não duplicada na listagem
+  const seedfAfter = tm.listTracks().filter(t => t.groupId === "seedf_2026");
+  assert.equal(seedfAfter.length, 20);
+  const stateAfter = tm.getTrackState(firstId);
+  assert.equal(stateAfter.answers["Q-TEST-1"].correct, true);
+  assert.equal(stateAfter.checkedTopics["t1"], true);
+});
+
