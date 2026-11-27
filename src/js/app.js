@@ -107,7 +107,27 @@
   const PERM = {};
   const SESS = {};
   const REVDONE = new Set();
-  const SIM = { on: false, qs: [], ans: {}, end: 0, start: 0, t: null, fin: false, n: 20, by: {}, hits: 0 };
+  const SIM = {
+    on: false,
+    mode: "quick",
+    tab: "obj",
+    qs: [],
+    ans: {},
+    end: 0,
+    start: 0,
+    t: null,
+    fin: false,
+    n: 20,
+    by: {},
+    hits: 0,
+    wrongs: 0,
+    blanks: 0,
+    discPrompt: null,
+    discText: "",
+    discMinLines: 20,
+    discMaxLines: 30,
+    discAiReview: ""
+  };
 
   function ensure() {
     state.answers = state.answers || {};
@@ -1747,21 +1767,100 @@
     `;
   }
 
-  // Simulado (sem pulo de scroll ao marcar alternativas!)
+  // Simulado & Concurso Completo (Objetiva + Dissertativa com cronômetro)
   const fmtTime = ms => {
-    const s = Math.max(0, Math.round(ms / 1000));
-    return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+    const totalSec = Math.max(0, Math.round(ms / 1000));
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${m}:${String(s).padStart(2, "0")}`;
   };
+
+  function getSimDiscursiveThemes() {
+    const data = window.DISCURSIVE_AND_FLASHCARDS || {};
+    const list = [];
+    if (Array.isArray(data.temasDissertacao)) list.push(...data.temasDissertacao);
+    if (Array.isArray(data.questoesTecnicasDiscursivas)) list.push(...data.questoesTecnicasDiscursivas);
+    if (!list.length) {
+      const meta = (window.EDITAL_DATA && window.EDITAL_DATA.metadata) || {};
+      const cargo = meta.cargo || meta.concurso || "Concurso Público";
+      list.push({
+        id: "SIM_DISC_DEFAULT",
+        titulo: `Tema Dissertativo — ${cargo}`,
+        linhasMax: 30,
+        proposta: `Redija um texto dissertativo-argumentativo (20 a 30 linhas) abordando os desafios atuais, princípios da Administração Pública e boas práticas técnicas relacionadas à atuação em ${cargo}.`
+      });
+    }
+    return list;
+  }
+
+  function pickProportionalQuestions(pool, targetN) {
+    const disciplinas = (window.EDITAL_DATA && Array.isArray(window.EDITAL_DATA.disciplinas)) ? window.EDITAL_DATA.disciplinas : [];
+    const totalEditalQ = disciplinas.reduce((acc, d) => acc + (Number(d.questoesProva) || 0), 0);
+    if (!disciplinas.length || totalEditalQ <= 0) {
+      return shuffle(pool).slice(0, targetN);
+    }
+    const chosen = [];
+    const usedIds = new Set();
+    disciplinas.forEach(d => {
+      const want = Math.max(1, Math.round(((Number(d.questoesProva) || 0) / totalEditalQ) * targetN));
+      const subPool = shuffle(pool.filter(q => q.subjectId === d.id && !usedIds.has(q.id)));
+      subPool.slice(0, want).forEach(q => {
+        if (chosen.length < targetN) {
+          chosen.push(q);
+          usedIds.add(q.id);
+        }
+      });
+    });
+    if (chosen.length < targetN) {
+      shuffle(pool.filter(q => !usedIds.has(q.id))).slice(0, targetN - chosen.length).forEach(q => {
+        chosen.push(q);
+        usedIds.add(q.id);
+      });
+    }
+    return chosen.slice(0, targetN);
+  }
 
   function simTick() {
     const el = document.getElementById("sim-timer");
     const left = SIM.end - Date.now();
-    if (el) el.textContent = "Tempo: " + fmtTime(left);
-    if (left <= 0) window.simFinish();
+    if (el) {
+      el.textContent = "Tempo: " + fmtTime(left);
+      if (left <= 600000) el.style.color = "var(--danger-text)";
+      else if (left <= 1800000) el.style.color = "var(--warning-text)";
+      else el.style.color = "";
+    }
+    if (left <= 0) window.simFinish(true);
   }
 
-  window.simStart = function () {
-    const sel = document.getElementById("sim-n");
+  window.setSimSetupMode = function (mode) {
+    state.simSetupMode = mode === "full" ? "full" : "quick";
+    saveState();
+    renderSim();
+  };
+
+  window.simSetTab = function (tab) {
+    SIM.tab = tab === "disc" ? "disc" : "obj";
+    renderSim();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  window.simOnDiscInput = function (val) {
+    SIM.discText = val;
+    const lines = val.trim() ? val.split("\n").length : 0;
+    const words = val.trim() ? val.trim().split(/\s+/).length : 0;
+    const counter = document.getElementById("sim-disc-counter");
+    if (counter) {
+      counter.textContent = `${lines} / ${SIM.discMaxLines} linhas · ${words} palavras`;
+      counter.style.color = (lines > SIM.discMaxLines || (lines > 0 && lines < SIM.discMinLines)) ? "var(--warning-text)" : "var(--success-text)";
+    }
+    const tabLbl = document.getElementById("sim-tab-disc-lbl");
+    if (tabLbl) tabLbl.textContent = `Dissertativa (${lines}/${SIM.discMaxLines} linhas)`;
+  };
+
+  window.simStart = function (modeArg) {
+    const mode = modeArg || state.simSetupMode || "quick";
     const originSel = document.getElementById("sim-origin");
     const onlyReal = originSel && originSel.value === "REAL";
     const pool = onlyReal ? ALL_QUESTIONS.filter(isRealQuestion) : ALL_QUESTIONS;
@@ -1769,32 +1868,71 @@
       alert("Nenhuma questão disponível para este filtro de simulado.");
       return;
     }
-    const n = Math.min(sel ? +sel.value : 20, pool.length);
-    SIM.n = n;
-    SIM.qs = shuffle(pool).slice(0, n);
+
+    let n = 20;
+    let durationMs = 60 * 60000;
+    let selectedQs = [];
+
+    if (mode === "full") {
+      const nSel = document.getElementById("sim-full-n");
+      const durSel = document.getElementById("sim-full-dur");
+      const themeSel = document.getElementById("sim-full-theme");
+      n = Math.min(nSel ? +nSel.value : 60, pool.length);
+      const durMin = durSel ? +durSel.value : 240;
+      durationMs = durMin * 60000;
+      selectedQs = pickProportionalQuestions(pool, n);
+      const themes = getSimDiscursiveThemes();
+      const chosenTheme = themes.find(t => t.id === (themeSel && themeSel.value)) || themes[0];
+      SIM.discPrompt = chosenTheme;
+      SIM.discText = "";
+      SIM.discMinLines = 20;
+      SIM.discMaxLines = (chosenTheme && chosenTheme.linhasMax) || 30;
+      SIM.discAiReview = "";
+    } else {
+      const sel = document.getElementById("sim-n");
+      n = Math.min(sel ? +sel.value : 20, pool.length);
+      durationMs = n * 180000;
+      selectedQs = shuffle(pool).slice(0, n);
+      SIM.discPrompt = null;
+      SIM.discText = "";
+      SIM.discAiReview = "";
+    }
+
+    SIM.mode = mode;
+    SIM.tab = "obj";
+    SIM.n = selectedQs.length;
+    SIM.qs = selectedQs;
     SIM.ans = {};
     SIM.fin = false;
     SIM.on = true;
     SIM.start = Date.now();
-    SIM.end = Date.now() + n * 180000;
+    SIM.end = Date.now() + durationMs;
     SIM.qs.forEach(q => delete PERM[q.id]);
     clearInterval(SIM.t);
     SIM.t = setInterval(simTick, 1000);
     renderSim();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   window.simPick = function (qid, idx) {
     if (SIM.fin) return;
-    SIM.ans[qid] = idx;
-    // Atualiza apenas o card clicado e o contador no DOM (zero perda de scroll!)
+    // Permite desmarcar clicando na mesma alternativa (útil em provas Certo/Errado!)
+    if (SIM.ans[qid] === idx) {
+      delete SIM.ans[qid];
+    } else {
+      SIM.ans[qid] = idx;
+    }
     const card = document.getElementById("mcard-" + qid);
     if (card) {
       card.querySelectorAll(".option-btn").forEach(btn => {
-        btn.classList.toggle("selected", Number(btn.dataset.idx) === idx);
+        btn.classList.toggle("selected", SIM.ans[qid] !== undefined && Number(btn.dataset.idx) === SIM.ans[qid]);
       });
     }
+    const count = Object.keys(SIM.ans).length;
     const prog = document.getElementById("sim-progress-count");
-    if (prog) prog.textContent = `${Object.keys(SIM.ans).length} de ${SIM.n} marcadas`;
+    if (prog) prog.textContent = `${count} de ${SIM.n} marcadas`;
+    const tabObj = document.getElementById("sim-tab-obj-lbl");
+    if (tabObj) tabObj.textContent = `Objetiva (${count}/${SIM.n})`;
   };
 
   window.simReset = function () {
@@ -1803,36 +1941,154 @@
     renderSim();
   };
 
-  window.simFinish = function () {
+  window.simFinish = function (autoTimeout) {
     if (!SIM.on || SIM.fin) return;
+    if (!autoTimeout) {
+      const answered = Object.keys(SIM.ans).length;
+      const missingObj = SIM.n - answered;
+      const emptyDisc = SIM.mode === "full" && !SIM.discText.trim();
+      if (missingObj > 0 || emptyDisc) {
+        const parts = [];
+        if (missingObj > 0) parts.push(`${missingObj} questão(ões) objetiva(s) em branco`);
+        if (emptyDisc) parts.push("dissertativa em branco");
+        if (!confirm(`Você ainda tem ${parts.join(" e ")}. Deseja entregar a prova mesmo assim?`)) return;
+      }
+    }
+
     clearInterval(SIM.t);
     SIM.fin = true;
     ensure();
     const secs = Math.round((Math.min(Date.now(), SIM.end) - SIM.start) / 1000);
     let hits = 0;
+    let wrongs = 0;
+    let blanks = 0;
     const by = {};
 
     SIM.qs.forEach(q => {
       const a = SIM.ans[q.id];
-      const ok = a === q.correctIndex;
-      if (ok) hits++;
-      const d = (by[q.subjectId] = by[q.subjectId] || [0, 0]);
+      const d = (by[q.subjectId] = by[q.subjectId] || [0, 0, 0]); // [hits, total, wrongs]
       d[1]++;
-      if (ok) d[0]++;
-      const optOrder = PERM[q.id] ? PERM[q.id].slice() : q.options.map((_, i) => i);
-      if (a !== undefined) {
-        state.answers[q.id] = { selectedIndex: a, correct: ok, timestamp: new Date().toISOString(), subjectId: q.subjectId, topicId: q.topicId, conf: "simulado", optOrder };
-        recordErrorIfWrong(q, a, ok, "simulado");
+      if (a === undefined) {
+        blanks++;
+        return;
       }
+      const ok = a === q.correctIndex;
+      if (ok) {
+        hits++;
+        d[0]++;
+      } else {
+        wrongs++;
+        d[2]++;
+      }
+      const optOrder = PERM[q.id] ? PERM[q.id].slice() : q.options.map((_, i) => i);
+      state.answers[q.id] = { selectedIndex: a, correct: ok, timestamp: new Date().toISOString(), subjectId: q.subjectId, topicId: q.topicId, conf: "simulado", optOrder };
+      recordErrorIfWrong(q, a, ok, "simulado");
       if (!ok) schedule(q.id, false, "simulado");
     });
 
+    const discLines = SIM.mode === "full" && SIM.discText.trim() ? SIM.discText.trim().split("\n").length : 0;
+    if (SIM.mode === "full" && SIM.discPrompt && SIM.discText.trim()) {
+      state.discursiveDrafts[SIM.discPrompt.id] = {
+        text: SIM.discText,
+        tl: discLines,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
     SIM.by = by;
     SIM.hits = hits;
-    state.simulados.push({ date: new Date().toISOString(), n: SIM.n, hits, secs });
+    SIM.wrongs = wrongs;
+    SIM.blanks = blanks;
+    state.simulados.push({
+      date: new Date().toISOString(),
+      mode: SIM.mode,
+      n: SIM.n,
+      hits,
+      wrongs,
+      blanks,
+      secs,
+      discLines,
+      discTitle: SIM.discPrompt ? SIM.discPrompt.titulo : ""
+    });
     saveState();
     renderSim();
+    if (typeof window.showToast === "function") {
+      window.showToast(autoTimeout ? "Tempo esgotado! Prova entregue automaticamente." : "Prova entregue e corrigida!", "success");
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  window.simGradeDiscursiveWithAi = async function () {
+    const statusEl = document.getElementById("sim-disc-ai-status");
+    const btnEl = document.getElementById("sim-disc-ai-btn");
+    if (!SIM.discText || !SIM.discText.trim()) {
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.innerHTML = `<div class="ai-loading-banner" style="border-color:var(--danger); color:var(--danger-text);">A dissertativa está em branco.</div>`;
+      }
+      return;
+    }
+    if (!window.AI_TUTOR || !window.AI_TUTOR.isConfigured()) {
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.innerHTML = `Configure sua chave gratuita de IA para corrigir a dissertativa. <button class="btn btn-outline btn-sm" style="margin-left:6px;" onclick="window.OnboardingWizard && OnboardingWizard.open(2)">Configurar chave IA</button>`;
+      }
+      return;
+    }
+
+    const cfg = window.AI_TUTOR.loadConfig ? window.AI_TUTOR.loadConfig() : {};
+    const startedAt = Date.now();
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.innerHTML = `<span class="ai-spinner" aria-hidden="true"></span> Corrigindo dissertativa...`;
+    }
+    const tick = () => {
+      const secs = Math.max(1, Math.floor((Date.now() - startedAt) / 1000));
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.innerHTML = `<div class="ai-loading-banner"><span class="ai-spinner" aria-hidden="true"></span><span>Corrigindo dissertativa com <strong>${escapeHtml(cfg.model || "IA")}</strong>…</span><span class="ai-elapsed">${secs}s</span></div>`;
+      }
+    };
+    tick();
+    const tid = setInterval(tick, 1000);
+
+    try {
+      const meta = (window.EDITAL_DATA && window.EDITAL_DATA.metadata) || {};
+      const lines = SIM.discText.trim().split("\n").length;
+      const prompt = [
+        `Você é um examinador rigoroso da banca ${meta.banca || "de concursos públicos"} corrigindo a prova dissertativa de ${meta.concurso || "concurso"} (${meta.cargo || ""}).`,
+        `Tema proposto: ${SIM.discPrompt ? SIM.discPrompt.titulo : "Redação"}`,
+        `Comando da proposta: ${SIM.discPrompt ? (SIM.discPrompt.proposta || "") : ""}`,
+        `Linhas escritas: ${lines} (faixa esperada: ${SIM.discMinLines} a ${SIM.discMaxLines} linhas).`,
+        "",
+        "TEXTO DO CANDIDATO:",
+        SIM.discText.trim(),
+        "",
+        "Avalie em Markdown objetivo com:",
+        "1. **Nota estimada (0 a 10)** dividida em: Conteúdo/Domínio do tema (até 6,0), Estrutura/Coesão (até 2,0) e Gramática/Norma culta (até 2,0).",
+        "2. **Pontos fortes** (2 a 3 itens curtos).",
+        "3. **Erros e lacunas a corrigir** (apontamentos cirúrgicos de conteúdo, argumentação e português).",
+        "4. **Sugestão prática de reescrita** para o ponto mais fraco."
+      ].join("\n");
+
+      const md = await window.AI_TUTOR.askRaw(prompt, { temperature: 0.3 });
+      clearInterval(tid);
+      SIM.discAiReview = md;
+      renderSim();
+      if (typeof window.showToast === "function") window.showToast("Dissertativa corrigida pela IA!", "success");
+    } catch (err) {
+      clearInterval(tid);
+      const msg = err && err.message ? err.message : String(err);
+      if (btnEl) {
+        btnEl.disabled = false;
+        btnEl.textContent = "Corrigir dissertativa com IA";
+      }
+      if (statusEl) {
+        statusEl.style.display = "block";
+        statusEl.innerHTML = `<div class="ai-loading-banner" style="border-color:var(--danger); color:var(--danger-text);">Erro na correção: ${escapeHtml(msg)}</div>`;
+      }
+      if (typeof window.showToast === "function") window.showToast("Erro na correção: " + msg, "error");
+    }
   };
 
   function renderSim() {
@@ -1842,49 +2098,103 @@
 
     if (!SIM.on) {
       const realCount = ALL_QUESTIONS.filter(isRealQuestion).length;
-      const hist = state.simulados.slice(-5).reverse().map(s =>
-        `<tr><td>${new Date(s.date).toLocaleDateString("pt-BR")}</td><td><strong>${s.hits}/${s.n}</strong> (${Math.round((100 * s.hits) / Math.max(1, s.n))}%)</td><td>${Math.max(1, Math.round(s.secs / 60))} min</td></tr>`
-      ).join("");
+      const setupMode = state.simSetupMode || "full";
+      const meta = (window.EDITAL_DATA && window.EDITAL_DATA.metadata) || {};
+      const provas = meta.provas || {};
+      const editalTotalQ = (provas.objetiva && provas.objetiva.totalQuestoes) || 60;
+      const editalDurMin = Math.round(((provas.objetiva && provas.objetiva.duracaoHoras) || 4) * 60);
+      const themes = getSimDiscursiveThemes();
+
+      const hist = state.simulados.slice(-6).reverse().map(s => {
+        const tipo = s.mode === "full" ? `Completo${s.discLines ? ` + ${s.discLines}L` : ""}` : "Objetiva";
+        return `<tr><td>${new Date(s.date).toLocaleDateString("pt-BR")}</td><td>${escapeHtml(tipo)}</td><td><strong>${s.hits}/${s.n}</strong> (${Math.round((100 * s.hits) / Math.max(1, s.n))}%)</td><td>${Math.max(1, Math.round(s.secs / 60))} min</td></tr>`;
+      }).join("");
 
       container.innerHTML = `
         <div class="focus-Stage">
           <div class="section-head">
             <div>
-              <h2>Simulado Cronometrado</h2>
-              <p>Questões misturadas sem gabarito imediato (3 min por questão). Os erros entram automaticamente na Revisão.</p>
+              <h2>Simulado &amp; Concurso Completo</h2>
+              <p>Treine com cronômetro real: só objetiva ou prova completa (Objetiva + Dissertativa).</p>
+            </div>
+            <div class="segmented-tabs">
+              <button class="seg-btn ${setupMode === "full" ? "active" : ""}" onclick="setSimSetupMode('full')">Concurso Completo</button>
+              <button class="seg-btn ${setupMode === "quick" ? "active" : ""}" onclick="setSimSetupMode('quick')">Simulado Rápido</button>
             </div>
           </div>
-          <div class="card">
-            <div class="filter-grid" style="margin-bottom:14px;">
-              <div>
-                <label class="field-label" for="sim-n">Quantidade</label>
-                <select id="sim-n" class="form-control">
-                  <option value="10">10 questões (30 min)</option>
-                  <option value="20" selected>20 questões (60 min)</option>
-                  <option value="30">30 questões (90 min)</option>
-                  ${(() => {
-                    const tot = (window.EDITAL_DATA && window.EDITAL_DATA.metadata && window.EDITAL_DATA.metadata.provas && window.EDITAL_DATA.metadata.provas.objetiva && window.EDITAL_DATA.metadata.provas.objetiva.totalQuestoes) || 60;
-                    return `<option value="${tot}">${tot} questões — Padrão do Edital</option>`;
-                  })()}
-                  <option value="${realCount}">Todas as reais (${realCount})</option>
+
+          ${setupMode === "full" ? `
+            <div class="card">
+              <div style="margin-bottom:14px;">
+                <strong style="font-size:0.96rem;">Prova Objetiva + Dissertativa no mesmo cronômetro</strong>
+                <p style="font-size:0.83rem; color:var(--text-muted); margin-top:3px;">
+                  Distribuição proporcional às disciplinas do edital, alternância livre entre Objetiva e Dissertativa durante o tempo, e correção opcional da redação por IA ao entregar.
+                </p>
+              </div>
+              <div class="filter-grid" style="margin-bottom:14px;">
+                <div>
+                  <label class="field-label" for="sim-full-n">Questões da Objetiva</label>
+                  <select id="sim-full-n" class="form-control">
+                    <option value="${Math.min(editalTotalQ, realCount)}" selected>${Math.min(editalTotalQ, realCount)} questões (Padrão do Edital)</option>
+                    <option value="${Math.min(60, realCount)}">60 questões (Meio concurso)</option>
+                    <option value="${Math.min(30, realCount)}">30 questões (Treino reduzido)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="sim-full-dur">Tempo total (Obj + Disc)</label>
+                  <select id="sim-full-dur" class="form-control">
+                    <option value="${editalDurMin}" selected>${Math.floor(editalDurMin / 60)}h${String(editalDurMin % 60).padStart(2, "0")} (Tempo do Edital)</option>
+                    <option value="240">4h00</option>
+                    <option value="180">3h00</option>
+                    <option value="120">2h00 (Treino compacto)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="sim-origin">Banco de questões</label>
+                  <select id="sim-origin" class="form-control">
+                    <option value="REAL" selected>Apenas questões reais (${realCount})</option>
+                    <option value="ALL">Todas (${ALL_QUESTIONS.length})</option>
+                  </select>
+                </div>
+              </div>
+              <div style="margin-bottom:14px;">
+                <label class="field-label" for="sim-full-theme">Tema da Prova Dissertativa</label>
+                <select id="sim-full-theme" class="form-control">
+                  ${themes.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.titulo)}</option>`).join("")}
                 </select>
               </div>
-              <div>
-                <label class="field-label" for="sim-origin">Banco</label>
-                <select id="sim-origin" class="form-control">
-                  <option value="REAL" selected>Apenas questões reais (${realCount})</option>
-                  <option value="ALL">Todas as questões (${ALL_QUESTIONS.length})</option>
-                </select>
-              </div>
+              <button class="btn btn-primary" id="btn-start-full-exam" onclick="simStart('full')">Iniciar Concurso Completo</button>
             </div>
-            <button class="btn btn-primary" onclick="simStart()">Iniciar simulado</button>
-          </div>
+          ` : `
+            <div class="card">
+              <div class="filter-grid" style="margin-bottom:14px;">
+                <div>
+                  <label class="field-label" for="sim-n">Quantidade</label>
+                  <select id="sim-n" class="form-control">
+                    <option value="10">10 questões (30 min)</option>
+                    <option value="20" selected>20 questões (60 min)</option>
+                    <option value="30">30 questões (90 min)</option>
+                    <option value="${editalTotalQ}">${editalTotalQ} questões — Padrão do Edital</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="field-label" for="sim-origin">Banco</label>
+                  <select id="sim-origin" class="form-control">
+                    <option value="REAL" selected>Apenas questões reais (${realCount})</option>
+                    <option value="ALL">Todas (${ALL_QUESTIONS.length})</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="simStart('quick')">Iniciar simulado</button>
+            </div>
+          `}
+
           ${hist ? `
             <div class="card">
-              <h3 class="card-title" style="margin-bottom:10px;">Últimos simulados</h3>
+              <h3 class="card-title" style="margin-bottom:10px;">Últimas provas realizadas</h3>
               <div class="lesson-table-wrapper">
                 <table class="lesson-table">
-                  <thead><tr><th>Data</th><th>Resultado</th><th>Tempo</th></tr></thead>
+                  <thead><tr><th>Data</th><th>Modo</th><th>Objetiva</th><th>Tempo</th></tr></thead>
                   <tbody>${hist}</tbody>
                 </table>
               </div>
@@ -1895,35 +2205,112 @@
       return;
     }
 
-    let headHtml = "";
+    // PROVA FINALIZADA — BOLETIM COMPLETO
     if (SIM.fin) {
       const pct = Math.round((100 * SIM.hits) / Math.max(1, SIM.n));
-      const rows = Object.keys(SIM.by).map(id => `<tr><td>${escapeHtml(subjName(id))}</td><td><strong>${SIM.by[id][0]}/${SIM.by[id][1]}</strong></td></tr>`).join("");
-      headHtml = `
+      const isCE = SIM.qs.filter(q => Array.isArray(q.options) && q.options.length === 2).length > SIM.n / 2;
+      const netScore = SIM.hits - SIM.wrongs;
+      const secsUsed = Math.max(1, Math.round((Math.min(Date.now(), SIM.end) - SIM.start) / 1000));
+      const rows = Object.keys(SIM.by).map(id => {
+        const [h, tot, w] = SIM.by[id];
+        return `<tr><td>${escapeHtml(subjName(id))}</td><td><strong>${h}/${tot}</strong></td><td style="color:var(--danger-text);">${w}</td></tr>`;
+      }).join("");
+
+      const discLines = SIM.discText.trim() ? SIM.discText.trim().split("\n").length : 0;
+      const discWords = SIM.discText.trim() ? SIM.discText.trim().split(/\s+/).length : 0;
+      const renderMd = window.AI_TUTOR ? window.AI_TUTOR.renderMarkdownSafe : (s => `<pre style="white-space:pre-wrap;">${escapeHtml(s)}</pre>`);
+
+      const discResultHtml = SIM.mode === "full" ? `
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Resultado: ${SIM.hits}/${SIM.n} (${pct}%)</h3>
-            <button class="btn btn-primary btn-sm" onclick="simReset()">Novo simulado</button>
+            <div>
+              <h3 class="card-title">Prova Dissertativa — ${escapeHtml(SIM.discPrompt ? SIM.discPrompt.titulo : "Redação")}</h3>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">${discLines} linhas · ${discWords} palavras (salvo nos seus rascunhos)</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              ${window.AI_TUTOR && window.AI_TUTOR.renderQuickModelSelect ? window.AI_TUTOR.renderQuickModelSelect() : ""}
+              <button class="btn btn-primary btn-sm" id="sim-disc-ai-btn" onclick="simGradeDiscursiveWithAi()" ${SIM.discText.trim() ? "" : "disabled"}>Corrigir dissertativa com IA</button>
+            </div>
           </div>
-          <div class="lesson-table-wrapper">
-            <table class="lesson-table">
-              <thead><tr><th>Disciplina</th><th>Acertos</th></tr></thead>
-              <tbody>${rows}</tbody>
-            </table>
+          <div id="sim-disc-ai-status" style="display:none; margin-bottom:10px;"></div>
+          ${SIM.discAiReview ? `<div style="padding:14px; border-radius:var(--radius-sm); background:var(--bg-elevated); border:1px solid var(--border-strong); margin-bottom:12px;">${renderMd(SIM.discAiReview)}</div>` : ""}
+          <div style="white-space:pre-wrap; font-size:0.9rem; color:var(--text-secondary); padding:12px; border-radius:var(--radius-sm); background:var(--bg-elevated); border:1px solid var(--border-color); max-height:260px; overflow-y:auto;">${SIM.discText.trim() ? escapeHtml(SIM.discText) : "Dissertativa entregue em branco."}</div>
+        </div>
+      ` : "";
+
+      container.innerHTML = `
+        <div class="focus-Stage">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Boletim da Prova — ${SIM.hits}/${SIM.n} (${pct}%)</h3>
+                <div style="font-size:0.82rem; color:var(--text-muted); margin-top:2px;">
+                  Acertos: ${SIM.hits} · Erros: ${SIM.wrongs} · Em branco: ${SIM.blanks}${isCE ? ` · Nota líquida (C−E): <strong>${netScore}</strong>` : ""} · Tempo: ${fmtTime(secsUsed * 1000)}
+                </div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="simReset()">Nova prova</button>
+            </div>
+            <div class="lesson-table-wrapper">
+              <table class="lesson-table">
+                <thead><tr><th>Disciplina</th><th>Acertos</th><th>Erros</th></tr></thead>
+                <tbody>${rows}</tbody>
+              </table>
+            </div>
+          </div>
+          ${discResultHtml}
+          ${SIM.qs.map(q => miniCardHtml(q, "simfb")).join("")}
+        </div>
+      `;
+      return;
+    }
+
+    // PROVA EM ANDAMENTO
+    const answeredCount = Object.keys(SIM.ans).length;
+    const discLinesNow = SIM.discText.trim() ? SIM.discText.trim().split("\n").length : 0;
+    const discWordsNow = SIM.discText.trim() ? SIM.discText.trim().split(/\s+/).length : 0;
+
+    const stickyBar = `
+      <div style="position:sticky; top:calc(var(--topbar-h) + 8px); z-index:40; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+        <strong id="sim-timer" style="font-variant-numeric:tabular-nums;">Tempo: ${fmtTime(SIM.end - Date.now())}</strong>
+        ${SIM.mode === "full" ? `
+          <div class="segmented-tabs">
+            <button class="seg-btn ${SIM.tab === "obj" ? "active" : ""}" id="sim-tab-obj-lbl" onclick="simSetTab('obj')">Objetiva (${answeredCount}/${SIM.n})</button>
+            <button class="seg-btn ${SIM.tab === "disc" ? "active" : ""}" id="sim-tab-disc-lbl" onclick="simSetTab('disc')">Dissertativa (${discLinesNow}/${SIM.discMaxLines} linhas)</button>
+          </div>
+        ` : `<span id="sim-progress-count" style="font-size:0.84rem; color:var(--text-muted);">${answeredCount} de ${SIM.n} marcadas</span>`}
+        <button class="btn btn-danger btn-sm" onclick="simFinish()">Entregar prova</button>
+      </div>
+    `;
+
+    let bodyHtml = "";
+    if (SIM.mode === "full" && SIM.tab === "disc") {
+      const p = SIM.discPrompt || { titulo: "Prova Dissertativa", proposta: "" };
+      bodyHtml = `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <strong style="font-size:1rem;">${escapeHtml(p.titulo)}</strong>
+            <span id="sim-disc-counter" style="font-size:0.8rem; color:var(--text-muted); font-variant-numeric:tabular-nums;">${discLinesNow} / ${SIM.discMaxLines} linhas · ${discWordsNow} palavras</span>
+          </div>
+          <p style="white-space:pre-line; font-size:0.88rem; color:var(--text-secondary); padding:12px; border-radius:var(--radius-sm); background:var(--bg-elevated); border:1px solid var(--border-color); margin-bottom:14px; line-height:1.6;">${escapeHtml(p.proposta || "")}</p>
+          <textarea id="sim-disc-textarea" class="form-control" rows="16" style="width:100%; line-height:1.65; font-size:0.93rem;" placeholder="Escreva aqui sua redação (${SIM.discMinLines} a ${SIM.discMaxLines} linhas). Seu texto é mantido mesmo ao alternar para a Prova Objetiva..." oninput="simOnDiscInput(this.value)">${escapeHtml(SIM.discText)}</textarea>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:12px; flex-wrap:wrap;">
+            <span style="font-size:0.78rem; color:var(--text-muted);">Dica: você pode voltar para a Objetiva a qualquer momento antes de entregar.</span>
+            <button class="btn btn-outline btn-sm" onclick="simSetTab('obj')">← Voltar para Objetiva</button>
           </div>
         </div>
       `;
     } else {
-      headHtml = `
-        <div style="position:sticky; top:calc(var(--topbar-h) + 8px); z-index:40; background:var(--bg-card); border:1px solid var(--border-strong); border-radius:var(--radius-sm); padding:10px 14px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; gap:10px; box-shadow:var(--shadow-sm);">
-          <strong id="sim-timer">Tempo: ${fmtTime(SIM.end - Date.now())}</strong>
-          <span id="sim-progress-count" style="font-size:0.84rem; color:var(--text-muted);">${Object.keys(SIM.ans).length} de ${SIM.n} marcadas</span>
-          <button class="btn btn-danger btn-sm" onclick="simFinish()">Finalizar</button>
-        </div>
-      `;
+      bodyHtml = SIM.qs.map(q => miniCardHtml(q, "sim")).join("");
+      if (SIM.mode === "full") {
+        bodyHtml += `
+          <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+            <button class="btn btn-primary" onclick="simSetTab('disc')">Ir para a Prova Dissertativa →</button>
+          </div>
+        `;
+      }
     }
 
-    container.innerHTML = `<div class="focus-Stage">${headHtml}${SIM.qs.map(q => miniCardHtml(q, SIM.fin ? "simfb" : "sim")).join("")}</div>`;
+    container.innerHTML = `<div class="focus-Stage">${stickyBar}${bodyHtml}</div>`;
   }
 
   // ==========================================================================
