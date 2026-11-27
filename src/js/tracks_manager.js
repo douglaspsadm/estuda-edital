@@ -568,13 +568,51 @@
     return Array.from(map.values());
   }
 
+  function getRealDiscursivesForTrack(track) {
+    const bank = Array.isArray(window.SHARED_DISCURSIVE_BANK) ? window.SHARED_DISCURSIVE_BANK : [];
+    if (!bank.length) return [];
+    const blob = [
+      track && track.id,
+      track && track.shortName,
+      track && track.roleName,
+      track && track.subtitle,
+      track && track.edital && track.edital.metadata && track.edital.metadata.cargo
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    let primaryAreas = ["administracao", "geral"];
+    if (/ti\b|inform[aá]tica|sistema|desenvolvimento|dados|tecnologia/.test(blob)) {
+      primaryAreas = ["ti"];
+    } else if (/advog|jur[ií]d|direito/.test(blob)) {
+      primaryAreas = ["direito"];
+    } else if (/contad|contab|econom|finan/.test(blob)) {
+      primaryAreas = ["contabilidade", "administracao"];
+    } else if (/enferm|sa[uú]de|farmac/.test(blob)) {
+      primaryAreas = ["saude"];
+    } else if (/comunica|jornal|rela[çc][õo]es|publicid/.test(blob)) {
+      primaryAreas = ["comunicacao", "administracao"];
+    } else if (/base_comum/.test(blob)) {
+      return bank.slice();
+    }
+
+    const exact = bank.filter(d => primaryAreas.includes(d.area));
+    const extras = bank.filter(d => !primaryAreas.includes(d.area) && (d.area === "administracao" || d.area === "geral"));
+    const merged = exact.concat(extras);
+    return merged.length ? merged : bank.slice(0, 10);
+  }
+
   function syncWindowGlobalsForTrack(track) {
     const t = track || getActiveTrack();
     window.EDITAL_DATA = t.edital;
     window.LESSONS_DATA = t.lessons || {};
-    window.DISCURSIVE_AND_FLASHCARDS = (t.discursive && (t.discursive.temasDissertacao || t.discursive.flashcards))
+    const baseDisc = (t.discursive && (t.discursive.temasDissertacao || t.discursive.flashcards))
       ? t.discursive
       : { temasDissertacao: [], questoesTecnicasDiscursivas: [], flashcards: [] };
+    const realTemas = getRealDiscursivesForTrack(t);
+    const seenIds = new Set(realTemas.map(x => x.id));
+    const trackTemas = (Array.isArray(baseDisc.temasDissertacao) ? baseDisc.temasDissertacao : []).filter(x => x && !seenIds.has(x.id));
+    window.DISCURSIVE_AND_FLASHCARDS = Object.assign({}, baseDisc, {
+      temasDissertacao: realTemas.concat(trackTemas)
+    });
   }
 
   function getTheme() {

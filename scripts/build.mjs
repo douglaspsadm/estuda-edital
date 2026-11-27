@@ -51,6 +51,7 @@ const scriptOrder = [
   "data/cofen_edital_data.js",
   "data/quadrix_questions.js",
   "data/shared_bank.js",
+  "data/shared_discursive_bank.js",
   "js/tracks_manager.js",
   "js/ai_tutor.js",
   "js/pdf_importer.js",
