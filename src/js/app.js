@@ -1009,7 +1009,7 @@
                     <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', false)">Útil (${rem.upvotes || 0})</button>
                     <button class="btn btn-outline btn-sm" onclick="window.voteCommunityExplanation('${qidEsc}', true)">Reportar erro</button>
                   ` : ""}
-                  ${rem.generatedByAi ? `<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ ${rem.fromCommunity ? "Gerar outra com minha IA" : "Gerar novamente com IA"}</button>` : ""}
+                  ${rem.generatedByAi ? `${window.AI_TUTOR && window.AI_TUTOR.renderQuickModelSelect ? window.AI_TUTOR.renderQuickModelSelect() : ""}<button class="btn btn-outline btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">↻ ${rem.fromCommunity ? "Gerar outra com minha IA" : "Gerar novamente com IA"}</button>` : ""}
                   <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
                   ${!ans.correct ? `<button class="btn btn-primary btn-sm" onclick="switchView('errors')">Ir para Caderno de Erros / IA</button>` : ""}
                 </div>
@@ -1019,6 +1019,7 @@
           ` : `
             <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <button class="btn btn-primary btn-sm" id="ai-q-btn-${escapeHtml(q.id)}" onclick="window.generateQuestionExplanation('${qidEsc}')">Gerar dica com IA</button>
+              ${window.AI_TUTOR && window.AI_TUTOR.renderQuickModelSelect ? window.AI_TUTOR.renderQuickModelSelect() : ""}
               <button class="btn btn-outline btn-sm" onclick="switchView('remediation', '${escapeJsStr(q.subjectId)}')">Abrir aula da disciplina</button>
               ${!ans.correct ? `<button class="btn btn-outline btn-sm" onclick="switchView('errors')">Caderno de Erros</button>` : ""}
             </div>

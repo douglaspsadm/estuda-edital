@@ -385,6 +385,24 @@
     }
   }
 
+  function renderQuickModelSelectHtml(extraStyle) {
+    const cfg = loadAiConfig();
+    if (!cfg.apiKey) return "";
+    const models = Array.isArray(cfg.models) ? cfg.models.slice() : [];
+    if (cfg.model && !models.some(m => m.id === cfg.model)) {
+      models.unshift({ id: cfg.model, label: cfg.model });
+    }
+    const opts = models.map(m =>
+      `<option value="${escapeHtml(m.id)}" ${cfg.model === m.id ? "selected" : ""}>${escapeHtml(m.label || m.id)}</option>`
+    ).join("");
+    return `
+      <select class="form-control ai-quick-model" style="width:auto; max-width:210px; padding:5px 10px; font-size:0.78rem; height:32px; ${extraStyle || ""}" aria-label="Selecionar modelo de IA" title="Trocar modelo de IA caso esteja sobrecarregado" onchange="window.AI_TUTOR.onQuickModelChange(this.value)">
+        ${opts}
+        <option value="__REFRESH__">↻ Atualizar lista de modelos...</option>
+      </select>
+    `;
+  }
+
   // Renderiza barra enxuta: se já configurada, esconde os inputs num painel retrátil discreto!
   function renderAiConfigCardHtml(contextId, filterSubjectId, forceExpanded) {
     const cfg = loadAiConfig();
@@ -402,15 +420,14 @@
           <div style="min-width:200px; flex:1;">
             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
               <strong style="font-size:0.95rem;">Tutor IA Sob Medida</strong>
-              <span class="status-badge ${isReady ? "status-mastered" : "status-untested"}">
-                ${isReady ? escapeHtml(cfg.model) : "Chave não configurada"}
-              </span>
+              ${!isReady ? `<span class="status-badge status-untested">Chave não configurada</span>` : ""}
             </div>
             <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
               Gera uma aula focada apenas nas questões que você errou.
             </div>
           </div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${isReady ? renderQuickModelSelectHtml() : ""}
             <button class="btn btn-primary btn-sm" id="ai-gen-btn-${contextId}" onclick="window.AI_TUTOR.generateAndSaveLesson('${contextId}', '${filterSubjectId || "ALL"}')">
               Gerar Aula dos Meus Erros
             </button>
@@ -460,7 +477,29 @@
     },
     renderMarkdownSafe,
     renderConfigCard: renderAiConfigCardHtml,
+    renderQuickModelSelect: renderQuickModelSelectHtml,
     extractJsonFromText,
+
+    async onQuickModelChange(val) {
+      if (val === "__REFRESH__") {
+        const cfg = loadAiConfig();
+        if (!cfg.apiKey) return;
+        if (typeof window.showToast === "function") window.showToast("Buscando modelos disponíveis...", "info");
+        try {
+          const models = await fetchAvailableModels(cfg.provider, cfg.apiKey);
+          cfg.models = models;
+          if (!cfg.model || !models.some(m => m.id === cfg.model)) cfg.model = models[0].id;
+          saveAiConfig(cfg);
+          if (typeof window.showToast === "function") window.showToast(`${models.length} modelos carregados.`, "success");
+          if (typeof window.refreshActiveView === "function") window.refreshActiveView();
+        } catch (err) {
+          if (typeof window.showToast === "function") window.showToast("Erro ao buscar modelos: " + (err && err.message ? err.message : String(err)), "error");
+        }
+        return;
+      }
+      this.onModelChange(val);
+      if (typeof window.showToast === "function") window.showToast("Modelo alterado: " + val, "success");
+    },
 
     async discoverModelsDirect(provider, apiKey) {
       const models = await fetchAvailableModels(provider, apiKey);
