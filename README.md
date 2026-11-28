@@ -70,3 +70,13 @@ Este repositório já inclui **6 agentes e 6 skills** em `.agents/` (roteados em
 - `ui-ux-guardian` (memória de regras de UX e prevenção de regressões)
 - `qa-verifier` (`npm run check` + auditoria por trilha + Playwright E2E)
 - `token-optimizer` (`perf-stack` — instale ferramentas locais com `bash scripts/setup-perf-tools.sh`)
+
+---
+
+## Licença
+Este projeto está licenciado sob **[CC BY-NC-SA 4.0](LICENSE)** (Creative Commons Atribuição-NãoComercial-CompartilhaIgual 4.0 Internacional):
+* ✅ **Livre para usar, estudar, copiar e melhorar** gratuitamente.
+* ✅ **Atribuição:** mantenha o crédito ao projeto original.
+* ❌ **Uso comercial proibido:** não é permitido vender o sistema ou cobrar assinatura por ele.
+* 🔁 **CompartilhaIgual:** versões modificadas devem permanecer abertas sob a mesma licença.
+
