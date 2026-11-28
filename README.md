@@ -4,6 +4,8 @@ Plataforma web estática (custo zero de servidor, pronta para **Vercel** e uso *
 
 **Escolher Concurso / Subir Edital → Questões Reais por Disciplina → Caderno de Erros Incremental → Aula Cirúrgica (IA ou Externa) & Flashcards Automáticos → Revisão Espaçada (1/7/21/45 dias) → Simulado & Concurso Completo.**
 
+> 📖 **Novo por aqui?** Leia o **[Guia de Uso Passo a Passo (para qualquer pessoa)](GUIA_DE_USO.md)** — sem termos técnicos!
+
 ---
 
 ## Concursos Prontos & Bancos Reais
